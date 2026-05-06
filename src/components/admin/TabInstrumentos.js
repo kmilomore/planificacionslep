@@ -81,6 +81,10 @@ export default function TabInstrumentos() {
         <Alert type={feedback.type} message={feedback.msg} onClose={() => setFeedback(null)} />
       )}
 
+      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-navy font-body">
+        La hoja de instrumentos CDC ahora se reconstruye desde la base oficial en <strong>cdccolchagua</strong>. Si vuelves a ejecutar <code>migracionCDC()</code>, cualquier dato manual previo será reemplazado.
+      </div>
+
       <div className="flex justify-end">
         <button
           onClick={abrirCreacion}
@@ -116,6 +120,7 @@ export default function TabInstrumentos() {
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500 font-body">
                 <span>📅 {TIPO_LABELS[inst.tipo_seguimiento] ?? inst.tipo_seguimiento}</span>
                 <span>👤 {responsableNombre(inst.responsable_id)}</span>
+                <span>{inst.ciclo || 'anual'}</span>
               </div>
             </div>
           </div>

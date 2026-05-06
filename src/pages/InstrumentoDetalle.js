@@ -203,9 +203,15 @@ export default function InstrumentoDetalle() {
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-navy">{indicador.codigo_indicador}</td>
                   <td className="px-4 py-3 text-gray-700">
                     <div className="font-medium">{indicador.nombre}</div>
-                    <div className="text-xs text-gray-500 mt-1">{indicador.dimension || 'Sin dimensión'}{indicador.subdimension ? ` · ${indicador.subdimension}` : ''}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {indicador.dimension || 'Sin dimensión'}
+                      {indicador.equipo_trabajo ? ` · ${indicador.equipo_trabajo}` : indicador.subdimension ? ` · ${indicador.subdimension}` : ''}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{indicador.meta_valor || '—'} {indicador.unidad || ''}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    <div>{indicador.meta_valor || '—'} {indicador.unidad || ''}</div>
+                    <div className="text-xs text-gray-400 mt-1">{indicador.fecha_cumplimiento_2026 || 'Sin fecha de cumplimiento'}</div>
+                  </td>
                   <td className="px-4 py-3 text-center font-semibold text-navy">{avance ? `${avance.porcentaje_cumplimiento}%` : '—'}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
@@ -335,16 +341,22 @@ export default function InstrumentoDetalle() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DetalleItem label="Dimensión" value={detalle.indicador.dimension || '—'} />
+                  <DetalleItem label="Equipo de trabajo" value={detalle.indicador.equipo_trabajo || detalle.indicador.subdimension || '—'} />
+                  <DetalleItem label="Estado del indicador" value={detalle.indicador.estado_indicador || '—'} />
                   <DetalleItem label="Subdimensión" value={detalle.indicador.subdimension || '—'} />
                   <DetalleItem label="Meta" value={`${detalle.indicador.meta_valor || '—'} ${detalle.indicador.unidad || ''}`} />
                   <DetalleItem label="Peso" value={detalle.indicador.peso ? `${detalle.indicador.peso}%` : '—'} />
                   <DetalleItem label="Tipo de meta" value={detalle.indicador.tipo_meta || '—'} />
+                  <DetalleItem label="Ámbito de control" value={detalle.indicador.ambito_control || '—'} />
+                  <DetalleItem label="Expresión de fórmula" value={detalle.indicador.expresion_formula || '—'} />
+                  <DetalleItem label="Fecha de cumplimiento" value={detalle.indicador.fecha_cumplimiento_2026 || '—'} />
                   <DetalleItem label="Responsable" value={nombreUsuario(detalle.indicador.responsable_id)} />
                 </div>
 
                 <DetalleBlock label="Descripción" value={detalle.indicador.descripcion || 'Sin descripción'} />
                 <DetalleBlock label="Fórmula" value={detalle.indicador.formula || 'Sin fórmula'} />
                 <DetalleBlock label="Medio de verificación" value={detalle.indicador.fuente_verificacion || 'Sin medio de verificación'} />
+                <DetalleBlock label="Nota técnica 2026" value={detalle.indicador.nota_tecnica_2026 || 'Sin nota técnica'} />
               </>
             )}
 

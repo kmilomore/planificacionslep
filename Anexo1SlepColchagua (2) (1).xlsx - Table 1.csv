@@ -1,0 +1,413 @@
+Servicio,N° de indicador,Equipo de trabajo,Estado de indicador,Justificación de indicador,Nombre del indicador,Fórmula de cálculo,Dimensión,Ámbito de control,Expresión de fórmula,Unidad de Medida,Numerador 2026,Denominador 2026,Efectivo 2026,Fecha de cumplimiento 2026,Ponderación 2026,Medios de Verificación 2026,Nota técnica 2026
+"SLEP
+Colchagua",1,Subdirección De Administración Y Finanzas,Nuevo,"Como una forma de fortalecer la sostenibilidad de la gestión institucional, se incorpora este nuevo indicador en el CDC con el propósito de monitorear de manera sistemática el proceso de compras. Este indicador permite dar seguimiento al grado de cumplimiento del Plan de Compras Públicas, partiendo desde su formalización y planificación inicial, lo que posibilita visualizar cómo serán distribuidos los recursos en el territorio.
+Asimismo, al tratarse de un instrumento público disponible en la plataforma de Mercado Público, su cumplimiento refleja el compromiso del Servicio con la transparencia, la eficiencia en la gestión de los recursos y la adecuada programación de las adquisiciones institucionales, contribuyendo así a una administración más ordenada, trazable y alineada con las metas de gestión establecidas.",Porcentaje De Cumplimiento Del Plan De Compras Públicas,(Número de hitos cumplidos del Plan de Compras Públicas en el año t / Número de hitos planificados del Plan de Compras Públicas para el año t)*100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",35%,"1. Plan de Compras Públicas
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+El Plan de Compras Públicas (en adelante el Plan):
+a) Debe estar formalizado y aprobado por el jefe de servicio mediante Resolución Exenta y ser publicado en la plataforma de Mercado Público a más tardar en enero del año t.
+b) Se debe ajustar al reglamento e instrucciones elaboradas por Chilecompra y ser publicado en Mercado Público a más tardar en enero del año t.
+c) Debe considerar el programa 01 y 02, según corresponda.
+d) Debe contener los proyectos con sus respectivas fechas programadas.
+e) El Plan puede ser modificado conforme a lo estipulado en el reglamento y la ley de compras públicas durante todo el año t.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+Los informes de avance y de cumplimiento del Plan:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico  al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",2,Subdirección De Administración Y Finanzas,Continuidad,N/A,Porcentaje De Cierres Presupuestari os Mensuales Oportunos En Sigfe,(Número de cierres oportunos en SIGFE en el año t / Número de cierres en SIGFE del año t)*100,Eficiencia,Proceso,(A/B)*100,Porcentaje,12,12,85%,"31 de diciembre
+de 2026",10%,"1. Copia o captura de pantalla del cierre en SIGFE
+2. Oficio de justificación de prórroga de plazo a Contraloría General de la República (cuando corresponda).
+3. Informe de avance.
+4. Informe de cumplimiento.","1- Para el cálculo del denominador:
+Para efecto del cálculo del indicador se considerará como meses del año t, los cierres desde diciembre del año t-1 a noviembre del año t (12 meses).
+2- Para el cálculo del numerador:
+a) Se contabilizará como cierre oportuno todos aquellos efectuados dentro de los primeros 8 días corridos respecto de las operaciones efectuadas y registradas en el mes anterior. En caso que el 8vo día corresponda a sábado, domingo, o festivo, el plazo se prorrogará al primer día hábil siguiente.
+b) En caso de que en un mes no se realice cierre oportuno, debe originarse un Oficio desde el Servicio a la Contraloría General de la República (CGR) justificando la prórroga del plazo. El envío de dicho Oficio debe ser presentado como medio de verificación durante el proceso de evaluación del CDC, y la prórroga aceptada por la CGR se considerará como el nuevo plazo de envío oportuno.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",3,Subdirección De Administración Y Finanzas,Continuidad,"Se requiere incorporar este indicador para monitorear la ejecución y avance del plan de sostenibilidad financiera, instrumento clave para asegurar una gestión responsable, eficiente y equilibrada de los recursos del Servicio Local, en concordancia con los lineamientos del sistema de educación pública. La elección de este indicador responde a la necesidad de fortalecer la planificacion financiera y presupuestaria, promoviendo una administración transparente que garantice la continuidad operativa de los establecimientos y el uso eficiente de los recursos asignados al territorio.",Porcentaje de cumplimiento del Plan de Sostenibilidad Financiera,(Número de hitos cumplidos del Plan de Sostenibilidad Financiera en el año t / Número de hitos planificados del Plan de Sostenibilidad Financiera para el año t)*100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",10%,"1. Plan de sostenibilidad financiera
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+El Plan de sostenibilidad financiera (en adelante Plan):
+a) Debe contribuir a lo establecido en el objetivo estratégico N°5 de la Estrategia Nacional de Educación Pública.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",4,Subdirección De Administración Y Finanzas,Continuidad,N/A,"Porcentaje De Ejecución De Los Subtítulos 21, 22 Y 29
+Del Programa 02 Del Servicio","(Monto ejecutado de los subtítulos 21, 22 y 29 del
+programa 02 del Servicio en el año t / Monto total del ingreso percibido para los subtítulos 21, 22 y 29 del
+programa 02 del Servicio en el año t) * 100",Economía,Proceso,(A/B)*100,Porcentaje,N/A,N/A,85%,"31 de diciembre
+de 2026",10%,"1. Informes con registro SIGFE de la ejecución presupuestaria
+2. Informe de avance.
+3. Informe de cumplimiento.","1- Para el cálculo del denominador:
+Se entiende por monto total del ingreso percibido en el año t la suma de los asignados en los subtítulos 21, 22 y 29 del programa 02, incluyendo los ingresos percibidos en los subtítulos 05, 09 y los establecidos por ley en el subtítulo 08 del programa 02 en el año t.
+2- Para el cálculo del numerador:
+El indicador mide la ejecución del presupuesto de los subtítulos 21, 22 y 29 del programa 02 del SLEP en el año t.
+3- Sobre el indicador:
+a) Los informes con registro SIGFE tendrán fecha de corte en los meses de abril, agosto y diciembre.
+b) El monto ejecutado se registra en base devengada y considera las variaciones presupuestarias del año t.
+c) El informe de avance del indicador será con corte a junio.
+d) El informe de cumplimiento del indicador será con cierre a diciembre.
+e) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte."
+"SLEP
+Colchagua",5,Subdirección De Administración Y Finanzas,Nuevo,"Se incorpora este indicador con el propósito de monitorear el grado de avance en la implementación de la Ley N° 21.180 sobre Transformación Digital del Estado, la cual establece la obligatoriedad de que los procedimientos administrativos de los servicios públicos sean tramitados de forma electrónica.
+La inclusión de este indicador permite dar seguimiento sistemático al cumplimiento de las acciones comprometidas en el Plan de Implementación, asegurando la correcta identificación y caracterización de los procedimientos administrativos del Servicio. De esta manera, se contribuye al fortalecimiento de la modernización institucional, al aumento de la eficiencia en la gestión y a la mejora de la experiencia usuaria, en coherencia con los lineamientos de digitalización y gestión pública moderna promovidos por el Estado.","Porcentaje De Cumplimiento Del Plan De Implementació n De La Ley N° 21.180 De
+Transformació n Digital","(Número de hitos cumplidos del Plan de implementació n de la Ley N°
+21.180 de
+Transformació n Digital en el año t /Número total de hitos para el año t del Plan de implementació n de la Ley N°
+21.180 de
+Transformació n Digital para el año t)*100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",35%,"1. Plan de implementación de la Ley N° 21.180 de Transformación Digital
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+Plan de implementación de la Ley N° 21.180 de Transformación Digital (en adelante Plan):
+a) Debe orientarse a acciones relacionadas con la implementación de la Ley N.º 21.180 de Transformación Digital dentro del Servicio, considerando su vínculo con dicha ley.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",6,Subdirección De Apoyo Técnico Pedagógico,Nuevo,"Se incorpora este indicador con el objetivo de monitorear el avance en la implementación de las acciones comprometidas en el Plan de Fortalecimiento de la Educación Parvularia, el cual busca garantizar una atención educativa de calidad en la primera infancia y asegurar las condiciones necesarias para el adecuado funcionamiento de los establecimientos dependientes del Servicio Local.
+La elección de este indicador permite medir de manera sistemática los progresos en materia de cobertura, infraestructura, gestión pedagógica y condiciones de bienestar de los niños y niñas, elementos fundamentales para asegurar la continuidad y sostenibilidad de las mejoras en este nivel educativo.",Porcentaje De Cumplimiento Del Plan De Fortalecimient o A La Educación Parvularia,(Número de hitos cumplidos del Plan de Fortalecimient o a la Educación Parvularia en el año t / Número de hitos planificados del Plan de Fortalecimient o a la Educación Parvularia para el año t) * 100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",40%,"1. Plan de Fortalecimiento a la Educación Parvularia
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan de Fortalecimiento a la Educación Parvularia (en adelante Plan):
+a) Debe considerar las necesidades de cada una de las salas cunas, jardines infantiles y escuelas o liceos que cuenten con niveles de transición.
+b) Debe considerar jornadas de reflexión para la definición de estrategias con foco en la mejora de los aprendizajes de los niños y niñas.
+c) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+d) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+e) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y enviada mediante correo electrónico y/o memorándum al Jefe de Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3-Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",7,Subdirección De Apoyo Técnico Pedagógico,Nuevo,"Se incorpora este indicador con el propósito de monitorear el avance en la implementación del Plan de Mejora de la Convivencia Escolar, instrumento que orienta las acciones territoriales destinadas a promover ambientes educativos seguros, inclusivos y respetuosos.
+La elección de este indicador responde a la necesidad de fortalecer la gestión institucional en materia de convivencia, asegurando la ejecución de estrategias preventivas y formativas que favorezcan el bienestar de las comunidades educativas. Su seguimiento permite evaluar la eficacia de las acciones implementadas, identificar brechas y ajustar oportunamente las intervenciones, contribuyendo así a una mejora continua en la gestión de la convivencia escolar.
+Además, este indicador se alinea con las políticas ministeriales que promueven la formación integral de los estudiantes y la creación de entornos educativos que resguarden el desarrollo socioemocional y el aprendizaje, consolidando el compromiso del Servicio Local con una educación pública de calidad y con",Porcentaje De Cumplimiento Del Plan De Mejora De La Convivencia Escolar En El Territorio,(Número de hitos cumplidos del Plan de mejora de la convivencia escolar en el territorio en el año t / Número de hitos planificados del Plan de mejora de la convivencia escolar en el territorio para el año t) * 100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",30%,"1. Plan de mejora de la convivencia escolar en el territorio
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan de mejora de la convivencia escolar en el territorio (en adelante Plan):
+a) Debe orientarse a acciones que permitan la mejora de la convivencia escolar en el territorio.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Deben contener los hitos, sus respectivas descripciones, fechas programadas y de cumplimiento y medios de verificación que den cuenta de la ejecución.
+d)  El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y enviada mediante correo electrónico y/o memorándum al Jefe de Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3-Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",8,Subdirección De Apoyo Técnico Pedagógico,Nuevo,"Se incorpora este indicador con el propósito de dar seguimiento al avance en la implementación del Plan de Monitoreo de los Aprendizajes, instrumento que permite evaluar de manera sistemática los resultados educativos y orientar la toma de decisiones pedagógicas en el territorio.
+La elección de este indicador responde a la necesidad de fortalecer la gestión pedagógica mediante el seguimiento permanente de los niveles de logro de los estudiantes, identificando brechas y oportunidades de mejora en los distintos establecimientos. De esta forma, se contribuye al desarrollo de estrategias focalizadas que promuevan una mejora continua en la calidad de los aprendizajes y en la equidad educativa.",Porcentaje De Cumplimiento Del Plan De Monitoreo De Los Aprendizajes,"(Número de hitos cumplidos del Plan de monitoreo de los aprendizajes en el año t
+/Número de hitos planificados del Plan de monitoreo de los aprendizajes para el año t)
+*100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",30%,"1. Plan de monitoreo de los aprendizajes
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan de monitoreo de los aprendizajes (en adelante Plan):
+a) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación, los que deben determinar los instrumentos a utilizar para monitorear aprendizajes, como el Diagnóstico Integral de Aprendizajes (DIA) o similares.
+b) Debe contener un hito asociado al análisis y socialización de los resultados obtenidos del instrumento utilizado para el monitoreo de los aprendizajes.
+c) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y enviada mediante correo electrónico y/o memorándum al Jefe de Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3-Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",9,Dirección,Continuidad,N/A,Porcentaje De Cumplimiento Del Plan Anual De Auditoría,(Número de auditorías realizadas del Plan Anual de Auditoría en el año t /Número de auditorías planificadas del Plan Anual de Auditoría para el año t) * 100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",30%,"1. Plan Anual de Auditoría
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan Anual de Auditoría (en adelante Plan):
+a) Debe ser aprobado por el Jefe del Centro de Responsabilidad y  enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+b) Debe contener las auditorías con sus respectivas descripciones, fechas programadas y medios de verificación.
+c) Puede estar sujeto a cambios justificados por parte del CAIGG, respecto de los hitos de aseguramiento gubernamentales.
+2-Para el cálculo del numerador:
+Se considerará que una auditoría está realizada cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicha actividad.
+3-Sobre el indicador:
+a) Se entiende por Auditoría a los procedimientos  definidos a nivel gubernamental, ministerial e institucional y no considera las actividades de consultoría, seguimiento y reportería.
+b) El informe de avance del indicador será con corte a junio.
+c) El informe de cumplimiento del indicador será con cierre a diciembre.
+d) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+e) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",10,Dirección,Nuevo,"Se incorpora este indicador con el propósito de monitorear la implementación de las acciones contempladas en el Plan Comunicacional orientado a fortalecer la convivencia escolar positiva en los establecimientos educacionales del territorio.
+La elección de este indicador responde a la necesidad de promover una comunicación interna y externa efectiva, que visibilice buenas prácticas, fomente  el respeto, la inclusión y la colaboración dentro de las comunidades educativas. A través de este plan, se busca instalar mensajes y estrategias comunicacionales coherentes con los valores institucionales, contribuyendo a la prevención de conflictos y al fortalecimiento de una cultura escolar basada en el buen trato y la participación.Asimismo, el seguimiento de este indicador permite evaluar la efectividad de las acciones comunicacionales en el fortalecimiento del clima escolar y la cohesión comunitaria, aportando a la consolidación de entornos educativos seguros, respetuosos y comprometidos con la formación integral de los estudiantes",Porcentaje de cumplimiento del Plan Comunicacion al para promover la Convivencia Escolar Positiva en los establecimient os educacionales (E.E),"(Número de hitos cumplidos del Plan comunicacion al para promover la convivencia escolar positiva en los
+E.E  en el año t / Número total de hitos planificados del Plan comunicacion al para promover la convivencia escolar positiva en los
+E.E para el año t) * 100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",35%,"1. Plan Comunicacional para promover la Convivencia Escolar Positiva en los establecimientos educacionales (E.E)
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan comunicacional para promover la convivencia escolar positiva en los establecimientos educacionales públicos (en adelante Plan):
+a) Debe orientarse a la difusión de acciones dirigidas a fortalecer y promover la convivencia escolar positiva.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y enviada mediante correo electrónico y/o memorándum al Jefe de Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",11,Dirección,Continuidad,N/A,Porcentaje De Solicitudes De Requerimiento s Parlamentario s Respondidas Que Cumplen Con El Nivel De Servicio Acordado,(Número de solicitudes de requerimientos parlamentarios respondidos que cumplen con el nivel de servicio acordado en el año t/Total de solicitudes de requerimientos parlamentarios recibidos en el año t) *100,Calidad,Producto,(A/B)*100,Porcentaje,N/A,N/A,82%,"31 de diciembre
+de 2026",35%,"1. Solicitudes de requerimientos parlamentarios
+2. Registro de los tiempos del nivel de servicio acordado.
+3. Informe de avance.
+4. Informe de cumplimiento.","1- Para el cálculo del denominador:
+a) Las solicitudes de requerimientos parlamentarios son emitidas por el Departamento Jurídico de la DEP mediante oficio dirigido al área Jurídica del SLEP.
+b) En los casos en que los requerimientos parlamentarios ingresen directamente al SLEP, este deberá informar a la DEP y remitir los antecedentes necesarios para que la DEP gestione la respuesta ante la Subsecretaría de Educación.
+2- Para el cálculo del numerador:
+a) Cuando la DEP solicite antecedentes al SLEP para responder requerimientos parlamentarios, el nivel de servicio acordado corresponderá a los plazos que la DEP establezca para la entrega de dichos insumos.
+b) Cuando el requerimiento parlamentario ingrese directamente al SLEP, el nivel de servicio acordado corresponderá al envío del requerimiento y de sus antecedentes a la DEP, dentro de un plazo máximo de 10 días hábiles.
+3- Sobre el indicador:
+a) Entrarán a la medición del indicador todas aquellas solicitudes que ingresen hasta el 18 de noviembre del año t.
+b) En caso no ingresen solicitudes parlamentarias, se da por cumplido el indicador
+c) El informe de avance del indicador será con corte a junio.
+d) El informe de cumplimiento del indicador será con cierre a diciembre.
+e) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte."
+"SLEP
+Colchagua",12,Subdirección De Gestión De Personas,Continuidad,N/A,Porcentaje De Meses Que Se Paga Correctament e Las Remuneracion es De Al Menos 90% De Los Funcionarios Del Programa 02,(Número de meses que se paga correctamente las remuneracion es de al menos 90% de los funcionarios del Programa 02 en el año t / Número de meses que se paga las remuneracion es de los funcionarios del Programa 02 en el año t)*100,Calidad,Proceso,(A/B)*100,Porcentaje,11,11,95%,"31 de diciembre
+de 2026",25%,"1. Informe mensual de pago de remuneraciones a funcionarios del programa 02
+2. Informe de avance.
+3. Informe de cumplimiento.","1- Para el cálculo del denominador:
+Se contabilizará como número de meses que se paga las remuneraciones de los funcionarios del Programa 02 en el año t desde enero a noviembre. Por tanto, corresponden a 11.
+2- Para el cálculo del numerador:
+a) Se entiende por pago correcto de la remuneración de un funcionario cuando se paga a tiempo y no requiere de ajustes ni reliquidaciones por causas atribuibles a la gestión del centro de responsabilidad.
+b) El informe mensual de pago de remuneraciones a funcionarios del programa 02 debe contener:
+i. El listado de docentes y asistentes de la educación del territorio
+ii. Un verificador que contemple si las remuneraciones fueron pagadas correctamente al menos en un 90% desde el mes de enero al mes de noviembre del año t.
+iii. Las reliquidaciones de las remuneraciones de los funcionarios que no fueron pagadas correctamente.
+iv. El calendario de fecha de pago del Servicio Local.
+c) El informe mensual de pago de remuneraciones debe ser validado por el jefe del centro de responsabilidad y enviado mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte."
+"SLEP
+Colchagua",13,Subdirección De Gestión De Personas,Nuevo,"Se incorpora este indicador con el propósito de monitorear el avance en la formalización de los perfiles de cargos del Servicio, asegurando que cada uno cuente con la aprobación correspondiente mediante acto administrativo.
+La elección de este indicador responde a la necesidad de fortalecer la gestión de personas y la estructura organizacional, garantizando que las funciones, responsabilidades y competencias de cada puesto estén debidamente definidas y respaldadas normativamente. Esto contribuye a una mayor transparencia, trazabilidad y coherencia en los procesos de dotación, selección y evaluación del desempeño.",Porcentaje De Perfiles De Cargos Aprobados Mediante Acto Administrativo Del Programa 01,(Número de perfiles de cargos aprobados mediante el respectivo acto administrativo del año t / N° de perfiles de cargos del programa 01 en el año t)*100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,75%,"31 de diciembre
+de 2026",25%,"1. Actos administrativos que aprueben los Perfiles de Cargos del Programa 01 en el año t.
+2. Informe de análisis.
+3. Informe de avance.
+4. Informe de cumplimiento.","1- Para el cálculo del denominador:
+a) Se contabilizará como número de perfiles de cargos del programa 01 en el año t aquellos que sean priorizados en el Informe de análisis.
+b) El Informe de análisis deberá contener como mínimo:
+i. La estructura organizacional junto a su dotación.
+ii. Identificación de cargos junto con su respectiva descripción.
+iii. Priorización de los perfiles de cargo a formalizar.
+c) El informe de análisis deberá ser validado y enviado por el jefe del centro de responsabilidad y enviado al Jefe de Servicio mediante memorándum o correo electrónico, a más tardar en marzo del año t.
+2- Para el cálculo del numerador:
+a) Los perfiles de cargos deberán contar con al menos:
+i. Identificación del Cargo
+ii. Objetivo del cargo
+iii. Funciones del cargo.
+iv. Competencias específicas del cargo
+b) El numerador estará determinado por la totalidad de actos administrativos que aprueben los Perfiles de Cargos del Programa 01 en el año t.
+c) Los actos administrativos que aprueben los perfiles de cargo deben estar sancionados y ser enviados mediante memorándum o correo electrónico al Director/a Ejecutivo/a a más tardar en diciembre.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte."
+"SLEP
+Colchagua",14,Subdirección De Gestión De Personas,Nuevo,"Se incorpora este indicador con el propósito de monitorear la implementación del proceso de inducción institucional, asegurando que todos los funcionarios que se integran al Servicio Local reciban oportunamente la información, orientación y acompañamiento necesarios para el adecuado desempeño de sus funciones.
+La elección de este indicador responde a la necesidad de fortalecer la gestión del capital humano y promover una inserción laboral efectiva, facilitando la comprensión del rol institucional, los procesos internos y la cultura organizacional. Una inducción oportuna contribuye a mejorar la adaptación de los equipos, aumentar la eficiencia en la gestión y reducir los tiempos de aprendizaje asociados a los nuevos ingresos.",Porcentaje De Funcionarios Que Ingresan Al Servicio Y Que Reciben Inducción De Manera Oportuna,(Número de funcionarios que ingresan al servicio y reciben inducción oportuna en el año t / Número total de funcionarios que ingresan al servicio en el año t)*100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,80%,"31 de diciembre
+de 2026",25%,"1. Listado de funcionarios que ingresan al servicio.
+2. Informe de inducciones realizadas.
+3. Informe de avance.
+4. Informe de cumplimiento.","1- Para el cálculo del denominador:
+a) Considera a aquellos funcionarios que ingresan al SLEP desde el 1 de enero al 31 de octubre del año t.
+b) Se considera un funcionario ingresado aquel que se incorpora al Servicio en calidad de planta o contrata.
+c) Sólo se considerarán aquellos funcionarios del programa 01.
+d) El listado de funcionarios que ingresa al Servicio deberá contener como mínimo los nombres, apellidos, RUT y la fecha de ingreso de los/las funcionarios (as).
+2- Para el cálculo del numerador:
+a) Se considera que un funcionario recibe inducción oportuna cuando participa de un proceso de inducción en que se le entrega información del Servicio y su funcionamiento.
+b) Se considera como inducción oportuna cuando la inducción se realiza en un máximo de 60 días desde el ingreso del funcionario.
+c) El informe de inducciones realizadas deberá detallar las inducciones realizadas a los funcionarios del programa 01 que se integran al SLEP, los participantes y la fecha en que se realizaron dichas inducciones.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte."
+"SLEP
+Colchagua",15,Subdirección De Gestión De Personas,Nuevo,"Se incorpora este indicador con el propósito de monitorear el grado de ejecución del Plan de Capacitación institucional, instrumento que orienta el desarrollo de competencias y habilidades del personal en función de las necesidades detectadas y de los objetivos estratégicos del Servicio Local.
+La elección de este indicador responde a su seguimiento permite evaluar la pertinencia y efectividad de las instancias de capacitación, promoviendo la profesionalización del personal, la equidad en las oportunidades de desarrollo y la consolidación de una cultura organizacional orientada al aprendizaje",Porcentaje De Cumplimiento Del Plan De Capacitación,"(Número de hitos cumplidos del Plan de Capacitación en el año t / Número de hitos planificados del Plan de Capacitación para del año t)
+*100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",25%,"1. Plan de Capacitación
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+El Plan de Capacitación:
+a) Debe estar orientado a la capacitación del personal del programa 01.
+b) Debe contener como mínimo las actividades, con sus respectivas descripciones, fechas programadas y medios de verificación para el cumplimiento.
+c) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+d) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+e) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",16,Subdirección De Planificacion Y Control De Gestión,Nuevo,"Se incorpora este indicador con el propósito de monitorear el avance en la elaboración, actualización y formalización de los manuales de procedimientos institucionales, asegurando la existencia de instrumentos que respalden la gestión interna y fortalezcan la estandarización de los procesos del Servicio Local.
+La elección de este indicador responde a la necesidad de consolidar una gestión basada en la mejora continua, la trazabilidad y la transparencia, garantizando que las actividades operativas y administrativas cuenten con orientaciones claras, actualizadas y alineadas con la normativa vigente.",Porcentaje De Cumplimiento Del Plan De Levantamiento Y Elaboración De Manuales De Procedimiento s,"(Número de hitos cumplidos del Plan de levantamiento y elaboración de manuales de procedimiento s en el año t/ Número de hitos planificados del Plan de levantamiento y elaboración de manuales de procedimiento s para el año t
+)*100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",35%,"1. Plan de levantamiento y elaboración de manuales de procedimientos
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+El Plan de Levantamiento y Elaboración de Manuales de Procedimientos (en adelante Plan):
+a) Debe orientarse a establecer los procedimientos institucionales.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",17,Subdirección De Planificacion Y Control De Gestión,Continuidad,N/A,Porcentaje De Cumplimiento Del Plan De Mantención De La Infraestructura De Los Establecimient os Educacionales (E.E),(Número de hitos cumplidos del Plan de mantención de la infraestructura de los E.E en el año t  / Número de hitos planificados del Plan de mantención de la infraestructura de los E.E para el año t) * 100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",35%,"1. Plan de mantención de la infraestructura de los Establecimientos Educacionales (E.E).
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+El Plan de mantención de la infraestructura de los Establecimientos (en adelante Plan):
+a) Debe incluir actividades asociadas a mantención de infraestructura ejecutadas mediante el subtítulo 22.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico  y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico  y/o memorándum al Jefe del Servicio.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",18,Subdirección De Planificacion Y Control De Gestión,Continuidad,"Se incorpora este indicador con el propósito de monitorear la actualización permanente del registro del estado de la infraestructura de los establecimientos educacionales dependientes del Servicio Local, garantizando una gestión informada y planificada de las condiciones físicas de los recintos escolares.La elección de este indicador responde a la necesidad de contar con información técnica y actualizada que permita priorizar inversiones, programar mantenimientos y gestionar de manera oportuna las acciones necesarias para resguardar la seguridad, habitabilidad y funcionalidad de los espacios educativos.",Porcentaje de establecimient os educacionales que cuentan con Registro Actualizado del Estado de la Infraestructura,(Número de EE que cuentan con registro actualizado del estado de la infraestructura al año t/ Número total de EE en funcionamient o en el año t)*100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,75%,"31 de diciembre
+de 2026",30%,"1. Reporte de Establecimientos Educacionales con registro actualizado del estado de la infraestructura.
+2. Nómina de EE en funcionamiento.
+3. Informe de avance.
+4. Informe de cumplimiento.","1- Para el cálculo del denominador:
+a) Se entiende por establecimientos educacionales a las Escuelas, Liceos y Jardines VTF.
+b) Se entiende por establecimiento educacional en funcionamiento los que cuentan con estudiantes matriculados y han impartido clases en el año t.
+d) La nómina de EE en funcionamiento debe contener los datos identificatorios de los EE: RBD, Nombre, Dirección, y Comuna.
+c) La nómina de EE en funcionamiento debe ser validada y enviada por el jefe del centro de responsabilidad al jefe del servicio mediante memorándum o correo electrónico, a más tardar en marzo.
+2- Para el cálculo del numerador:
+a) Se entiende por registro actualizado del estado de la infraestructura, a los datos cuantitativos y/o cualitativos de: pisos, techumbre, revestimientos, puertas, ventanas, servicios (agua, electricidad, alcantarillado).
+b) El reporte con establecimientos educacionales con registro actualizado del estado de la infraestructura debe contener los datos identificatorios de los EE: RBD, Nombre, Dirección, y Comuna.
+c) El reporte debe ser validado y enviado por el jefe del centro de responsabilidad al jefe del servicio mediante memorándum o correo electrónico.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte."
+"SLEP
+Colchagua",19,Subdirección De Vinculación Y Participación Territorial,Nuevo,"La importancia de incorporar este indicador esta vinculada a consolidar y monitorear desde un solo indicador las acciones que se realizan con los CE, CEP, CL , CDL, esto vinculada a las acciones que busca realizar el SLEP en territorio priorizando tiempo y actividades, respaldando la gestion de las comuindiaes y fortaleciendo los lazos que se generan.","Porcentaje De Cumplimiento Del Plan De Trabajo Anual Con Los Consejos Escolares (Ce) Y Consejos De Educación Parvularia (Cep), Consejo Local (Cl) Y Comité Directivo Local (Cdl)","(Número de hitos cumplidos del Plan de trabajo anual con los C.E y CEP, CL y
+CDL en el año t/ Número de hitos planificados del Plan de trabajo anual con los C.E y CEP, CL y
+CDL para el año t) * 100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",25%,"1. Plan de trabajo anual con los Consejos Escolares y Consejos de Educación Parvularia, Consejo Local y Comité Directivo Local
+2. Informe de avance
+3. Informe de cumplimiento","1- Para el cálculo del denominador:
+El Plan de trabajo anual con los Consejos Escolares y Consejos de Educación Parvularia, Consejo Local y Comité Directivo Local (en adelante Plan):
+a) Debe incluir la planificación para el año t en torno al trabajo que realizará el SLEP con los CE, CEP, CL, y CDL.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en abril del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2- Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3- Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",20,Subdirección De Vinculación Y Participación Territorial,Nuevo,"Se incorpora este indicador con el propósito de monitorear el grado de ejecución de las acciones comprometidas en el Plan de Participación de los Centros de Estudiantes, promoviendo el fortalecimiento de la participación estudiantil y el desarrollo de liderazgos democráticos en los establecimientos educacionales del territorio.
+La elección de este indicador responde a la necesidad de fomentar espacios formativos que aseguren la voz, el protagonismo y la representación de los estudiantes en la vida escolar, en coherencia con los principios de ciudadanía activa y convivencia democrática promovidos por el sistema educativo público.",Porcentaje De Cumplimiento Del Plan De Participación De Los Centros De Estudiantes,(Número de hitos cumplidos del Plan de Participación de los Centros de Estudiantes en el año t / Número de hitos planificados del Plan de Participación de los Centros Estudiantes para el año t) * 100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",25%,"1. Plan de Participación de los Centros de estudiantes
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan de Participación de los Centros de Estudiantes (en adelante Plan):
+a) Debe orientarse a la ejecución de acciones por parte del Servicio durante el año t para implementar y fomentar la participación de los Centros de Estudiantes.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y  enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3-Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",21,Subdirección De Vinculación Y Participación Territorial,Continuidad,N/A,"Porcentaje De Cumplimiento Del Plan De Participación De Los Centros De Padres, Madres Y Apoderados","(Número de hitos cumplidos del Plan de Participación de los Centros de Padres, Madres y Apoderados en el año t / Número de hitos planificados del Plan de Participación de los Centros de Padres, Madres y Apoderados para el año t )
+* 100",Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",25%,"1. Plan de Participación de los Centros de Padres, Madres y Apoderados
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan de Participación de los Centros de Padres, Madres y Apoderados (en adelante Plan):
+a) Debe orientarse a la ejecución de acciones por parte del Servicio durante el año t para implementar y fomentar la participación de los Centros de Padres, Madres y Apoderados.
+b) Debe ser aprobado por el Jefe del Centro de Responsabilidad y  enviado mediante correo electrónico y/o memorándum al Jefe del Servicio, a más tardar en marzo del año t.
+c) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+d) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y  enviada mediante correo electrónico y/o memorándum al Jefe del Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3-Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Ambos informes deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Ambos informes deben contener los medios de verificación declarados en el Plan."
+"SLEP
+Colchagua",22,Subdirección De Vinculación Y Participación Territorial,Continuidad,N/A,Porcentaje De Cumplimiento Del Plan De Participación Y Vinculación Territorial,(Número de hitos cumplidos del Plan de Participación y Vinculación Territorial en el año t / Número de hitos planificados del Plan de Participación y Vinculación Territorial para el año t) * 100,Eficacia,Proceso,(A/B)*100,Porcentaje,N/A,N/A,95%,"31 de diciembre
+de 2026",25%,"1. Plan de Participación y Vinculación Territorial
+2. Informe de avance
+3. Informe de cumplimiento","1-Para el cálculo del denominador:
+El Plan de Participación y Vinculación Territorial (en adelante Plan):
+a) Debe considerar acciones vinculadas a fomentar la participación de las comunidades educativas y locales.
+a) Debe ser validado por el jefe del centro de responsabilidad y enviado mediante memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar en marzo del año t.
+b) Debe contener los hitos con sus respectivas descripciones, fechas programadas y medios de verificación.
+c) El Plan podrá ser modificado hasta junio del año t, solo en los hitos que hayan sido programados con fecha posterior a la fecha de la modificación. Cada modificación debe ser aprobada por el Jefe del Centro de Responsabilidad y enviada mediante correo electrónico y/o memorándum al Jefe de Servicio.
+2-Para el cálculo del numerador:
+Se considerará que un hito está cumplido cuando los medios de verificación especificados en el Plan demuestren la ejecución de dicho hito, conforme a las fechas programadas.
+3-Sobre el indicador:
+a) El informe de avance del indicador será con corte a junio.
+b) El informe de cumplimiento del indicador será con cierre a diciembre.
+c) Deben ser validados por el jefe del centro de responsabilidad y enviados mediante un memorándum o correo electrónico al Director(a) Ejecutivo (a), a más tardar a la primera quincena del mes siguiente al mes de corte.
+d) Deben contener los medios de verificación declarados en el Plan"

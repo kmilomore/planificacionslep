@@ -22,11 +22,7 @@ function setupInicial() {
       'id', 'instrumento_id', 'codigo_corte', 'nombre_corte',
       'fecha_inicio', 'fecha_limite', 'dias_recordatorio', 'estado', 'año',
     ],
-    indicadores: [
-      'id', 'instrumento_id', 'dimension', 'subdimension', 'codigo_indicador',
-      'nombre', 'descripcion', 'formula', 'tipo_meta', 'meta_valor', 'unidad',
-      'peso', 'fuente_verificacion', 'responsable_id', 'activo',
-    ],
+    indicadores: _getIndicadoresHeaders(),
     avances: [
       'id', 'indicador_id', 'corte_id', 'valor_reportado',
       'porcentaje_cumplimiento', 'estado_semaforo', 'comentario',
@@ -65,6 +61,18 @@ function setupInicial() {
   _seedCortes(ss);
 
   Logger.log('🎉 Setup completado. Agrega usuarios en la hoja "usuarios".');
+}
+
+function _getIndicadoresHeaders() {
+  return [
+    'id', 'instrumento_id', 'servicio', 'numero_indicador', 'codigo_indicador',
+    'equipo_trabajo', 'estado_indicador', 'nombre', 'descripcion',
+    'justificacion_indicador', 'formula', 'dimension', 'subdimension',
+    'ambito_control', 'expresion_formula', 'tipo_meta', 'meta_valor',
+    'efectivo_2026', 'unidad', 'numerador_2026', 'denominador_2026',
+    'fecha_cumplimiento_2026', 'peso', 'fuente_verificacion',
+    'medios_verificacion_2026', 'nota_tecnica_2026', 'responsable_id', 'activo',
+  ];
 }
 
 function _seedInstrumentos(ss) {
@@ -149,113 +157,206 @@ function _seedCortes(ss) {
   Logger.log('✅ Cortes 2026 seed completado.');
 }
 
-/**
- * MIGRACIÓN CDC — Lee la hoja "Base (SLEP ANT)" del mismo Google Sheet
- * y migra todos sus indicadores a la hoja normalizada "indicadores".
- *
- * La hoja origen tiene estas columnas (en orden):
- *   A: N°  |  B: Objetivo  |  C: Tipo  |  D: Nombre  |  E: Categoría
- *   F: CR  |  G: Relación CADP  |  H: Fórmula  |  I: Unidad  |  J: Medios de Verificación  |  K: Notas
- *
- * Ejecutar UNA VEZ después de setupInicial().
- * Es idempotente: si el indicador ya existe (mismo codigo_indicador), lo omite.
- */
 function migracionCDC() {
   const ss = SpreadsheetApp.openById(Config.SHEET_ID);
 
-  // Hoja origen
-  const origen = ss.getSheetByName('Base (SLEP ANT)');
+  const origen = ss.getSheetByName(Config.CDC_SOURCE_SHEET);
   if (!origen) {
-    Logger.log('❌ No se encontró la hoja "Base (SLEP ANT)". Verifica el nombre exacto.');
+    Logger.log(`❌ No se encontró la hoja "${Config.CDC_SOURCE_SHEET}". Verifica el nombre exacto.`);
     return;
   }
 
-  // Obtener ID del instrumento CDC
-  const instSheet = ss.getSheetByName(Config.SHEETS.INSTRUMENTOS);
-  const insts     = Utils.sheetToObjects(instSheet);
-  const cdcInst   = insts.find(i => i.codigo === 'CDC');
-  if (!cdcInst) {
-    Logger.log('❌ Instrumento CDC no encontrado. Ejecuta setupInicial() primero.');
-    return;
-  }
-
-  // Leer indicadores ya existentes para evitar duplicados
-  const indSheet    = ss.getSheetByName(Config.SHEETS.INDICADORES);
-  const existentes  = Utils.sheetToObjects(indSheet);
-  const codigosSet  = new Set(existentes.map(i => i.codigo_indicador));
-
-  // Leer hoja origen — fila 1 = cabecera, desde fila 2 en adelante = datos
-  const datos = origen.getDataRange().getValues();
-  if (datos.length < 2) {
+  const datos = Utils.sheetToObjects(origen);
+  if (!datos.length) {
     Logger.log('❌ La hoja origen está vacía o solo tiene cabecera.');
     return;
   }
 
-  // Índices de columnas (0-based)
-  // N° | Objetivo | Tipo | Nombre | Categoría | CR | Relación CADP | Fórmula | Unidad | Medios Verif | Notas
-  const COL = { num: 0, objetivo: 1, tipo: 2, nombre: 3, categoria: 4, cr: 5, cadp: 6, formula: 7, unidad: 8, medios: 9, notas: 10 };
-
-  let migrados  = 0;
-  let omitidos  = 0;
-  let errores   = 0;
-
-  for (let i = 1; i < datos.length; i++) {
-    const fila = datos[i];
-    const num  = fila[COL.num];
-
-    // Saltar filas sin número de indicador
-    if (!num || isNaN(Number(num))) continue;
-
-    const nPad   = String(Number(num)).padStart(2, '0');
-    const codigo = `CDC-${nPad}`;
-
-    // Saltar si ya existe
-    if (codigosSet.has(codigo)) {
-      omitidos++;
-      continue;
-    }
-
-    const unidadRaw = String(fila[COL.unidad] || '').trim().toLowerCase();
-    const tipo_meta = unidadRaw.includes('porcentaje') ? 'porcentaje'
-                    : unidadRaw.includes('cantidad')   ? 'numero'
-                    : unidadRaw.includes('número')     ? 'numero'
-                    : 'porcentaje';
-
-    // Descripción enriquecida: objetivo + tipo
-    const tipo  = String(fila[COL.tipo] || '').trim();
-    const obj   = String(fila[COL.objetivo] || '').trim();
-    const desc  = tipo ? `[${tipo}] ${obj}` : obj;
-
-    try {
-      const indicador = {
-        id:               Utils.uuid(),
-        instrumento_id:   cdcInst.id,
-        dimension:        String(fila[COL.categoria] || '').trim(),
-        subdimension:     String(fila[COL.cr] || '').trim(),
-        codigo_indicador: codigo,
-        nombre:           String(fila[COL.nombre] || '').trim(),
-        descripcion:      desc,
-        formula:          String(fila[COL.formula] || '').trim(),
-        tipo_meta:        tipo_meta,
-        meta_valor:       '',
-        unidad:           String(fila[COL.unidad] || '').trim(),
-        peso:             '',
-        fuente_verificacion: String(fila[COL.medios] || '').trim(),
-        responsable_id:   '',
-        activo:           true,
-      };
-
-      Utils.appendRow(Config.SHEETS.INDICADORES, indicador);
-      codigosSet.add(codigo);
-      migrados++;
-
-    } catch (e) {
-      Logger.log(`❌ Error en indicador N° ${num}: ${e.message}`);
-      errores++;
-    }
+  const requiredHeaders = [
+    'Servicio',
+    'N° de indicador',
+    'Equipo de trabajo',
+    'Estado de indicador',
+    'Justificación de indicador',
+    'Nombre del indicador',
+    'Fórmula de cálculo',
+    'Dimensión',
+    'Ámbito de control',
+    'Expresión de fórmula',
+    'Unidad de Medida',
+    'Numerador 2026',
+    'Denominador 2026',
+    'Efectivo 2026',
+    'Fecha de cumplimiento 2026',
+    'Ponderación 2026',
+    'Medios de Verificación 2026',
+    'Nota técnica 2026',
+  ];
+  const missingHeaders = requiredHeaders.filter(header => !(header in datos[0]));
+  if (missingHeaders.length) {
+    Logger.log(`❌ Faltan columnas requeridas en ${Config.CDC_SOURCE_SHEET}: ${missingHeaders.join(', ')}`);
+    return;
   }
 
-  Logger.log(`✅ Migración CDC completada: ${migrados} migrados, ${omitidos} ya existían, ${errores} errores.`);
+  const instrumentoCDC = _buildCDCInstrumento(datos[0]);
+
+  _resetSheetWithHeaders(ss, Config.SHEETS.INSTRUMENTOS, [
+    'id', 'codigo', 'nombre', 'descripcion', 'ciclo', 'tipo_seguimiento',
+    'responsable_id', 'color_hex', 'activo', 'creado_en',
+  ]);
+  _resetSheetWithHeaders(ss, Config.SHEETS.CORTES, [
+    'id', 'instrumento_id', 'codigo_corte', 'nombre_corte',
+    'fecha_inicio', 'fecha_limite', 'dias_recordatorio', 'estado', 'año',
+  ]);
+  _resetSheetWithHeaders(ss, Config.SHEETS.INDICADORES, _getIndicadoresHeaders());
+  _resetSheetWithHeaders(ss, Config.SHEETS.AVANCES, [
+    'id', 'indicador_id', 'corte_id', 'valor_reportado',
+    'porcentaje_cumplimiento', 'estado_semaforo', 'comentario',
+    'evidencia_url', 'estado_revision', 'ingresado_por', 'ingresado_en',
+    'modificado_en', 'aprobado_por', 'aprobado_en',
+  ]);
+
+  Utils.appendRow(Config.SHEETS.INSTRUMENTOS, instrumentoCDC);
+  _seedCortes(ss);
+
+  let migrados = 0;
+  let errores = 0;
+
+  datos.forEach(row => {
+    try {
+      const indicador = _buildCDCIndicador(row, instrumentoCDC.id);
+      if (!indicador) return;
+      Utils.appendRow(Config.SHEETS.INDICADORES, indicador);
+      migrados++;
+    } catch (e) {
+      Logger.log(`❌ Error en indicador ${row['N° de indicador'] || 'sin número'}: ${e.message}`);
+      errores++;
+    }
+  });
+
+  [
+    Config.SHEETS.INSTRUMENTOS,
+    Config.SHEETS.CORTES,
+    Config.SHEETS.INDICADORES,
+    Config.SHEETS.AVANCES,
+  ].forEach(sheetName => Utils.invalidateSheetCache(sheetName));
+  Utils.invalidateDashboardCaches({ instrumentoId: instrumentoCDC.id });
+
+  Logger.log(
+    `✅ Migración CDC completada desde ${Config.CDC_SOURCE_SHEET}: ${migrados} indicadores, ${errores} errores. ` +
+    'Se reiniciaron instrumentos, cortes, indicadores y avances para mantener consistencia.'
+  );
+}
+
+function _buildCDCInstrumento(firstRow) {
+  const servicio = _normalizeText(firstRow['Servicio']) || 'SLEP Colchagua';
+  return {
+    id: Utils.uuid(),
+    codigo: 'CDC',
+    nombre: 'Convenio de Desempeño Colectivo',
+    descripcion: `Base oficial ${servicio}, sincronizada desde la hoja ${Config.CDC_SOURCE_SHEET}.`,
+    ciclo: 'anual',
+    tipo_seguimiento: 'semestral',
+    responsable_id: '',
+    color_hex: '#25306B',
+    activo: true,
+    creado_en: Utils.ahora(),
+  };
+}
+
+function _buildCDCIndicador(row, instrumentoId) {
+  const numero = _normalizeText(row['N° de indicador']);
+  if (!numero) return null;
+
+  const numeroNormalizado = String(numero).replace(/[^0-9]/g, '');
+  if (!numeroNormalizado) return null;
+
+  const efectivoRaw = _normalizeText(row['Efectivo 2026']);
+  const unidad = _normalizeText(row['Unidad de Medida']);
+  const ponderacionRaw = _normalizeText(row['Ponderación 2026']);
+  const justificacion = _normalizeText(row['Justificación de indicador']);
+  const medios = _normalizeText(row['Medios de Verificación 2026']);
+  const equipo = _normalizeText(row['Equipo de trabajo']);
+
+  return {
+    id: Utils.uuid(),
+    instrumento_id: instrumentoId,
+    servicio: _normalizeText(row['Servicio']),
+    numero_indicador: numeroNormalizado,
+    codigo_indicador: `CDC-${numeroNormalizado.padStart(2, '0')}`,
+    equipo_trabajo: equipo,
+    estado_indicador: _normalizeText(row['Estado de indicador']),
+    nombre: _normalizeText(row['Nombre del indicador']),
+    descripcion: justificacion,
+    justificacion_indicador: justificacion,
+    formula: _normalizeText(row['Fórmula de cálculo']),
+    dimension: _normalizeText(row['Dimensión']),
+    subdimension: equipo,
+    ambito_control: _normalizeText(row['Ámbito de control']),
+    expresion_formula: _normalizeText(row['Expresión de fórmula']),
+    tipo_meta: _resolveTipoMeta(unidad, efectivoRaw),
+    meta_valor: _normalizeNumericValue(efectivoRaw),
+    efectivo_2026: efectivoRaw,
+    unidad: unidad,
+    numerador_2026: _normalizeText(row['Numerador 2026']),
+    denominador_2026: _normalizeText(row['Denominador 2026']),
+    fecha_cumplimiento_2026: _normalizeText(row['Fecha de cumplimiento 2026']),
+    peso: _normalizeNumericValue(ponderacionRaw),
+    fuente_verificacion: medios,
+    medios_verificacion_2026: medios,
+    nota_tecnica_2026: _normalizeText(row['Nota técnica 2026']),
+    responsable_id: '',
+    activo: true,
+  };
+}
+
+function _resolveTipoMeta(unidad, efectivo) {
+  const source = `${unidad || ''} ${efectivo || ''}`.toLowerCase();
+  if (source.includes('%') || source.includes('porcentaje')) return 'porcentaje';
+  if (source.includes('si') || source.includes('sí') || source.includes('no')) return 'booleano';
+  if (_normalizeNumericValue(efectivo)) return 'numero';
+  return 'texto';
+}
+
+function _normalizeNumericValue(value) {
+  const text = _normalizeText(value);
+  if (!text) return '';
+
+  const sanitized = text
+    .replace(/\./g, '')
+    .replace(/,/g, '.')
+    .replace(/%/g, '')
+    .replace(/[^0-9.-]/g, '');
+
+  if (!sanitized || sanitized === '-' || sanitized === '.') return '';
+  const parsed = Number(sanitized);
+  return Number.isFinite(parsed) ? String(parsed) : '';
+}
+
+function _normalizeText(value) {
+  return String(value || '')
+    .replace(/\r/g, ' ')
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function _resetSheetWithHeaders(ss, sheetName, headers) {
+  const sheet = Utils.getSheet(sheetName, ss);
+  sheet.clearContents();
+
+  if (sheet.getMaxColumns() < headers.length) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
+  }
+
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length)
+    .setBackground('#25306B')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold');
+  if (sheet.getMaxRows() > 1) {
+    sheet.getRange(2, 1, sheet.getMaxRows() - 1, Math.max(sheet.getMaxColumns(), headers.length)).clearContent();
+  }
 }
 
 /**

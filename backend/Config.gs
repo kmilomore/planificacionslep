@@ -1,6 +1,7 @@
 const Config = {
   SHEET_ID: '1V_x0_e4QlzoRxDvZmQHU5b0C9g-0HRpNdZIlmJXJl8A',
   DIAS_RECORDATORIO_DEFAULT: 7,
+  CDC_SOURCE_SHEET: 'cdccolchagua',
 
   SHEETS: {
     USUARIOS:     'usuarios',

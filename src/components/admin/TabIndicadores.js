@@ -115,6 +115,10 @@ export default function TabIndicadores() {
         <Alert type={feedback.type} message={feedback.msg} onClose={() => setFeedback(null)} />
       )}
 
+      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-navy font-body">
+        La base oficial CDC se sincroniza desde la hoja <strong>cdccolchagua</strong> mediante <code>migracionCDC()</code> en Apps Script. Los campos visibles debajo reflejan esa estructura real.
+      </div>
+
       {/* Filtros */}
       <div className="flex flex-wrap gap-3">
         <select
@@ -168,8 +172,11 @@ export default function TabIndicadores() {
                 <tr className="text-left text-xs font-semibold text-white" style={{ background: '#25306B' }}>
                   <th className="px-3 py-3 w-20">Código</th>
                   <th className="px-3 py-3">Nombre</th>
+                  <th className="px-3 py-3 w-40">Equipo</th>
+                  <th className="px-3 py-3 w-28">Estado</th>
                   <th className="px-3 py-3 w-32">Dimensión</th>
                   <th className="px-3 py-3 w-20 text-center">Meta</th>
+                  <th className="px-3 py-3 w-28">Cumplimiento</th>
                   <th className="px-3 py-3 w-16 text-center">Peso %</th>
                   <th className="px-3 py-3 w-32">Responsable</th>
                   <th className="px-3 py-3 w-16 text-center">Estado</th>
@@ -183,6 +190,8 @@ export default function TabIndicadores() {
                     <td className="px-3 py-2.5 text-gray-700 max-w-xs">
                       <span className="line-clamp-2 leading-snug">{ind.nombre}</span>
                     </td>
+                    <td className="px-3 py-2.5 text-gray-500 text-xs">{ind.equipo_trabajo || ind.subdimension || '—'}</td>
+                    <td className="px-3 py-2.5 text-gray-500 text-xs">{ind.estado_indicador || '—'}</td>
                     <td className="px-3 py-2.5 text-gray-500 text-xs">{ind.dimension || '—'}</td>
                     <td className="px-3 py-2.5 text-center">
                       {ind.meta_valor
@@ -190,6 +199,7 @@ export default function TabIndicadores() {
                         : <span className="text-red text-xs">Sin meta</span>
                       }
                     </td>
+                    <td className="px-3 py-2.5 text-gray-500 text-xs">{ind.fecha_cumplimiento_2026 || '—'}</td>
                     <td className="px-3 py-2.5 text-center text-gray-600">
                       {ind.peso ? `${ind.peso}%` : <span className="text-gray-300">—</span>}
                     </td>
@@ -223,8 +233,8 @@ export default function TabIndicadores() {
                 ))}
                 {filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
-                      Sin indicadores. Ejecuta <code>migracionCDC()</code> en Apps Script.
+                    <td colSpan={10} className="px-4 py-8 text-center text-gray-400">
+                      Sin indicadores. Ejecuta <code>migracionCDC()</code> para recargar la base oficial desde <code>cdccolchagua</code>.
                     </td>
                   </tr>
                 )}

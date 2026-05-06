@@ -96,7 +96,11 @@ export default function IngresarAvance() {
           <Info label="Corte" value={corte.nombre_corte} />
           <Info label="Estado del corte" value={corte.estado} />
           <Info label="Meta" value={`${indicador.meta_valor || '—'} ${indicador.unidad || ''}`} />
+          <Info label="Fecha de cumplimiento" value={indicador.fecha_cumplimiento_2026 || '—'} />
           <Info label="Fórmula" value={indicador.formula || 'Sin fórmula definida'} />
+          <Info label="Equipo de trabajo" value={indicador.equipo_trabajo || indicador.subdimension || '—'} />
+          <Info label="Ámbito de control" value={indicador.ambito_control || '—'} />
+          <Info label="Medios de verificación" value={indicador.medios_verificacion_2026 || indicador.fuente_verificacion || '—'} />
         </section>
 
         <section className="space-y-4">
