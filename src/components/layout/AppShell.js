@@ -23,6 +23,11 @@ export default function AppShell() {
         queryFn: () => callApi('getDashboardResumen'),
         staleTime: 1000 * 60 * 5,
       }),
+      indicadores: () => queryClient.prefetchQuery({
+        queryKey: ['indicadores_all'],
+        queryFn: () => callApi('getIndicadores', { filtros: {} }),
+        staleTime: 1000 * 60 * 5,
+      }),
       acciones: () => queryClient.prefetchQuery({
         queryKey: ['acciones', emptyAccionesFilters],
         queryFn: () => callApi('getAcciones', { filtros: emptyAccionesFilters }),
@@ -40,6 +45,7 @@ export default function AppShell() {
 
   useEffect(() => {
     prefetchRouteData('dashboard');
+    prefetchRouteData('indicadores');
     prefetchRouteData('acciones');
     prefetchRouteData('gantt');
   }, [prefetchRouteData]);

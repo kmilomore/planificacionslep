@@ -7,9 +7,9 @@ const Indicadores = {
   },
 
   getByInstrumento(instrumento_id, user) {
-    if (!instrumento_id) throw new Error('instrumento_id requerido');
-    return Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90)
-      .filter(i => i.instrumento_id === instrumento_id);
+    const rows = Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90);
+    if (!instrumento_id) return rows;
+    return rows.filter(i => i.instrumento_id === instrumento_id);
   },
 
   create(data, user) {

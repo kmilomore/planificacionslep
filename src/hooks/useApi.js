@@ -44,6 +44,14 @@ export function useIndicadores(instrumento_id) {
   );
 }
 
+export function useTodosLosIndicadores() {
+  return useApiQuery(
+    ['indicadores_all'],
+    'getIndicadores',
+    { filtros: {} }
+  );
+}
+
 export function useIndicador(id) {
   return useApiQuery(
     ['indicador', id],

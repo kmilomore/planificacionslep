@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { CalendarRange, ClipboardCheck, LayoutDashboard, Settings } from 'lucide-react';
+import { BarChart3, CalendarRange, ClipboardCheck, LayoutDashboard, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/indicadores', label: 'Indicadores', icon: BarChart3 },
   { to: '/acciones', label: 'Acciones', icon: ClipboardCheck },
   { to: '/gantt', label: 'Calendario', icon: CalendarRange },
 ];
@@ -79,6 +80,7 @@ function SidebarLink({ to, label, icon, onClose, onPrefetchRoute }) {
   const Icon = icon;
   const routeKeyByPath = {
     '/dashboard': 'dashboard',
+    '/indicadores': 'indicadores',
     '/acciones': 'acciones',
     '/gantt': 'gantt',
   };

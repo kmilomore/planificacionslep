@@ -495,20 +495,6 @@ export default function InstrumentoDetalle() {
             )}
 
             <div className="border-t border-gray-100 pt-4 space-y-3">
-              <h3 className="text-sm font-semibold text-navy">Último avance del corte seleccionado</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetalleItem label="Valor reportado" value={detalle.avance?.valor_reportado || '—'} />
-                <DetalleItem label="Cumplimiento" value={detalle.avance ? `${detalle.avance.porcentaje_cumplimiento}%` : '—'} />
-                <DetalleItem label="Semáforo" value={detalle.avance?.estado_semaforo || 'sin dato'} />
-                <DetalleItem label="Estado de gestión" value={getEstadoGestion(detalle.avance).label} />
-                <DetalleItem label="Fecha del último avance" value={formatDateTimeValue(detalle.avance?.modificado_en || detalle.avance?.ingresado_en)} />
-                <DetalleItem label="Estado de revisión" value={detalle.avance?.estado_revision || 'sin revisión'} />
-              </div>
-              <DetalleBlock label="Comentario" value={detalle.avance?.comentario || 'Sin comentario'} />
-              <DetalleBlock label="Evidencia" value={detalle.avance?.evidencia_url || 'Sin evidencia'} isLink={!!detalle.avance?.evidencia_url} />
-            </div>
-
-            <div className="border-t border-gray-100 pt-4 space-y-3">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <h3 className="text-sm font-semibold text-navy">Acciones relacionadas con este indicador</h3>
@@ -727,25 +713,6 @@ function formatDateValue(value) {
 
   const [, year, month, day] = match;
   return `${day}/${month}/${year}`;
-}
-
-function formatDateTimeValue(value) {
-  if (!value) return '—';
-
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
-    return new Intl.DateTimeFormat('es-CL', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(parsed);
-  }
-
-  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
-  if (!match) return String(value);
-
-  const [, year, month, day, hours, minutes] = match;
-  if (!hours || !minutes) return `${day}/${month}/${year}`;
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
 function FormField({ label, tipo, value, onChange, usuarios }) {
