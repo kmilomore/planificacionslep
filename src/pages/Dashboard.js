@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import { useDashboardResumen } from '../hooks/useApi';
+import { useDashboardResumen, useRefreshDashboardResumen } from '../hooks/useApi';
 import Alert from '../components/ui/Alert';
 import Skeleton from '../components/ui/Skeleton';
 
@@ -74,8 +74,12 @@ function DashboardSkeleton() {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { data: resumen = [], isLoading, error } = useDashboardResumen();
+  const { data: dashboardData, isLoading, error } = useDashboardResumen();
+  const refreshDashboard = useRefreshDashboardResumen();
   const [urgencyFilter, setUrgencyFilter] = useState('all');
+
+  const resumen = Array.isArray(dashboardData) ? dashboardData : dashboardData?.items || [];
+  const updatedAt = Array.isArray(dashboardData) ? null : dashboardData?.updated_at || null;
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -98,15 +102,32 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-display font-bold text-navy mb-2">
-        Dashboard
-      </h1>
-      <p className="text-gray-500 font-body text-sm mb-6">
-        Bienvenido/a, <span className="font-semibold text-navy">{user?.nombre}</span>
-        {' '}· <span className="capitalize">{user?.rol?.replace('_', ' ')}</span>
-      </p>
+      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-navy mb-2">
+            Dashboard
+          </h1>
+          <p className="text-gray-500 font-body text-sm">
+            Bienvenido/a, <span className="font-semibold text-navy">{user?.nombre}</span>
+            {' '}· <span className="capitalize">{formatRoleLabel(user?.rol)}</span>
+          </p>
+          <p className="text-xs text-gray-500 font-body mt-2">
+            {updatedAt ? `Actualizado ${formatUpdatedAt(updatedAt)}` : 'Sin marca de actualizacion desde backend'}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => refreshDashboard.mutate()}
+          disabled={refreshDashboard.isPending}
+          className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold font-body transition-colors ${refreshDashboard.isPending ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-navy text-white hover:bg-blue'}`}
+        >
+          {refreshDashboard.isPending ? 'Actualizando...' : 'Actualizar dashboard'}
+        </button>
+      </div>
 
       {error ? <Alert type="error" message={error.message} className="mb-6" /> : null}
+      {refreshDashboard.error ? <Alert type="error" message={refreshDashboard.error.message} className="mb-6" /> : null}
 
       {!error && !resumen.length ? (
         <Alert
@@ -352,6 +373,20 @@ function DashboardTooltip({ active, payload, label }) {
       <p className="text-xs text-gray-500 font-body">Plazo: <span className={deadlineTone(point.dias_para_corte)}>{formatDeadlineLabel(point.dias_para_corte)}</span></p>
     </div>
   );
+}
+
+function formatUpdatedAt(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'sin hora disponible';
+
+  return new Intl.DateTimeFormat('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function formatRoleLabel(role) {
+  return (role || '').replace(/_/g, ' ');
 }
 
 const URGENCY_FILTERS = [

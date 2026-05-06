@@ -5,8 +5,13 @@ const Dashboard = {
     if (cached) return cached;
 
     const context = this._loadContext();
-    const result = context.instrumentos.map(inst => this._buildInstrumentSummary(inst, context));
+    const result = this._buildResumenPayload(context.instrumentos.map(inst => this._buildInstrumentSummary(inst, context)));
     return Utils.putCachedJson(cacheKey, result, 120);
+  },
+
+  refreshResumenGeneral(user) {
+    Utils.invalidateDashboardCaches();
+    return this.getResumenGeneral(user);
   },
 
   getResumenInstrumento(instrumento_id, user) {
@@ -121,6 +126,14 @@ const Dashboard = {
         ...corte,
         estado_visual: this._estadoEfectivo(corte),
       })),
+    };
+  },
+
+  _buildResumenPayload(items) {
+    return {
+      items,
+      updated_at: Utils.ahora(),
+      cache_ttl_seconds: 120,
     };
   },
 

@@ -49,6 +49,7 @@ function doPost(e) {
 
       // Dashboard
       'getDashboardResumen':     () => Dashboard.getResumenGeneral(user),
+      'refreshDashboardResumen': () => Dashboard.refreshResumenGeneral(user),
       'getDashboardInstrumento': () => Dashboard.getResumenInstrumento(filtros.instrumento_id, user),
       'getGanttData':            () => Dashboard.getGanttData(user),
       'getMetricasCorte':        () => Dashboard.getMetricasCorte(filtros.corte_id, user),

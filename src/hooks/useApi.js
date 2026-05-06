@@ -123,6 +123,18 @@ export function useDashboardResumen() {
   return useApiQuery('dashboard_resumen', 'getDashboardResumen');
 }
 
+export function useRefreshDashboardResumen() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => callApi('refreshDashboardResumen'),
+    onSuccess: (data) => {
+      qc.setQueryData(['dashboard_resumen'], data);
+      qc.invalidateQueries({ queryKey: ['gantt_data'] });
+    },
+  });
+}
+
 export function useDashboardInstrumento(instrumento_id) {
   return useApiQuery(
     ['dashboard_instrumento', instrumento_id],
