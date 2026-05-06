@@ -99,6 +99,12 @@ export default function Dashboard() {
     ? Math.round((totalIndicadoresConAvance / totalIndicadores) * 100)
     : 0;
   const metaGapPromedio = cumplimientoPromedio - 80;
+  const roleConfig = getRoleDashboardConfig(user?.rol, {
+    instrumentosEnRojo,
+    instrumentosConCorteUrgente,
+    coberturaAvance,
+    cumplimientoPromedio,
+  });
 
   return (
     <div className="p-6">
@@ -116,15 +122,58 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => refreshDashboard.mutate()}
-          disabled={refreshDashboard.isPending}
-          className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold font-body transition-colors ${refreshDashboard.isPending ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-navy text-white hover:bg-blue'}`}
-        >
-          {refreshDashboard.isPending ? 'Actualizando...' : 'Actualizar dashboard'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => downloadExecutiveSummaryCsv({
+              items: resumenFiltrado,
+              urgencyFilter,
+              userRole: user?.rol,
+              updatedAt,
+              cumplimientoPromedio,
+              instrumentosEnRojo,
+              instrumentosConCorteUrgente,
+              coberturaAvance,
+            })}
+            disabled={!resumenFiltrado.length}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold font-body transition-colors ${!resumenFiltrado.length ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-navy border border-gray-200 hover:border-blue hover:text-blue'}`}
+          >
+            Exportar resumen CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => refreshDashboard.mutate()}
+            disabled={refreshDashboard.isPending}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold font-body transition-colors ${refreshDashboard.isPending ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-navy text-white hover:bg-blue'}`}
+          >
+            {refreshDashboard.isPending ? 'Actualizando...' : 'Actualizar dashboard'}
+          </button>
+        </div>
       </div>
+
+      {!error ? (
+        <section className="mb-6 rounded-card shadow-card overflow-hidden bg-[linear-gradient(135deg,#25306B_0%,#006BB9_100%)] text-white">
+          <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1.6fr_1fr] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 font-body">{roleConfig.eyebrow}</p>
+              <h2 className="mt-3 text-2xl font-display font-bold">{roleConfig.title}</h2>
+              <p className="mt-3 max-w-2xl text-sm text-white/80 font-body">{roleConfig.description}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {roleConfig.focus.map(item => (
+                  <span key={item} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold font-body">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60 font-body">Foco sugerido hoy</p>
+              <p className="mt-3 text-3xl font-display font-bold">{roleConfig.highlightValue}</p>
+              <p className="mt-2 text-sm text-white/80 font-body">{roleConfig.highlightLabel}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {error ? <Alert type="error" message={error.message} className="mb-6" /> : null}
       {refreshDashboard.error ? <Alert type="error" message={refreshDashboard.error.message} className="mb-6" /> : null}
@@ -386,8 +435,144 @@ function formatUpdatedAt(value) {
 }
 
 function formatRoleLabel(role) {
-  return (role || '').replace(/_/g, ' ');
+  return ROLE_LABELS[role] || (role || '').replace(/_/g, ' ');
 }
+
+function getRoleDashboardConfig(role, metrics) {
+  const normalizedRole = role || 'default';
+
+  const configs = {
+    admin: {
+      eyebrow: 'Vista de control operacional',
+      title: 'Prioriza consistencia de carga y seguimiento de hitos abiertos.',
+      description: 'Esta cabecera resalta brechas operativas para administracion: cobertura de avance, proximidad de cortes y focos donde el tablero puede degradarse por atraso de carga.',
+      focus: ['Cobertura de avance', 'Cortes urgentes', 'Instrumentos sin holgura'],
+      highlightValue: `${metrics.coberturaAvance}%`,
+      highlightLabel: 'Cobertura total reportada en indicadores con avance.',
+    },
+    director_ejecutivo: {
+      eyebrow: 'Vista ejecutiva priorizada',
+      title: 'Concentra riesgos de cumplimiento y proximidad de decisiones.',
+      description: 'Pensada para lectura rapida de excepciones: instrumentos en rojo, brecha contra meta institucional y cortes con riesgo inmediato de vencimiento.',
+      focus: ['Semaforos rojos', 'Brecha contra meta', 'Cortes en riesgo'],
+      highlightValue: String(metrics.instrumentosEnRojo),
+      highlightLabel: 'Instrumentos en rojo que requieren seguimiento directivo.',
+    },
+    subdirector: {
+      eyebrow: 'Vista de seguimiento tactico',
+      title: 'Equilibra avance reportado con presion de plazos cercanos.',
+      description: 'El foco tactico combina avance real y urgencia temporal para priorizar coordinacion con equipos antes del siguiente corte.',
+      focus: ['Cumplimiento promedio', 'Cobertura reportada', 'Vencimientos proximos'],
+      highlightValue: String(metrics.instrumentosConCorteUrgente),
+      highlightLabel: 'Instrumentos con corte vencido o dentro de 7 dias.',
+    },
+    default: {
+      eyebrow: 'Vista general',
+      title: 'Resumen ejecutivo del estado agregado por instrumento.',
+      description: 'Entrega una lectura sintetica de cumplimiento, cobertura de avance y proximidad de cortes para navegar al detalle con contexto.',
+      focus: ['Cumplimiento', 'Semaforos', 'Proximos cortes'],
+      highlightValue: `${metrics.cumplimientoPromedio}%`,
+      highlightLabel: 'Cumplimiento promedio agregado del tablero.',
+    },
+  };
+
+  return configs[normalizedRole] || configs.default;
+}
+
+function downloadExecutiveSummaryCsv({
+  items,
+  urgencyFilter,
+  userRole,
+  updatedAt,
+  cumplimientoPromedio,
+  instrumentosEnRojo,
+  instrumentosConCorteUrgente,
+  coberturaAvance,
+}) {
+  if (!items?.length) return;
+
+  const metadataRows = [
+    ['Reporte', 'Dashboard ejecutivo'],
+    ['Rol', formatRoleLabel(userRole)],
+    ['Filtro urgencia', getUrgencyFilterLabel(urgencyFilter)],
+    ['Actualizado', updatedAt ? formatUpdatedAt(updatedAt) : 'Sin marca de actualizacion'],
+    ['Cumplimiento promedio', `${cumplimientoPromedio}%`],
+    ['Instrumentos en rojo', String(instrumentosEnRojo)],
+    ['Cortes en 7 dias', String(instrumentosConCorteUrgente)],
+    ['Cobertura de avance', `${coberturaAvance}%`],
+    [],
+  ];
+
+  const headerRow = [[
+    'Codigo',
+    'Instrumento',
+    'Cumplimiento global',
+    'Brecha meta 80',
+    'Semaforo',
+    'Indicadores con avance',
+    'Total indicadores',
+    'Cobertura avance',
+    'Indicadores pendientes',
+    'Proximo corte',
+    'Fecha limite',
+    'Dias para corte',
+    'Plazo visual',
+  ]];
+
+  const dataRows = items.map(item => [
+    item.instrumento.codigo,
+    item.instrumento.nombre,
+    `${normalizeNumber(item.cumplimiento_global)}%`,
+    formatGoalGap(normalizeNumber(item.cumplimiento_global) - 80),
+    item.semaforo,
+    String(normalizeNumber(item.indicadores_con_avance)),
+    String(normalizeNumber(item.total_indicadores)),
+    `${calculateCoverage(item.indicadores_con_avance, item.total_indicadores)}%`,
+    String(normalizeNumber(item.indicadores_pendientes)),
+    item.proximo_corte?.nombre_corte || 'Sin corte pendiente',
+    item.proximo_corte?.fecha_limite || '',
+    item.dias_para_corte === null || item.dias_para_corte === undefined ? '' : String(item.dias_para_corte),
+    formatDeadlineLabel(item.dias_para_corte),
+  ]);
+
+  const csv = [...metadataRows, ...headerRow, ...dataRows]
+    .map(row => row.map(escapeCsvCell).join(','))
+    .join('\n');
+
+  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `dashboard-ejecutivo-${formatFileDate(new Date())}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsvCell(value) {
+  const normalized = String(value ?? '');
+  return `"${normalized.replace(/"/g, '""')}"`;
+}
+
+function getUrgencyFilterLabel(filter) {
+  return URGENCY_FILTERS.find(item => item.value === filter)?.label || 'Todos';
+}
+
+function formatFileDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}${month}${day}-${hours}${minutes}`;
+}
+
+const ROLE_LABELS = {
+  admin: 'Administrador',
+  subdirector: 'Subdirector',
+  director_ejecutivo: 'Director Ejecutivo',
+};
 
 const URGENCY_FILTERS = [
   { value: 'all', label: 'Todos' },
