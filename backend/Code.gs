@@ -88,3 +88,24 @@ function jsonError(msg, code) {
     .createTextOutput(JSON.stringify({ ok: false, error: msg, code }))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+function autorizarServicios() {
+  SpreadsheetApp.openById(Config.SHEET_ID).getId();
+  var folder = Drive.getOrCreateRootFolder_();
+  var authProbeFile = null;
+
+  try {
+    authProbeFile = folder.createFile(
+      'tmp_auth_' + new Date().getTime() + '.txt',
+      'Autorizacion temporal de Drive para documentos.'
+    );
+  } finally {
+    if (authProbeFile) {
+      try {
+        authProbeFile.setTrashed(true);
+      } catch (trashError) {
+        // No bloquear la autorizacion si no se puede enviar a la papelera.
+      }
+    }
+  }
+}

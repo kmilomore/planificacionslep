@@ -10,15 +10,21 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
 
   if (!open) return null;
 
-  const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' };
+  const widths = {
+    sm: 'max-w-sm',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-[min(96vw,1600px)]',
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-6 px-3 sm:px-4 lg:px-6">
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className={`relative bg-white rounded-card shadow-xl w-full ${widths[size]} max-h-[80vh] flex flex-col`}>
+      <div className={`relative bg-white rounded-card shadow-xl w-full ${widths[size] || widths.md} max-h-[92vh] flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
           <h2 className="text-base font-display font-bold text-navy">{title}</h2>

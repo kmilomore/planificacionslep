@@ -131,6 +131,7 @@ export default function Gantt() {
         open={!!selectedCorte}
         onClose={() => setSelectedCorte(null)}
         title={selectedCorte ? `${selectedCorte.nombre_corte} · ${selectedCorte.codigo_corte}` : 'Detalle del corte'}
+        size="full"
       >
         {!selectedCorte || loadingMetricas ? (
           <div className="flex justify-center py-6"><Spinner /></div>

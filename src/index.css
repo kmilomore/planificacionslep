@@ -11,3 +11,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+@keyframes uploadProgressSlide {
+  0% {
+    transform: translateX(-65%);
+  }
+
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.upload-progress-bar {
+  animation: uploadProgressSlide 1.1s ease-in-out infinite alternate;
+}

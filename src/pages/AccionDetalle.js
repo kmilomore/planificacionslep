@@ -58,6 +58,10 @@ export default function AccionDetalle() {
     if (!uploadForm.file || !isImageFile(uploadForm.file.name)) return '';
     return URL.createObjectURL(uploadForm.file);
   }, [uploadForm.file]);
+  const uploadFileName = useMemo(() => {
+    if (!uploadForm.file) return '';
+    return ensureFileExtension(uploadForm.displayName, uploadForm.file.name);
+  }, [uploadForm.displayName, uploadForm.file]);
 
   useEffect(() => {
     return () => {
@@ -150,6 +154,45 @@ export default function AccionDetalle() {
 
   return (
     <div className="p-6 space-y-6">
+      {uploadMedio.isPending ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/45 backdrop-blur-[2px] px-4">
+          <div className="w-full max-w-xl rounded-[28px] border border-white/15 bg-white shadow-2xl">
+            <div className="border-b border-slate-100 px-6 py-5">
+              <p className="text-xs uppercase tracking-[0.24em] text-blue font-semibold font-body">Subiendo evidencia</p>
+              <h2 className="mt-2 text-2xl font-display font-bold text-navy">Estamos cargando el medio de verificación</h2>
+              <p className="mt-2 text-sm text-slate-500 font-body">
+                No cierres esta pantalla mientras terminamos la lectura del archivo y el envío a Drive.
+              </p>
+            </div>
+
+            <div className="px-6 py-6 space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue/10 text-blue">
+                  <Spinner />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-navy break-words">{uploadFileName || uploadForm.file?.name || 'Procesando archivo'}</p>
+                  <p className="mt-1 text-sm text-slate-500 font-body">
+                    {humanizeTipo(uploadForm.tipo)} · {formatFileSize(uploadForm.file?.size || 0)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="upload-progress-bar h-full w-full rounded-full bg-gradient-to-r from-sky-400 via-blue to-navy" />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <UploadStep label="Leyendo archivo" active />
+                  <UploadStep label="Enviando a Drive" active />
+                  <UploadStep label="Actualizando acción" active />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {feedback ? <Alert type={feedback.type} message={feedback.message} onClose={() => setFeedback(null)} /> : null}
 
       <section className="bg-white rounded-card shadow-card border border-slate-100 p-6 lg:p-8 max-w-6xl space-y-6">
@@ -241,7 +284,7 @@ export default function AccionDetalle() {
                       disabled={uploadMedio.isPending}
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue px-5 py-3 text-sm font-semibold text-white hover:bg-navy transition-colors disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
-                      <UploadCloud size={16} />
+                      {uploadMedio.isPending ? <Spinner size="sm" /> : <UploadCloud size={16} />}
                       {uploadMedio.isPending ? 'Subiendo...' : 'Subir medio'}
                     </button>
 
@@ -520,4 +563,19 @@ function ensureFileExtension(displayName, originalName) {
 function getFileExtension(fileName) {
   const parts = String(fileName || '').trim().split('.');
   return parts.length > 1 ? parts.pop() : '';
+}
+
+function formatFileSize(size) {
+  if (!size) return '0 KB';
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function UploadStep({ label, active }) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">Estado</p>
+      <p className={`mt-2 text-sm font-semibold font-body ${active ? 'text-navy' : 'text-slate-400'}`}>{label}</p>
+    </div>
+  );
 }
