@@ -6,6 +6,8 @@ import AppShell from './components/layout/AppShell';
 import Login     from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin     from './pages/Admin';
+import InstrumentoDetalle from './pages/InstrumentoDetalle';
+import IngresarAvance from './pages/IngresarAvance';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +35,8 @@ export default function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/instrumento/:id" element={<InstrumentoDetalle />} />
+              <Route path="/avance/:indicador_id/:corte_id" element={<IngresarAvance />} />
               <Route
                 path="/admin"
                 element={

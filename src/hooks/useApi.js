@@ -44,6 +44,15 @@ export function useIndicadores(instrumento_id) {
   );
 }
 
+export function useIndicador(id) {
+  return useApiQuery(
+    ['indicador', id],
+    'getIndicador',
+    { id },
+    { enabled: !!id }
+  );
+}
+
 export function useCreateIndicador(instrumento_id) {
   return useApiMutation('createIndicador', [['indicadores', instrumento_id]]);
 }
@@ -76,6 +85,23 @@ export function useCreateCorte(instrumento_id) {
 
 export function useCerrarCorte(instrumento_id) {
   return useApiMutation('cerrarCorte', [['cortes', instrumento_id], 'cortes_all']);
+}
+
+// --- Avances ---
+export function useAvancesPorCorte(corte_id) {
+  return useApiQuery(
+    ['avances', corte_id],
+    'getAvancesPorCorte',
+    { filtros: { corte_id } },
+    { enabled: !!corte_id }
+  );
+}
+
+export function useUpsertAvance(corte_id, instrumento_id) {
+  return useApiMutation('upsertAvance', [
+    ['avances', corte_id],
+    ['indicadores', instrumento_id],
+  ]);
 }
 
 // --- Usuarios ---

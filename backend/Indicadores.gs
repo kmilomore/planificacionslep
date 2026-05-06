@@ -1,4 +1,11 @@
 const Indicadores = {
+  getById(id, user) {
+    if (!id) throw new Error('id requerido');
+    const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', id);
+    if (!indicador) throw new Error('Indicador no encontrado');
+    return indicador;
+  },
+
   getByInstrumento(instrumento_id, user) {
     if (!instrumento_id) throw new Error('instrumento_id requerido');
     const ss = SpreadsheetApp.openById(Config.SHEET_ID);

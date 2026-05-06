@@ -29,6 +29,7 @@ function doPost(e) {
       'updateInstrumento': () => Instrumentos.update(id, data, user),
 
       // Indicadores
+      'getIndicador':   () => Indicadores.getById(id, user),
       'getIndicadores':  () => Indicadores.getByInstrumento(filtros.instrumento_id, user),
       'createIndicador': () => Indicadores.create(data, user),
       'updateIndicador': () => Indicadores.update(id, data, user),
