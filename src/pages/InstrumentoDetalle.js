@@ -119,8 +119,8 @@ export default function InstrumentoDetalle() {
 
   const nombreUsuario = (userId) => usuarios.find((entry) => entry.id === userId)?.nombre || '—';
   const responsableOperativo = (indicador) => {
-    const equipo = String(indicador?.equipo_trabajo || indicador?.subdimension || '').trim();
-    return equipo || nombreUsuario(indicador?.responsable_id);
+    const responsable = String(indicador?.subdimension || '').trim();
+    return responsable || nombreUsuario(indicador?.responsable_id);
   };
 
   const abrirDetalle = (indicador, avance) => {
