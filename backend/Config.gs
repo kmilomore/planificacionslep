@@ -11,6 +11,7 @@ const Config = {
     AVANCES:      'avances',
     ACCIONES:     'acciones',
     MEDIOS_VERIFICACION: 'medios_verificacion',
+    COMENTARIOS_ACCION: 'comentarios_accion',
     ALERTAS_LOG:  'alertas_log',
   },
 

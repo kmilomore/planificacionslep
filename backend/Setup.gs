@@ -31,6 +31,7 @@ function setupInicial() {
     ],
     acciones: _getAccionesHeaders(),
     medios_verificacion: _getMediosVerificacionHeaders(),
+    comentarios_accion: _getComentariosAccionHeaders(),
     alertas_log: [
       'id', 'tipo_alerta', 'destinatario_email', 'instrumento_id',
       'corte_id', 'asunto', 'enviado_en', 'exito', 'error_msg',
@@ -74,9 +75,11 @@ function ensureAccionesSchema() {
   const ss = SpreadsheetApp.openById(Config.SHEET_ID);
   ensureSheetHeaders_(ss, Config.SHEETS.ACCIONES, _getAccionesHeaders());
   ensureSheetHeaders_(ss, Config.SHEETS.MEDIOS_VERIFICACION, _getMediosVerificacionHeaders());
+  ensureSheetHeaders_(ss, Config.SHEETS.COMENTARIOS_ACCION, _getComentariosAccionHeaders());
 
   Utils.invalidateSheetCache(Config.SHEETS.ACCIONES);
   Utils.invalidateSheetCache(Config.SHEETS.MEDIOS_VERIFICACION);
+  Utils.invalidateSheetCache(Config.SHEETS.COMENTARIOS_ACCION);
 }
 
 function _getIndicadoresHeaders() {
@@ -103,6 +106,12 @@ function _getMediosVerificacionHeaders() {
   return [
     'id', 'accion_id', 'tipo', 'nombre_archivo', 'url_drive', 'file_id',
     'usuario', 'fecha_subida', 'nombre_original', 'descripcion',
+  ];
+}
+
+function _getComentariosAccionHeaders() {
+  return [
+    'id', 'accion_id', 'texto', 'usuario', 'fecha', 'created_by', 'tipo',
   ];
 }
 

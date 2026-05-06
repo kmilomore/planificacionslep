@@ -197,6 +197,7 @@ const Utils = {
     const keys = [
       this.getSheetCacheKey(Config.SHEETS.ACCIONES),
       this.getSheetCacheKey(Config.SHEETS.MEDIOS_VERIFICACION),
+      this.getSheetCacheKey(Config.SHEETS.COMENTARIOS_ACCION),
     ];
 
     CacheService.getScriptCache().removeAll(Array.from(new Set(keys)));

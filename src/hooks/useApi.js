@@ -175,6 +175,18 @@ export function useUpdateEstadoAccion(id) {
   return useApiMutation('updateEstadoAccion', ['acciones', ['accion', id]]);
 }
 
+export function useAddComentarioAccion(id) {
+  return useApiMutation('addComentarioAccion', ['acciones', ['accion', id]]);
+}
+
+export function useUpdateComentarioAccion(id) {
+  return useApiMutation('updateComentarioAccion', ['acciones', ['accion', id]]);
+}
+
+export function useDeleteComentarioAccion(id) {
+  return useApiMutation('deleteComentarioAccion', ['acciones', ['accion', id]]);
+}
+
 export function useMediosAccion(accionId) {
   return useApiQuery(
     ['medios_accion', accionId],

@@ -59,6 +59,9 @@ function doPost(e) {
       'createAccion':            () => Acciones.create(data, user),
       'updateAccion':            () => Acciones.update(id, data, user),
       'updateEstadoAccion':      () => Acciones.updateEstado(id, data, user),
+      'addComentarioAccion':     () => Acciones.addComentario(id, data, user),
+      'updateComentarioAccion':  () => Acciones.updateComentario(id, data, user),
+      'deleteComentarioAccion':  () => Acciones.deleteComentario(id, user),
       'uploadMedioVerificacion': () => Acciones.uploadMedio(id, data, user),
       'getMediosAccion':         () => Acciones.getMedios(id || filtros.accion_id, user),
 

@@ -38,11 +38,15 @@ const Acciones = {
     const medios = bundle.medios
       .filter((medio) => medio.accion_id === id)
       .sort((a, b) => new Date(b.fecha_subida || 0) - new Date(a.fecha_subida || 0));
+    const comentarios = bundle.comentarios
+      .filter((comentario) => comentario.accion_id === id)
+      .sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
 
     return {
       ...decorated,
       medios,
-      timeline: this.buildTimeline_(decorated, medios),
+      comentarios,
+      timeline: this.buildTimeline_(decorated, medios, comentarios),
     };
   },
 
@@ -141,6 +145,74 @@ const Acciones = {
     return this.getById(id, user);
   },
 
+  addComentario(id, data, user) {
+    if (!id) throw new Error('id requerido');
+
+    const accion = this.getOwnedAccionForEdit_(id, user);
+    const texto = String(data?.texto || '').trim();
+    if (!texto) throw new Error('Comentario requerido');
+
+    ensureAccionesSchema();
+
+    const comentario = {
+      id: Utils.uuid(),
+      accion_id: accion.id,
+      texto,
+      usuario: user.email,
+      fecha: Utils.ahora(),
+      created_by: user.id,
+      tipo: 'comentario',
+    };
+
+    Utils.appendRow(Config.SHEETS.COMENTARIOS_ACCION, comentario);
+    Utils.updateRowById(Config.SHEETS.ACCIONES, accion.id, { updated_at: comentario.fecha });
+
+    const indicador = this.getIndicador_(accion.indicador_id);
+    Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    return comentario;
+  },
+
+  updateComentario(id, data, user) {
+    if (!id) throw new Error('id requerido');
+
+    const comentario = this.getComentarioForEdit_(id, user);
+    const texto = String(data?.texto || '').trim();
+    if (!texto) throw new Error('Comentario requerido');
+
+    const updates = {
+      texto,
+      fecha: Utils.ahora(),
+      tipo: 'comentario',
+    };
+
+    Utils.updateRowById(Config.SHEETS.COMENTARIOS_ACCION, comentario.id, updates);
+    Utils.updateRowById(Config.SHEETS.ACCIONES, comentario.accion_id, { updated_at: updates.fecha });
+
+    const accion = this.getOwnedAccionForEdit_(comentario.accion_id, user);
+    const indicador = this.getIndicador_(accion.indicador_id);
+    Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    return { ...comentario, ...updates };
+  },
+
+  deleteComentario(id, user) {
+    if (!id) throw new Error('id requerido');
+
+    const comentario = this.getComentarioForEdit_(id, user);
+    const deletedAt = Utils.ahora();
+
+    Utils.updateRowById(Config.SHEETS.COMENTARIOS_ACCION, comentario.id, {
+      tipo: 'comentario_eliminado',
+      texto: '[Comentario eliminado]',
+      fecha: deletedAt,
+    });
+    Utils.updateRowById(Config.SHEETS.ACCIONES, comentario.accion_id, { updated_at: deletedAt });
+
+    const accion = this.getOwnedAccionForEdit_(comentario.accion_id, user);
+    const indicador = this.getIndicador_(accion.indicador_id);
+    Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    return { id: comentario.id, deleted: true };
+  },
+
   getMedios(accionId, user) {
     if (!accionId) throw new Error('accion_id requerido');
     const accion = this.getById(accionId, user);
@@ -184,6 +256,8 @@ const Acciones = {
     return {
       acciones: Utils.getSheetObjectsCached(Config.SHEETS.ACCIONES, 60).filter((accion) => this.isActive_(accion)),
       medios: Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 60),
+      comentarios: Utils.getSheetObjectsCached(Config.SHEETS.COMENTARIOS_ACCION, 60)
+        .filter((comentario) => String(comentario.tipo || '').trim() !== 'comentario_eliminado'),
       indicadores: Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90).filter((indicador) => this.isActive_(indicador)),
       instrumentos: Utils.getSheetObjectsCached(Config.SHEETS.INSTRUMENTOS, 120).filter((instrumento) => this.isActive_(instrumento)),
     };
@@ -223,7 +297,7 @@ const Acciones = {
     };
   },
 
-  buildTimeline_(accion, medios) {
+  buildTimeline_(accion, medios, comentarios) {
     const timeline = [
       {
         tipo: 'creacion',
@@ -245,6 +319,14 @@ const Acciones = {
         tipo: 'medio',
         fecha: medio.fecha_subida,
         texto: `Medio cargado: ${medio.nombre_archivo}`,
+      });
+    });
+
+    (comentarios || []).forEach((comentario) => {
+      timeline.push({
+        tipo: comentario.tipo || 'comentario',
+        fecha: comentario.fecha,
+        texto: comentario.texto,
       });
     });
 
@@ -314,6 +396,22 @@ const Acciones = {
     const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', indicadorId);
     if (!indicador) throw new Error('Indicador no encontrado');
     return indicador;
+  },
+
+  getComentarioForEdit_(comentarioId, user) {
+    const comentario = Utils.buscarEnSheet(Config.SHEETS.COMENTARIOS_ACCION, 'id', comentarioId);
+    if (!comentario) throw new Error('Comentario no encontrado');
+
+    const accion = this.getOwnedAccionForEdit_(comentario.accion_id, user);
+    if (user.rol === 'admin' || user.rol === 'director_ejecutivo') {
+      return { ...comentario, accion_id: accion.id };
+    }
+
+    if (comentario.created_by !== user.id) {
+      throw new Error('Solo puedes editar o eliminar tus propios comentarios');
+    }
+
+    return { ...comentario, accion_id: accion.id };
   },
 
   assertIndicadorActivo_(indicador) {
