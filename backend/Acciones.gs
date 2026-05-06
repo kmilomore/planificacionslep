@@ -153,6 +153,8 @@ const Acciones = {
     const tipo = String(data?.tipo || '').trim();
     if (!this.TIPOS_MEDIO[tipo]) throw new Error('Tipo de medio inválido');
 
+    ensureAccionesSchema();
+
     const indicador = this.getIndicador_(accion.indicador_id);
     const upload = Drive.uploadMedio(data, {
       indicadorNombre: indicador.nombre,
@@ -168,6 +170,8 @@ const Acciones = {
       file_id: upload.fileId,
       usuario: user.email,
       fecha_subida: Utils.ahora(),
+      nombre_original: String(data?.nombre_original || data?.nombre_archivo || '').trim(),
+      descripcion: String(data?.descripcion || '').trim(),
     };
 
     Utils.appendRow(Config.SHEETS.MEDIOS_VERIFICACION, medio);

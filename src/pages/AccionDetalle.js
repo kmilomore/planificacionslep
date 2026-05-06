@@ -32,9 +32,15 @@ export default function AccionDetalle() {
   const { data: accion, isLoading, error } = useAccion(id);
   const updateEstado = useUpdateEstadoAccion(id);
   const uploadMedio = useUploadMedioVerificacion(id);
+
   const [feedback, setFeedback] = useState(null);
   const [estadoForm, setEstadoForm] = useState({ estado: 'planificada', avance: '0' });
-  const [uploadForm, setUploadForm] = useState({ tipo: 'reporte', file: null });
+  const [uploadForm, setUploadForm] = useState({
+    tipo: 'reporte',
+    file: null,
+    displayName: '',
+    description: '',
+  });
 
   const canManage = ROLES_GESTION.includes(user?.rol);
 
@@ -48,6 +54,16 @@ export default function AccionDetalle() {
 
   const timeline = useMemo(() => accion?.timeline || [], [accion]);
   const medios = useMemo(() => accion?.medios || [], [accion]);
+  const imagePreviewUrl = useMemo(() => {
+    if (!uploadForm.file || !isImageFile(uploadForm.file.name)) return '';
+    return URL.createObjectURL(uploadForm.file);
+  }, [uploadForm.file]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
 
   if (isLoading) {
     return (
@@ -100,20 +116,32 @@ export default function AccionDetalle() {
       return;
     }
 
+    if (!String(uploadForm.displayName || '').trim()) {
+      setFeedback({ type: 'error', message: 'Define un nombre para el medio antes de subirlo.' });
+      return;
+    }
+
     try {
       const base64Content = await readFileAsBase64(uploadForm.file);
       await uploadMedio.mutateAsync({
         id,
         data: {
           tipo: uploadForm.tipo,
-          nombre_archivo: uploadForm.file.name,
+          nombre_archivo: ensureFileExtension(uploadForm.displayName, uploadForm.file.name),
+          nombre_original: uploadForm.file.name,
+          descripcion: uploadForm.description.trim(),
           mime_type: uploadForm.file.type,
           size_bytes: uploadForm.file.size,
           base64Content,
         },
       });
 
-      setUploadForm({ tipo: uploadForm.tipo, file: null });
+      setUploadForm({
+        tipo: uploadForm.tipo,
+        file: null,
+        displayName: '',
+        description: '',
+      });
       setFeedback({ type: 'success', message: 'Medio de verificación subido correctamente.' });
     } catch (submitError) {
       setFeedback({ type: 'error', message: submitError.message });
@@ -136,7 +164,7 @@ export default function AccionDetalle() {
           <EstadoBadge estado={accion.estado} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Metric label="Equipo responsable" value={accion.responsable_display || accion.responsable} />
           <Metric label="Instrumento" value={accion.instrumento_nombre || accion.instrumento_codigo || 'Sin instrumento'} />
           <Metric label="Avance" value={`${accion.avance}%`} />
@@ -195,7 +223,14 @@ export default function AccionDetalle() {
                       <input
                         type="file"
                         accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp"
-                        onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] || null }))}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] || null;
+                          setUploadForm((current) => ({
+                            ...current,
+                            file,
+                            displayName: file ? file.name : '',
+                          }));
+                        }}
                         disabled={uploadMedio.isPending}
                         className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-[11px] text-sm text-slate-700 file:mr-4 file:border-0 file:bg-transparent file:p-0 file:font-medium"
                       />
@@ -209,7 +244,42 @@ export default function AccionDetalle() {
                       <UploadCloud size={16} />
                       {uploadMedio.isPending ? 'Subiendo...' : 'Subir medio'}
                     </button>
+
+                    <label className="block space-y-2 text-sm text-slate-600 font-body lg:col-span-2">
+                      Nombre visible del medio
+                      <input
+                        type="text"
+                        value={uploadForm.displayName}
+                        onChange={(event) => setUploadForm((current) => ({ ...current, displayName: event.target.value }))}
+                        disabled={uploadMedio.isPending || !uploadForm.file}
+                        placeholder="Ej. Evidencia visita territorial abril 2026.pdf"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30 disabled:bg-slate-50 disabled:text-slate-400"
+                      />
+                    </label>
+
+                    <label className="block space-y-2 text-sm text-slate-600 font-body lg:col-span-3">
+                      Descripción del medio
+                      <textarea
+                        rows="3"
+                        value={uploadForm.description}
+                        onChange={(event) => setUploadForm((current) => ({ ...current, description: event.target.value }))}
+                        disabled={uploadMedio.isPending || !uploadForm.file}
+                        placeholder="Describe qué evidencia contiene el archivo y por qué respalda esta acción."
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30 disabled:bg-slate-50 disabled:text-slate-400"
+                      />
+                    </label>
                   </div>
+
+                  {imagePreviewUrl ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
+                      <p className="text-sm font-semibold text-navy">Previsualización</p>
+                      <img
+                        src={imagePreviewUrl}
+                        alt="Previsualización del medio seleccionado"
+                        className="max-h-72 w-full rounded-xl object-contain bg-slate-50"
+                      />
+                    </div>
+                  ) : null}
 
                   <p className="text-xs text-slate-500 font-body">
                     Formatos permitidos: PDF, DOCX, XLSX, PNG, JPG, JPEG y WEBP. Tamaño máximo: 10 MB.
@@ -233,6 +303,14 @@ export default function AccionDetalle() {
                         <p className="mt-1 text-sm text-slate-500 font-body">
                           {humanizeTipo(medio.tipo)} · Subido por {medio.usuario || 'Usuario no informado'} · {formatDateTime(medio.fecha_subida)}
                         </p>
+                        {medio.nombre_original && medio.nombre_original !== medio.nombre_archivo ? (
+                          <p className="mt-1 text-xs text-slate-400 font-body">
+                            Archivo original: {medio.nombre_original}
+                          </p>
+                        ) : null}
+                        {medio.descripcion ? (
+                          <p className="mt-2 text-sm text-slate-600 font-body leading-6">{medio.descripcion}</p>
+                        ) : null}
                       </div>
                     </div>
 
@@ -426,4 +504,20 @@ function readFileAsBase64(file) {
     reader.onerror = () => reject(new Error('No se pudo leer el archivo seleccionado'));
     reader.readAsDataURL(file);
   });
+}
+
+function ensureFileExtension(displayName, originalName) {
+  const trimmed = String(displayName || '').trim();
+  const originalExtension = getFileExtension(originalName);
+  if (!trimmed) return originalName;
+  if (!originalExtension) return trimmed;
+
+  return new RegExp(`[.]${originalExtension}$`, 'i').test(trimmed)
+    ? trimmed
+    : `${trimmed}.${originalExtension}`;
+}
+
+function getFileExtension(fileName) {
+  const parts = String(fileName || '').trim().split('.');
+  return parts.length > 1 ? parts.pop() : '';
 }

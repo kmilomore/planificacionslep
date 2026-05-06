@@ -248,6 +248,7 @@ Frontend:
 - pantalla `/acciones/nueva` conectada a instrumentos e indicadores activos
 - creación real usando `createAccion`
 - pantalla `/acciones/:id` con detalle base
+- pantalla `/acciones/:id` con carga real de medios desde frontend, edición de nombre visible y descripción previa al upload
 - lenguaje de UI ya alineado a “Equipo responsable”
 
 Backend:
@@ -280,7 +281,6 @@ Backend:
 
 - edición visual completa de acciones desde frontend
 - timeline operativo más rico en detalle
-- carga de medios desde frontend
 - validaciones más profundas de transición de estados
 - posible refactor de nombres internos para reemplazar `responsable` por `equipoResponsable`
 

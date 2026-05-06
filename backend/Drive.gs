@@ -10,7 +10,7 @@ const Drive = {
     this.validateUpload_(payload);
 
     const folder = this.ensureAccionFolder(context.indicadorNombre, context.accionNombre);
-    const fileName = this.sanitizeName_(payload.nombre_archivo || 'archivo');
+    const fileName = this.buildFileName_(payload.nombre_archivo, payload.nombre_original);
     const bytes = Utilities.base64Decode(payload.base64Content);
     const blob = Utilities.newBlob(bytes, payload.mime_type, fileName);
     const file = folder.createFile(blob).setName(fileName);
@@ -27,6 +27,10 @@ const Drive = {
       throw new Error('Archivo requerido para subir medio de verificación');
     }
 
+    if (!String(payload.nombre_archivo || '').trim()) {
+      throw new Error('Nombre de archivo requerido');
+    }
+
     const extension = this.getExtension_(payload.nombre_archivo);
     if (!Config.DRIVE.ALLOWED_EXTENSIONS.includes(extension)) {
       throw new Error('Extensión de archivo no permitida');
@@ -39,6 +43,16 @@ const Drive = {
     if (payload.size_bytes && Number(payload.size_bytes) > Config.DRIVE.MAX_FILE_SIZE_BYTES) {
       throw new Error('El archivo excede el tamaño máximo permitido');
     }
+  },
+
+  buildFileName_(editableName, originalName) {
+    const candidate = this.sanitizeName_(editableName || originalName || 'archivo');
+    const extension = this.getExtension_(candidate) || this.getExtension_(originalName);
+    const baseName = extension
+      ? candidate.replace(new RegExp(`\.${extension}$`, 'i'), '').trim()
+      : candidate;
+
+    return extension ? `${baseName || 'archivo'}.${extension}` : (baseName || 'archivo');
   },
 
   getOrCreateRootFolder_() {

@@ -66,34 +66,17 @@ function setupInicial() {
 }
 
 function setupAcciones() {
+  ensureAccionesSchema();
+  Logger.log('✅ Setup de Acciones completado.');
+}
+
+function ensureAccionesSchema() {
   const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-  const hojas = {
-    acciones: _getAccionesHeaders(),
-    medios_verificacion: _getMediosVerificacionHeaders(),
-  };
-
-  Object.entries(hojas).forEach(([nombre, headers]) => {
-    let sheet = ss.getSheetByName(nombre);
-    if (!sheet) {
-      sheet = ss.insertSheet(nombre);
-      Logger.log(`✅ Hoja creada: ${nombre}`);
-    } else {
-      Logger.log(`⚠️  Hoja ya existe: ${nombre} (no se modificó)`);
-    }
-
-    if (sheet.getLastRow() === 0) {
-      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      sheet.getRange(1, 1, 1, headers.length)
-        .setBackground('#25306B')
-        .setFontColor('#FFFFFF')
-        .setFontWeight('bold');
-    }
-  });
+  ensureSheetHeaders_(ss, Config.SHEETS.ACCIONES, _getAccionesHeaders());
+  ensureSheetHeaders_(ss, Config.SHEETS.MEDIOS_VERIFICACION, _getMediosVerificacionHeaders());
 
   Utils.invalidateSheetCache(Config.SHEETS.ACCIONES);
   Utils.invalidateSheetCache(Config.SHEETS.MEDIOS_VERIFICACION);
-
-  Logger.log('✅ Setup de Acciones completado.');
 }
 
 function _getIndicadoresHeaders() {
@@ -119,8 +102,38 @@ function _getAccionesHeaders() {
 function _getMediosVerificacionHeaders() {
   return [
     'id', 'accion_id', 'tipo', 'nombre_archivo', 'url_drive', 'file_id',
-    'usuario', 'fecha_subida',
+    'usuario', 'fecha_subida', 'nombre_original', 'descripcion',
   ];
+}
+
+function ensureSheetHeaders_(ss, sheetName, expectedHeaders) {
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    Logger.log(`✅ Hoja creada: ${sheetName}`);
+  }
+
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+    sheet.getRange(1, 1, 1, expectedHeaders.length)
+      .setBackground('#25306B')
+      .setFontColor('#FFFFFF')
+      .setFontWeight('bold');
+    return;
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const missingHeaders = expectedHeaders.filter((header) => !currentHeaders.includes(header));
+  if (!missingHeaders.length) return;
+
+  const startColumn = currentHeaders.length + 1;
+  sheet.getRange(1, startColumn, 1, missingHeaders.length).setValues([missingHeaders]);
+  sheet.getRange(1, startColumn, 1, missingHeaders.length)
+    .setBackground('#25306B')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold');
+
+  Logger.log(`✅ Cabeceras agregadas en ${sheetName}: ${missingHeaders.join(', ')}`);
 }
 
 function _seedInstrumentos(ss) {
