@@ -67,7 +67,7 @@ function validateForm(form) {
   if (!form.instrumento_id) return 'Selecciona un instrumento.';
   if (!form.indicador_id) return 'Selecciona un indicador activo.';
   if (!form.nombre.trim()) return 'Ingresa el nombre de la acción.';
-  if (!form.responsable.trim()) return 'Ingresa el responsable.';
+  if (!form.responsable) return 'Selecciona un equipo responsable.';
   if (!form.fecha_compromiso) return 'Selecciona la fecha compromiso.';
 
   const avance = Number(form.avance);
@@ -117,10 +117,21 @@ export default function NuevaAccion() {
     [indicadores]
   );
 
+  const equipoResponsable = useMemo(
+    () => String(indicadorSeleccionado?.equipo_trabajo || indicadorSeleccionado?.subdimension || '').trim(),
+    [indicadorSeleccionado]
+  );
+
   const updateField = (key, value) => {
     setForm((current) => {
       if (key === 'instrumento_id') {
         return { ...current, instrumento_id: value, indicador_id: '' };
+      }
+
+      if (key === 'indicador_id') {
+        const indicador = indicadoresActivos.find((item) => item.id === value) || null;
+        const equipo = String(indicador?.equipo_trabajo || indicador?.subdimension || '').trim();
+        return { ...current, indicador_id: value, responsable: equipo };
       }
 
       if (key === 'estado') {
@@ -148,7 +159,7 @@ export default function NuevaAccion() {
           indicador_id: form.indicador_id,
           nombre: form.nombre.trim(),
           descripcion: form.descripcion.trim(),
-          responsable: form.responsable.trim(),
+          responsable: form.responsable,
           fecha_inicio: form.fecha_inicio || '',
           fecha_compromiso: form.fecha_compromiso,
           estado: form.estado,
@@ -173,7 +184,7 @@ export default function NuevaAccion() {
             <p className="text-xs uppercase tracking-[0.24em] text-blue font-semibold font-body">Acciones</p>
             <h1 className="mt-3 text-3xl font-display font-bold text-navy">Nueva acción</h1>
             <p className="mt-3 text-sm text-slate-500 font-body max-w-2xl">
-              El formulario ya opera con instrumentos, indicadores activos y creación real sobre Apps Script. Las validaciones locales cubren consistencia básica antes de enviar al backend.
+              El formulario ya opera con instrumentos, indicadores activos y creación real sobre Apps Script. La asignación ahora se hace por equipo de trabajo del indicador, no por usuario individual.
             </p>
           </div>
 
@@ -252,15 +263,22 @@ export default function NuevaAccion() {
                 />
               </Field>
 
-              <Field label="Responsable" required hint="Puede registrarse con nombre, correo o identificador institucional.">
-                <input
-                  type="text"
-                  value={form.responsable}
-                  onChange={(event) => updateField('responsable', event.target.value)}
-                  disabled={!canManage || createAccion.isPending}
-                  placeholder="Ej. juan.perez@slepc.cl"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-body text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue/30 disabled:bg-slate-50 disabled:text-slate-400"
-                />
+              <Field label="Equipo responsable" required hint="Se completa desde el campo equipo_trabajo del indicador en Google Sheet. Si no existe, usa subdimensión como respaldo.">
+                {form.indicador_id && loadingIndicadores ? (
+                  <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+                    <Skeleton className="h-11 w-full" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={form.responsable}
+                    readOnly
+                    disabled
+                    placeholder="Selecciona un indicador para completar el equipo"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-body text-slate-700 placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-500"
+                  />
+                )}
               </Field>
 
               <Field label="Fecha de inicio" hint="Opcional. Se usa para validar la secuencia temporal de la acción.">
@@ -361,6 +379,12 @@ export default function NuevaAccion() {
                   </dd>
                 </div>
                 <div>
+                  <dt className="text-slate-500">Equipo responsable</dt>
+                  <dd className="mt-1 font-semibold text-navy">
+                    {equipoResponsable || 'Pendiente de seleccionar'}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-slate-500">Indicadores activos disponibles</dt>
                   <dd className="mt-1 font-semibold text-navy">
                     {form.instrumento_id ? indicadoresActivos.length : 'Selecciona un instrumento'}
@@ -373,6 +397,7 @@ export default function NuevaAccion() {
               <p className="text-xs uppercase tracking-[0.24em] text-sky-200 font-semibold font-body">Validación</p>
               <ul className="space-y-2 text-sm text-slate-200 font-body">
                 <li>La acción debe quedar asociada a un indicador activo.</li>
+                <li>El equipo responsable debe coincidir con equipo_trabajo del indicador.</li>
                 <li>La fecha compromiso no puede quedar antes de la fecha de inicio.</li>
                 <li>El avance debe ser coherente con el estado inicial declarado.</li>
               </ul>

@@ -48,10 +48,10 @@ const Acciones = {
 
   create(data, user) {
     this.assertCanEdit_(user);
-    this.validatePayload_(data, false);
-
     const indicador = this.getIndicador_(data.indicador_id);
     this.assertIndicadorActivo_(indicador);
+    const responsable = this.assertEquipoResponsableValido_(data?.responsable, indicador);
+    this.validatePayload_({ ...data, responsable }, false, indicador);
 
     const now = Utils.ahora();
     const nueva = {
@@ -59,7 +59,7 @@ const Acciones = {
       indicador_id: data.indicador_id,
       nombre: String(data.nombre || '').trim(),
       descripcion: String(data.descripcion || '').trim(),
-      responsable: String(data.responsable || '').trim(),
+      responsable,
       fecha_inicio: data.fecha_inicio || '',
       fecha_compromiso: data.fecha_compromiso,
       estado: data.estado || 'planificada',
@@ -79,8 +79,14 @@ const Acciones = {
     if (!id) throw new Error('id requerido');
 
     const accion = this.getOwnedAccionForEdit_(id, user);
+    const indicador = this.getIndicador_(accion.indicador_id);
     const nextData = { ...accion, ...data };
-    this.validatePayload_(nextData, true);
+
+    if (Object.prototype.hasOwnProperty.call(nextData, 'responsable')) {
+      nextData.responsable = this.assertEquipoResponsableValido_(nextData.responsable, indicador);
+    }
+
+    this.validatePayload_(nextData, true, indicador);
 
     const allowed = {
       nombre: true,
@@ -97,11 +103,15 @@ const Acciones = {
         .filter(([key]) => allowed[key])
         .map(([key, value]) => [key, key === 'avance' ? this.normalizeAvance_(value) : value])
     );
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'responsable')) {
+      updates.responsable = this.assertEquipoResponsableValido_(updates.responsable, indicador);
+    }
+
     updates.updated_at = Utils.ahora();
 
     Utils.updateRowById(Config.SHEETS.ACCIONES, id, updates);
 
-    const indicador = this.getIndicador_(accion.indicador_id);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
     return this.getById(id, user);
   },
@@ -111,6 +121,13 @@ const Acciones = {
     const accion = this.getOwnedAccionForEdit_(id, user);
     const estado = data?.estado;
     if (!this.ESTADOS[estado]) throw new Error('Estado de acción inválido');
+
+    const nextData = {
+      ...accion,
+      estado,
+      avance: data && data.avance !== undefined ? data.avance : accion.avance,
+    };
+    this.validateBusinessRules_(nextData);
 
     const updates = { estado, updated_at: Utils.ahora() };
     if (data && data.avance !== undefined) {
@@ -165,9 +182,6 @@ const Acciones = {
       medios: Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 60),
       indicadores: Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90).filter((indicador) => this.isActive_(indicador)),
       instrumentos: Utils.getSheetObjectsCached(Config.SHEETS.INSTRUMENTOS, 120).filter((instrumento) => this.isActive_(instrumento)),
-      usuarios: user?.rol === 'admin'
-        ? Utils.getSheetObjectsCached(Config.SHEETS.USUARIOS, 120)
-        : [],
     };
   },
 
@@ -177,15 +191,19 @@ const Acciones = {
       ? bundle.instrumentos.find((item) => item.id === indicador.instrumento_id) || null
       : null;
     const medios = bundle.medios.filter((medio) => medio.accion_id === accion.id);
+    const equipoIndicador = this.getEquipoResponsable_(indicador);
+    const responsableDisplay = String(accion.responsable || equipoIndicador || '').trim();
 
     return {
       ...accion,
       avance: Number(accion.avance || 0),
       indicador_nombre: indicador?.nombre || '',
       indicador_codigo: indicador?.codigo_indicador || '',
+      indicador_equipo_trabajo: indicador?.equipo_trabajo || '',
       instrumento_id: instrumento?.id || '',
       instrumento_codigo: instrumento?.codigo || '',
       instrumento_nombre: instrumento?.nombre || '',
+      responsable_display: responsableDisplay || 'Sin equipo',
       medios_count: medios.length,
     };
   },
@@ -241,7 +259,7 @@ const Acciones = {
     const compromiso = decorated.fecha_compromiso ? new Date(decorated.fecha_compromiso) : null;
 
     if (search) {
-      const hayMatch = [decorated.nombre, decorated.indicador_nombre, decorated.responsable]
+      const hayMatch = [decorated.nombre, decorated.indicador_nombre, decorated.responsable_display, decorated.indicador_equipo_trabajo]
         .some((value) => String(value || '').toLowerCase().includes(search));
       if (!hayMatch) return false;
     }
@@ -249,7 +267,12 @@ const Acciones = {
     if (estado && accion.estado !== estado) return false;
     if (indicadorId && accion.indicador_id !== indicadorId) return false;
     if (instrumentoId && decorated.instrumento_id !== instrumentoId) return false;
-    if (responsable && String(accion.responsable || '').toLowerCase() !== responsable) return false;
+    if (responsable) {
+      const responsableKeys = [decorated.responsable_display, decorated.indicador_equipo_trabajo, accion.responsable]
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean);
+      if (!responsableKeys.includes(responsable)) return false;
+    }
     if (desde && compromiso && compromiso < desde) return false;
     if (hasta && compromiso && compromiso > hasta) return false;
 
@@ -269,11 +292,12 @@ const Acciones = {
 
     if (user.rol === 'admin' || user.rol === 'director_ejecutivo') return accion;
 
-    const responsible = String(accion.responsable || '').trim().toLowerCase();
-    const matchesUser = [user.id, user.email, user.nombre]
-      .filter(Boolean)
-      .map((value) => String(value).trim().toLowerCase())
-      .includes(responsible);
+    const indicador = this.getIndicador_(accion.indicador_id);
+    const equipoResponsable = this.normalizeTeam_(this.getEquipoResponsable_(indicador));
+    const userArea = this.normalizeTeam_(user.area);
+    const userNombre = this.normalizeTeam_(user.nombre);
+    const actionArea = this.normalizeTeam_(accion.responsable);
+    const matchesUser = !!actionArea && [equipoResponsable, userArea, userNombre].filter(Boolean).includes(actionArea);
 
     if (accion.created_by !== user.id && !matchesUser) {
       throw new Error('No tienes permiso para editar esta acción');
@@ -294,13 +318,57 @@ const Acciones = {
     }
   },
 
-  validatePayload_(data, isUpdate) {
+  validatePayload_(data, isUpdate, indicador) {
     if (!isUpdate && !data?.indicador_id) throw new Error('indicador_id requerido');
     if (!String(data?.nombre || '').trim()) throw new Error('Nombre de la acción requerido');
-    if (!String(data?.responsable || '').trim()) throw new Error('Responsable requerido');
+    if (!String(data?.responsable || '').trim()) throw new Error('Equipo responsable requerido');
     if (!String(data?.fecha_compromiso || '').trim()) throw new Error('Fecha compromiso requerida');
     if (data?.estado && !this.ESTADOS[data.estado]) throw new Error('Estado de acción inválido');
-    this.normalizeAvance_(data?.avance);
+    if (indicador) this.assertEquipoResponsableValido_(data?.responsable, indicador);
+    this.validateBusinessRules_(data);
+  },
+
+  validateBusinessRules_(data) {
+    const avance = this.normalizeAvance_(data?.avance);
+    const fechaInicio = String(data?.fecha_inicio || '').trim();
+    const fechaCompromiso = String(data?.fecha_compromiso || '').trim();
+    const estado = String(data?.estado || 'planificada').trim();
+
+    if (fechaInicio && fechaCompromiso && fechaCompromiso < fechaInicio) {
+      throw new Error('La fecha compromiso no puede ser anterior a la fecha de inicio');
+    }
+
+    if (estado === 'planificada' && avance > 0) {
+      throw new Error('Una acción planificada debe iniciar con avance 0');
+    }
+
+    if (estado === 'completada' && avance !== 100) {
+      throw new Error('Una acción completada debe registrar avance 100');
+    }
+  },
+
+  assertEquipoResponsableValido_(value, indicador) {
+    const expected = this.getEquipoResponsable_(indicador);
+    const normalizedValue = this.normalizeTeam_(value);
+    const normalizedExpected = this.normalizeTeam_(expected);
+
+    if (!normalizedExpected) {
+      throw new Error('El indicador no tiene equipo de trabajo configurado');
+    }
+
+    if (!normalizedValue || normalizedValue !== normalizedExpected) {
+      throw new Error('El equipo responsable debe coincidir con el equipo de trabajo del indicador');
+    }
+
+    return expected;
+  },
+
+  getEquipoResponsable_(indicador) {
+    return String(indicador?.equipo_trabajo || indicador?.subdimension || '').trim();
+  },
+
+  normalizeTeam_(value) {
+    return String(value || '').trim().toLowerCase();
   },
 
   normalizeAvance_(value) {

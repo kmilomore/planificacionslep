@@ -69,7 +69,7 @@ export default function Acciones() {
     [acciones]
   );
   const responsables = useMemo(
-    () => [...new Set(acciones.map((accion) => accion.responsable).filter(Boolean))],
+    () => [...new Set(acciones.map((accion) => accion.responsable_display || accion.responsable).filter(Boolean))],
     [acciones]
   );
 
@@ -82,7 +82,7 @@ export default function Acciones() {
         descripcion: accion.descripcion || 'Sin descripción registrada.',
         indicador: accion.indicador_nombre || accion.indicador_codigo || 'Indicador sin nombre',
         instrumento: accion.instrumento_codigo || 'Sin instrumento',
-        responsable: accion.responsable || 'Sin responsable',
+        responsable: accion.responsable_display || accion.responsable || 'Sin responsable',
         fechaCompromiso: accion.fecha_compromiso || 'Sin fecha',
         estado: accion.estado,
         avance: Number(accion.avance || 0),
