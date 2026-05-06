@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8" /></head>
+<body>
+<script>
+  try {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const idToken = params.get('id_token');
+    const error   = params.get('error');
+
+    if (window.opener) {
+      if (idToken) {
+        window.opener.postMessage(
+          { type: 'GOOGLE_AUTH_SUCCESS', idToken },
+          window.location.origin
+        );
+      } else {
+        window.opener.postMessage(
+          { type: 'GOOGLE_AUTH_ERROR', error: error || 'Sin token' },
+          window.location.origin
+        );
+      }
+      window.close();
+    }
+  } catch (e) {
+    if (window.opener) {
+      window.opener.postMessage(
+        { type: 'GOOGLE_AUTH_ERROR', error: e.message },
+        window.location.origin
+      );
+      window.close();
+    }
+  }
+</script>
+</body>
+</html>

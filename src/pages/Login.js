@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { callApi } from '../config/api';
 
 export default function Login() {
   const { loginWithGoogle, user } = useAuth();
-  const navigate = useNavigate();
-  const btnRef   = useRef(null);
+  const navigate  = useNavigate();
+  const popupRef  = useRef(null);
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,45 +15,13 @@ export default function Login() {
     if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
-  // Inicializar Google Identity Services
-  useEffect(() => {
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-
-    const init = () => {
-      if (!btnRef.current) return;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback:  handleCredential,
-        auto_select: false,
-      });
-      window.google.accounts.id.renderButton(btnRef.current, {
-        theme:  'outline',
-        size:   'large',
-        text:   'signin_with',
-        locale: 'es',
-        width:  280,
-      });
-    };
-
-    if (window.google) {
-      init();
-    } else {
-      const script = document.getElementById('gsi-script');
-      if (script) {
-        script.addEventListener('load', init);
-        return () => script.removeEventListener('load', init);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleCredential = async ({ credential }) => {
+  const handleToken = useCallback(async (idToken) => {
     setLoading(true);
     setError('');
     try {
-      localStorage.setItem('google_id_token', credential);
+      localStorage.setItem('google_id_token', idToken);
       const userInfo = await callApi('validarSesion');
-      loginWithGoogle(credential, userInfo);
+      loginWithGoogle(idToken, userInfo);
       navigate('/dashboard', { replace: true });
     } catch {
       localStorage.removeItem('google_id_token');
@@ -61,6 +29,66 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  }, [loginWithGoogle, navigate]);
+
+  // Escuchar mensaje del popup de OAuth
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
+        handleToken(event.data.idToken);
+      } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+        setError('Error al autenticar con Google. Intenta de nuevo.');
+        setLoading(false);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [handleToken]);
+
+  const abrirSelectorCuentas = () => {
+    if (loading) return;
+
+    // Cerrar popup anterior si sigue abierto
+    if (popupRef.current && !popupRef.current.closed) {
+      popupRef.current.close();
+    }
+
+    // Nonce aleatorio para seguridad
+    const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+    const params = new URLSearchParams({
+      client_id:     process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      redirect_uri:  `${window.location.origin}/auth_callback.html`,
+      response_type: 'id_token',
+      scope:         'openid email profile',
+      nonce:         nonce,
+      prompt:        'select_account',   // ← siempre muestra el selector
+    });
+
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+
+    // Centrar el popup en la pantalla
+    const w = 480, h = 600;
+    const left = Math.round(window.screenX + (window.outerWidth  - w) / 2);
+    const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
+
+    popupRef.current = window.open(
+      url,
+      'google-auth',
+      `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`
+    );
+
+    setLoading(true);
+    setError('');
+
+    // Si el usuario cierra el popup sin autenticar
+    const timer = setInterval(() => {
+      if (popupRef.current?.closed) {
+        clearInterval(timer);
+        setLoading(false);
+      }
+    }, 500);
   };
 
   return (
@@ -86,7 +114,6 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Divisor */}
         <div className="w-full border-t border-gray-100" />
 
         <p className="text-sm text-gray-600 font-body text-center">
@@ -95,7 +122,7 @@ export default function Login() {
 
         {/* Botón Google */}
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-gray-500 font-body">
             <svg className="animate-spin h-5 w-5 text-blue" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -103,10 +130,15 @@ export default function Login() {
             Verificando acceso…
           </div>
         ) : (
-          <div ref={btnRef} />
+          <button
+            onClick={abrirSelectorCuentas}
+            className="flex items-center gap-3 px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-body text-sm font-medium text-gray-700 shadow-sm"
+          >
+            <GoogleIcon />
+            Iniciar sesión con Google
+          </button>
         )}
 
-        {/* Error */}
         {error && (
           <div className="w-full bg-red-50 border-l-4 border-red-500 text-red-700 text-sm px-4 py-3 rounded-r-lg font-body">
             {error}
@@ -118,5 +150,16 @@ export default function Login() {
         </p>
       </div>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
   );
 }
