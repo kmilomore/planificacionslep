@@ -8,11 +8,28 @@ import {
   useIndicadores,
   useInstrumentos,
   useObservarAvance,
+  useUpdateIndicador,
   useUsuarios,
 } from '../hooks/useApi';
 import Alert from '../components/ui/Alert';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
+
+const TIPO_META_OPS = ['porcentaje', 'numero', 'booleano', 'texto'];
+
+const CAMPOS_EDITABLES_INDICADOR = [
+  { key: 'nombre', label: 'Nombre', tipo: 'text' },
+  { key: 'dimension', label: 'Dimensión', tipo: 'text' },
+  { key: 'subdimension', label: 'Subdimensión', tipo: 'text' },
+  { key: 'tipo_meta', label: 'Tipo de meta', tipo: 'select_tipo' },
+  { key: 'meta_valor', label: 'Meta', tipo: 'text' },
+  { key: 'unidad', label: 'Unidad', tipo: 'text' },
+  { key: 'peso', label: 'Peso (%)', tipo: 'text' },
+  { key: 'responsable_id', label: 'Responsable', tipo: 'select_user' },
+  { key: 'formula', label: 'Fórmula', tipo: 'textarea' },
+  { key: 'fuente_verificacion', label: 'Medio de verificación', tipo: 'textarea' },
+  { key: 'descripcion', label: 'Descripción', tipo: 'textarea' },
+];
 
 export default function InstrumentoDetalle() {
   const { id } = useParams();
@@ -24,6 +41,8 @@ export default function InstrumentoDetalle() {
   const [corteId, setCorteId] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [detalle, setDetalle] = useState(null);
+  const [detalleForm, setDetalleForm] = useState({});
+  const [editandoDetalle, setEditandoDetalle] = useState(false);
   const [observando, setObservando] = useState(null);
   const [comentarioObservacion, setComentarioObservacion] = useState('');
 
@@ -36,9 +55,11 @@ export default function InstrumentoDetalle() {
   const { data: avances = [], isLoading: loadingAvances } = useAvancesPorCorte(corteId);
   const aprobarMut = useAprobarAvance(corteId, id);
   const observarMut = useObservarAvance(corteId, id);
+  const updateIndicadorMut = useUpdateIndicador(id);
 
   const instrumento = instrumentos.find(inst => inst.id === id);
   const corteActual = cortes.find(c => c.id === corteId);
+  const puedeEditarIndicador = user?.rol === 'admin';
 
   const filas = useMemo(() => {
     const avanceByIndicador = new Map(avances.map(av => [av.indicador_id, av]));
@@ -51,6 +72,18 @@ export default function InstrumentoDetalle() {
   }, [avances, indicadores, user]);
 
   const nombreUsuario = (userId) => usuarios.find(u => u.id === userId)?.nombre || '—';
+
+  const abrirDetalle = (indicador, avance) => {
+    setDetalle({ indicador, avance });
+    setDetalleForm(buildDetalleForm(indicador));
+    setEditandoDetalle(false);
+  };
+
+  const cerrarDetalle = () => {
+    setDetalle(null);
+    setDetalleForm({});
+    setEditandoDetalle(false);
+  };
 
   const aprobar = async (avance) => {
     try {
@@ -76,6 +109,20 @@ export default function InstrumentoDetalle() {
       setFeedback({ type: 'success', msg: 'Avance observado.' });
       setObservando(null);
       setComentarioObservacion('');
+    } catch (error) {
+      setFeedback({ type: 'error', msg: error.message });
+    }
+  };
+
+  const guardarDetalle = async () => {
+    if (!detalle?.indicador?.id) return;
+    try {
+      await updateIndicadorMut.mutateAsync({ id: detalle.indicador.id, data: detalleForm });
+      setDetalle(actual => actual
+        ? { ...actual, indicador: { ...actual.indicador, ...detalleForm } }
+        : actual);
+      setFeedback({ type: 'success', msg: 'Indicador actualizado.' });
+      setEditandoDetalle(false);
     } catch (error) {
       setFeedback({ type: 'error', msg: error.message });
     }
@@ -133,7 +180,7 @@ export default function InstrumentoDetalle() {
               <th className="px-4 py-3">Meta</th>
               <th className="px-4 py-3 text-center">Cumplimiento</th>
               <th className="px-4 py-3 text-center">Semáforo</th>
-              <th className="px-4 py-3 text-center">Revisión</th>
+              <th className="px-4 py-3 text-center">Estado de gestión</th>
               <th className="px-4 py-3">Responsable</th>
               <th className="px-4 py-3">Último comentario</th>
               <th className="px-4 py-3"></th>
@@ -149,13 +196,7 @@ export default function InstrumentoDetalle() {
                     ? 'bg-red-100 text-red-700'
                     : 'bg-gray-100 text-gray-500';
 
-              const revisionBadge = avance?.estado_revision === 'aprobado'
-                ? 'bg-green-100 text-green-700'
-                : avance?.estado_revision === 'observado'
-                  ? 'bg-yellow-100 text-yellow-700'
-                  : avance?.estado_revision === 'enviado'
-                    ? 'bg-blue-100 text-blue'
-                    : 'bg-gray-100 text-gray-500';
+              const estadoGestion = getEstadoGestion(avance);
 
               return (
                 <tr key={indicador.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
@@ -172,8 +213,8 @@ export default function InstrumentoDetalle() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${revisionBadge}`}>
-                      {avance?.estado_revision || 'borrador'}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoGestion.badgeClassName}`}>
+                      {estadoGestion.label}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{nombreUsuario(indicador.responsable_id)}</td>
@@ -181,7 +222,7 @@ export default function InstrumentoDetalle() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3 flex-wrap">
                       <button
-                        onClick={() => setDetalle({ indicador, avance })}
+                        onClick={() => abrirDetalle(indicador, avance)}
                         className="text-xs text-navy hover:underline font-medium"
                       >
                         Ver detalle
@@ -236,24 +277,76 @@ export default function InstrumentoDetalle() {
 
       <Modal
         open={!!detalle}
-        onClose={() => setDetalle(null)}
+        onClose={cerrarDetalle}
         title={detalle ? `${detalle.indicador.codigo_indicador} · ${detalle.indicador.nombre}` : 'Detalle del indicador'}
         size="lg"
       >
         {detalle && (
           <div className="space-y-5 font-body text-sm">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetalleItem label="Dimensión" value={detalle.indicador.dimension || '—'} />
-              <DetalleItem label="Subdimensión" value={detalle.indicador.subdimension || '—'} />
-              <DetalleItem label="Meta" value={`${detalle.indicador.meta_valor || '—'} ${detalle.indicador.unidad || ''}`} />
-              <DetalleItem label="Peso" value={detalle.indicador.peso ? `${detalle.indicador.peso}%` : '—'} />
-              <DetalleItem label="Tipo de meta" value={detalle.indicador.tipo_meta || '—'} />
-              <DetalleItem label="Responsable" value={nombreUsuario(detalle.indicador.responsable_id)} />
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-xs text-gray-500">Revisa el indicador y el avance asociado al corte seleccionado.</p>
+              {puedeEditarIndicador && (
+                <div className="flex items-center gap-2">
+                  {editandoDetalle ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setDetalleForm(buildDetalleForm(detalle.indicador));
+                          setEditandoDetalle(false);
+                        }}
+                        className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        Cancelar edición
+                      </button>
+                      <button
+                        onClick={guardarDetalle}
+                        disabled={updateIndicadorMut.isPending}
+                        className="px-3 py-1.5 text-xs bg-blue text-white rounded-lg hover:bg-navy disabled:opacity-50"
+                      >
+                        {updateIndicadorMut.isPending ? 'Guardando…' : 'Guardar indicador'}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setEditandoDetalle(true)}
+                      className="px-3 py-1.5 text-xs bg-navy text-white rounded-lg hover:bg-blue"
+                    >
+                      Editar información
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            <DetalleBlock label="Descripción" value={detalle.indicador.descripcion || 'Sin descripción'} />
-            <DetalleBlock label="Fórmula" value={detalle.indicador.formula || 'Sin fórmula'} />
-            <DetalleBlock label="Medio de verificación" value={detalle.indicador.fuente_verificacion || 'Sin medio de verificación'} />
+            {editandoDetalle ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {CAMPOS_EDITABLES_INDICADOR.map(({ key, label, tipo }) => (
+                  <FormField
+                    key={key}
+                    label={label}
+                    tipo={tipo}
+                    value={detalleForm[key] ?? ''}
+                    onChange={value => setDetalleForm(actual => ({ ...actual, [key]: value }))}
+                    usuarios={usuarios}
+                  />
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DetalleItem label="Dimensión" value={detalle.indicador.dimension || '—'} />
+                  <DetalleItem label="Subdimensión" value={detalle.indicador.subdimension || '—'} />
+                  <DetalleItem label="Meta" value={`${detalle.indicador.meta_valor || '—'} ${detalle.indicador.unidad || ''}`} />
+                  <DetalleItem label="Peso" value={detalle.indicador.peso ? `${detalle.indicador.peso}%` : '—'} />
+                  <DetalleItem label="Tipo de meta" value={detalle.indicador.tipo_meta || '—'} />
+                  <DetalleItem label="Responsable" value={nombreUsuario(detalle.indicador.responsable_id)} />
+                </div>
+
+                <DetalleBlock label="Descripción" value={detalle.indicador.descripcion || 'Sin descripción'} />
+                <DetalleBlock label="Fórmula" value={detalle.indicador.formula || 'Sin fórmula'} />
+                <DetalleBlock label="Medio de verificación" value={detalle.indicador.fuente_verificacion || 'Sin medio de verificación'} />
+              </>
+            )}
 
             <div className="border-t border-gray-100 pt-4 space-y-3">
               <h3 className="text-sm font-semibold text-navy">Último avance del corte seleccionado</h3>
@@ -261,7 +354,7 @@ export default function InstrumentoDetalle() {
                 <DetalleItem label="Valor reportado" value={detalle.avance?.valor_reportado || '—'} />
                 <DetalleItem label="Cumplimiento" value={detalle.avance ? `${detalle.avance.porcentaje_cumplimiento}%` : '—'} />
                 <DetalleItem label="Semáforo" value={detalle.avance?.estado_semaforo || 'sin dato'} />
-                <DetalleItem label="Estado de revisión" value={detalle.avance?.estado_revision || 'borrador'} />
+                <DetalleItem label="Estado de gestión" value={getEstadoGestion(detalle.avance).label} />
               </div>
               <DetalleBlock label="Comentario" value={detalle.avance?.comentario || 'Sin comentario'} />
               <DetalleBlock label="Evidencia" value={detalle.avance?.evidencia_url || 'Sin evidencia'} isLink={!!detalle.avance?.evidencia_url} />
@@ -331,6 +424,93 @@ function DetalleBlock({ label, value, isLink = false }) {
         </a>
       ) : (
         <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{value}</p>
+      )}
+    </div>
+  );
+}
+
+function buildDetalleForm(indicador) {
+  return {
+    nombre: indicador.nombre || '',
+    dimension: indicador.dimension || '',
+    subdimension: indicador.subdimension || '',
+    tipo_meta: indicador.tipo_meta || 'porcentaje',
+    meta_valor: indicador.meta_valor || '',
+    unidad: indicador.unidad || '',
+    peso: indicador.peso || '',
+    responsable_id: indicador.responsable_id || '',
+    formula: indicador.formula || '',
+    fuente_verificacion: indicador.fuente_verificacion || '',
+    descripcion: indicador.descripcion || '',
+  };
+}
+
+function getEstadoGestion(avance) {
+  const porcentaje = Number(avance?.porcentaje_cumplimiento || 0);
+  const valorReportado = String(avance?.valor_reportado || '').trim();
+
+  if (!avance?.id) {
+    return { label: 'pendiente', badgeClassName: 'bg-gray-100 text-gray-500' };
+  }
+
+  if (porcentaje >= 100) {
+    return { label: 'cumplido', badgeClassName: 'bg-emerald-100 text-emerald-700' };
+  }
+
+  if (avance.estado_revision === 'aprobado') {
+    return { label: 'aprobado', badgeClassName: 'bg-green-100 text-green-700' };
+  }
+
+  if (avance.estado_revision === 'observado') {
+    return { label: 'observado', badgeClassName: 'bg-yellow-100 text-yellow-700' };
+  }
+
+  if (porcentaje > 0 || valorReportado) {
+    return { label: 'en proceso', badgeClassName: 'bg-blue-100 text-blue' };
+  }
+
+  return { label: 'borrador', badgeClassName: 'bg-gray-100 text-gray-500' };
+}
+
+function FormField({ label, tipo, value, onChange, usuarios }) {
+  return (
+    <div className={tipo === 'textarea' ? 'md:col-span-2' : ''}>
+      <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">{label}</label>
+      {tipo === 'textarea' ? (
+        <textarea
+          rows={4}
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30 resize-none"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        />
+      ) : tipo === 'select_user' ? (
+        <select
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        >
+          <option value="">— Selecciona responsable —</option>
+          {usuarios.map(usuario => (
+            <option key={usuario.id} value={usuario.id}>{usuario.nombre}</option>
+          ))}
+        </select>
+      ) : tipo === 'select_tipo' ? (
+        <select
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        >
+          {TIPO_META_OPS.map(opcion => (
+            <option key={opcion} value={opcion}>{opcion}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type="text"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        />
       )}
     </div>
   );

@@ -93,12 +93,12 @@ Responsabilidades:
 - `Code.gs`: router principal por accion
 - `Auth.gs`: validacion del `id_token`
 - `Config.gs`: constantes, hojas y thresholds
-- `Utils.gs`: helpers de Sheets, fechas, UUID y calculos comunes
+- `Utils.gs`: helpers de Sheets, fechas, UUID, calculos comunes y capa de cache/invalidation
 - `Instrumentos.gs`: CRUD de instrumentos
 - `Indicadores.gs`: CRUD de indicadores
 - `Cortes.gs`: CRUD de cortes y cambios de estado
 - `Avances.gs`: guardado, aprobacion y observacion de avances
-- `Dashboard.gs`: agregaciones para dashboard, gantt y metricas por corte
+- `Dashboard.gs`: agregaciones optimizadas para dashboard, gantt y metricas por corte
 - `Setup.gs`: setup inicial, seed y migracion CDC
 
 ## Rutas Implementadas
@@ -226,6 +226,33 @@ Dashboard:
 - `director_ejecutivo` puede revisar, aprobar y observar avances
 - `subdirector` puede cargar o editar avances solo en indicadores donde es responsable
 
+## Optimizaciones de Rendimiento Implementadas
+
+### Backend Apps Script
+
+- `Dashboard.gs` fue reescrito para cargar cada hoja una sola vez por request y trabajar con indices en memoria
+- `Dashboard.gs` construye mapas por `instrumento_id`, `corte_id` e `indicador_id` para evitar filtros repetidos sobre arreglos completos
+- `Utils.updateRowById()` ahora actualiza filas con una sola llamada `setValues()` en vez de reconstruir lecturas innecesarias
+
+### CacheService
+
+- existe cache de script para respuestas de dashboard, gantt y metricas de corte
+- existe cache corta por hoja maestra para `usuarios`, `instrumentos`, `indicadores`, `cortes` y `avances`
+- `appendRow()` y `updateRowById()` invalidan automaticamente la cache de la hoja afectada
+- las mutaciones de avances, cortes, instrumentos e indicadores invalidan tambien la cache de dashboard para no servir agregados viejos
+
+TTLs actuales:
+- `usuarios`: 120 segundos
+- `instrumentos`: 120 segundos
+- `cortes`: 120 segundos
+- `indicadores`: 90 segundos
+- `avances`: 45 segundos
+
+Impacto esperado:
+- panel admin mas rapido
+- detalle de instrumento mas rapido al entrar y al cambiar corte
+- dashboard y gantt con menos lecturas repetidas a Google Sheets
+
 ## Hallazgos Tecnicos Importantes
 
 ### CORS con Apps Script
@@ -288,6 +315,20 @@ Consecuencia:
 - es esperable
 - si en el futuro se busca optimizacion, revisar carga diferida o componentes mas finos
 
+### Rendimiento Apps Script / Sheets
+
+Hallazgo:
+- el principal cuello de botella no estaba en React sino en Apps Script leyendo y filtrando hojas demasiadas veces por request
+
+Decision tomada:
+- mover la optimizacion al backend
+- usar indices en memoria para dashboard
+- usar `CacheService` para respuestas agregadas y lecturas cortas por hoja
+
+Consecuencia:
+- varias pantallas ganan velocidad sin cambiar de forma importante el frontend
+- cualquier mutacion relevante debe seguir invalidando la cache correspondiente
+
 ## Cosas que No se Deben Hacer
 
 - no volver a `application/json` en `fetch` hacia Apps Script sin rediseñar el manejo CORS
@@ -299,6 +340,8 @@ Consecuencia:
 - no confiar en que `activo` siempre venga como booleano puro desde Sheets
 - no modificar reglas de roles sin revisar `AuthContext`, vistas protegidas y validaciones backend
 - no tocar las acciones del router en `Code.gs` sin actualizar los hooks del frontend correspondientes
+- no agregar nuevas lecturas directas a Sheets en endpoints calientes si ya existe helper cacheado en `Utils.gs`
+- no cambiar TTLs o invalidaciones de cache sin revisar impacto en dashboard, admin y detalle de instrumento
 
 ## Restricciones Operativas
 
@@ -306,6 +349,7 @@ Consecuencia:
 - cualquier cambio en archivos `.gs` requiere copiar al proyecto Apps Script y republicar el Web App
 - la migracion CDC existe en codigo pero requiere ejecucion manual con `migracionCDC()`
 - Vercel requiere redeploy para reflejar cambios del frontend
+- las mejoras de rendimiento backend no tienen efecto real hasta republicar el Web App de Apps Script
 
 ## Dependencias entre Capas
 
@@ -314,6 +358,7 @@ Dependencias importantes:
 - `Dashboard.js` y `Gantt.js` dependen de la forma de datos retornada por `Dashboard.gs`
 - `InstrumentoDetalle.js` e `IngresarAvance.js` dependen de `Indicadores.gs`, `Cortes.gs` y `Avances.gs`
 - el login depende de `Auth.gs` y de la hoja `usuarios`
+- la performance actual depende de que `Utils.gs` siga siendo el punto unico para cache, invalidacion y acceso a hojas
 
 ## Estado Operativo Actual
 
@@ -325,6 +370,7 @@ Pendiente de operacion manual o despliegue segun ambiente:
 - volver a desplegar el Web App de Apps Script cuando se agregan o modifican archivos `.gs`
 - desplegar frontend en Vercel despues de cambios relevantes
 - ejecutar `migracionCDC()` si la bateria CDC aun no fue cargada
+- validar en ambiente real la mejora de tiempos del panel admin, dashboard, gantt y detalle de instrumento despues del redeploy backend
 
 ## Pendientes Actuales
 
@@ -347,6 +393,7 @@ Pendiente de operacion manual o despliegue segun ambiente:
 - las agregaciones del dashboard dependen de `peso`, `meta_valor` y avances correctamente cargados
 - si el backend desplegado no coincide con el codigo local, el frontend puede fallar aunque compile
 - Apps Script y Sheets tienen limitaciones de cuota y rendimiento si el volumen crece demasiado
+- si una mutacion nueva no invalida cache, se pueden mostrar datos desactualizados por algunos segundos
 
 ## Recomendacion de Continuidad
 
@@ -436,6 +483,8 @@ Pantallas listas:
 - El resultado del callback OAuth se guarda en `sessionStorage` y luego se procesa al volver a `/login`.
 - La URL del Apps Script tenia un typo y fue corregida en la configuracion local del frontend.
 - El dashboard usa Recharts; por eso el bundle del frontend crecio de forma importante al cerrar la fase 4.
+- La optimizacion principal de velocidad se movio al backend Apps Script usando indices en memoria y `CacheService`.
+- Las lecturas de `usuarios`, `instrumentos`, `indicadores`, `cortes` y `avances` ahora pueden servirse desde cache corta por hoja.
 
 ## Estado Operativo Importante
 
