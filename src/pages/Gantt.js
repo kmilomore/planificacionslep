@@ -62,6 +62,7 @@ export default function Gantt() {
   const { data = [], isLoading } = useGanttData();
   const [selectedCorte, setSelectedCorte] = useState(null);
   const { data: metricas, isLoading: loadingMetricas } = useMetricasCorte(selectedCorte?.id);
+  const nearestCorteId = getNearestUpcomingCorteId(data);
 
   if (isLoading) {
     return <GanttSkeleton />;
@@ -100,16 +101,28 @@ export default function Gantt() {
                     <div key={`${instrumento.id}-${monthIndex}`} className="min-h-20 rounded-xl border border-gray-100 p-2 bg-white">
                       <div className="space-y-2">
                         {cortesMes.map(corte => (
+                          (() => {
+                            const isNearest = corte.id === nearestCorteId;
+                            return (
                           <button
                             key={corte.id}
                             onClick={() => setSelectedCorte(corte)}
-                            className="w-full text-left px-2.5 py-2.5 rounded-xl text-white text-[11px] leading-tight font-body hover:opacity-90 transition-opacity shadow-sm"
-                            style={{ background: estadoColor(corte.estado_visual, instrumento.color_hex) }}
+                            className={`w-full text-left px-2.5 py-2.5 rounded-xl text-white text-[11px] leading-tight font-body hover:opacity-90 transition-opacity shadow-sm ${isNearest ? 'ring-2 ring-amber-300 ring-offset-2 ring-offset-white scale-[1.02]' : ''}`}
+                            style={{ background: estadoColor(corte.estado_visual, instrumento.color_hex, isNearest) }}
                           >
-                            <div className="font-semibold tracking-[0.01em]">{corte.codigo_corte}</div>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="font-semibold tracking-[0.01em]">{corte.codigo_corte}</div>
+                              {isNearest ? (
+                                <span className="inline-flex rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em]">
+                                  Próximo
+                                </span>
+                              ) : null}
+                            </div>
                             <div className="mt-1 opacity-95 text-[10px]">Vence: {formatShortDate(corte.fecha_limite)}</div>
                             <div className="mt-1 opacity-80 text-[10px]">{formatDateRange(corte.fecha_inicio, corte.fecha_limite)}</div>
                           </button>
+                            );
+                          })()
                         ))}
                       </div>
                     </div>
@@ -122,6 +135,7 @@ export default function Gantt() {
       </div>
 
       <div className="flex flex-wrap gap-3 text-xs font-body text-gray-600">
+        <Legend color="#F59E0B" label="Próximo a vencer" ringColor="#FCD34D" />
         <Legend color="#006BB9" label="En curso" />
         <Legend color="#22C55E" label="Cerrado" />
         <Legend color="#FF1D3D" label="Vencido" />
@@ -236,17 +250,43 @@ function extractDateParts(value) {
   return { year, month, day, hours, minutes };
 }
 
-function estadoColor(estado, fallback = '#25306B') {
+function getNearestUpcomingCorteId(data) {
+  const now = Date.now();
+  let nearest = null;
+
+  data.forEach(({ cortes = [] }) => {
+    cortes.forEach((corte) => {
+      const dueDate = resolveTimestamp(corte.fecha_limite);
+      if (!Number.isFinite(dueDate) || dueDate < now) return;
+      if (String(corte.estado_visual || '').toLowerCase() === 'cerrado') return;
+
+      if (!nearest || dueDate < nearest.dueDate) {
+        nearest = { id: corte.id, dueDate };
+      }
+    });
+  });
+
+  return nearest?.id || '';
+}
+
+function resolveTimestamp(value) {
+  const date = new Date(value);
+  const timestamp = date.getTime();
+  return Number.isNaN(timestamp) ? Number.NaN : timestamp;
+}
+
+function estadoColor(estado, fallback = '#25306B', isNearest = false) {
+  if (isNearest) return '#F59E0B';
   if (estado === 'cerrado') return '#22C55E';
   if (estado === 'en_curso') return fallback || '#006BB9';
   if (estado === 'vencido') return '#FF1D3D';
   return '#CBD5E1';
 }
 
-function Legend({ color, label }) {
+function Legend({ color, label, ringColor = '' }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-3 h-3 rounded-full" style={{ background: color }} />
+      <span className={`w-3 h-3 rounded-full ${ringColor ? 'ring-2 ring-offset-1' : ''}`} style={{ background: color, ringColor }} />
       <span>{label}</span>
     </div>
   );
