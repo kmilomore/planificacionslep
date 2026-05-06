@@ -104,6 +104,20 @@ export function useUpsertAvance(corte_id, instrumento_id) {
   ]);
 }
 
+export function useAprobarAvance(corte_id, instrumento_id) {
+  return useApiMutation('aprobarAvance', [
+    ['avances', corte_id],
+    ['indicadores', instrumento_id],
+  ]);
+}
+
+export function useObservarAvance(corte_id, instrumento_id) {
+  return useApiMutation('observarAvance', [
+    ['avances', corte_id],
+    ['indicadores', instrumento_id],
+  ]);
+}
+
 // --- Usuarios ---
 export function useUsuarios() {
   return useApiQuery('usuarios', 'getUsuarios');
