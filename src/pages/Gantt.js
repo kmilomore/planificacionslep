@@ -103,11 +103,12 @@ export default function Gantt() {
                           <button
                             key={corte.id}
                             onClick={() => setSelectedCorte(corte)}
-                            className="w-full text-left px-2 py-2 rounded-lg text-white text-[11px] leading-tight font-body hover:opacity-90 transition-opacity"
+                            className="w-full text-left px-2.5 py-2.5 rounded-xl text-white text-[11px] leading-tight font-body hover:opacity-90 transition-opacity shadow-sm"
                             style={{ background: estadoColor(corte.estado_visual, instrumento.color_hex) }}
                           >
-                            <div className="font-semibold">{corte.codigo_corte}</div>
-                            <div className="opacity-90">{corte.fecha_limite}</div>
+                            <div className="font-semibold tracking-[0.01em]">{corte.codigo_corte}</div>
+                            <div className="mt-1 opacity-95 text-[10px]">Vence: {formatShortDate(corte.fecha_limite)}</div>
+                            <div className="mt-1 opacity-80 text-[10px]">{formatDateRange(corte.fecha_inicio, corte.fecha_limite)}</div>
                           </button>
                         ))}
                       </div>
@@ -137,9 +138,17 @@ export default function Gantt() {
           <div className="flex justify-center py-6"><Spinner /></div>
         ) : (
           <div className="space-y-4 font-body text-sm">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Ventana del corte</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <Metric label="Inicio" value={formatDateLabel(selectedCorte.fecha_inicio)} />
+                <Metric label="Límite" value={formatDateTimeLabel(selectedCorte.fecha_limite)} />
+                <Metric label="Periodo" value={formatDateRange(selectedCorte.fecha_inicio, selectedCorte.fecha_limite)} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               <Metric label="Estado" value={selectedCorte.estado_visual} />
-              <Metric label="Fecha límite" value={selectedCorte.fecha_limite} />
               <Metric label="Indicadores" value={metricas?.total_indicadores ?? '—'} />
               <Metric label="Con avance" value={metricas?.indicadores_con_avance ?? '—'} />
               <Metric label="Pendientes" value={metricas?.indicadores_pendientes ?? '—'} />
@@ -166,6 +175,67 @@ function incluyeMes(corte, monthIndex) {
   return monthIndex >= inicio && monthIndex <= fin;
 }
 
+function formatShortDate(value) {
+  if (!value) return 'Sin fecha';
+  const parts = extractDateParts(value);
+  if (parts) return `${parts.day}/${parts.month}`;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('es-CL', {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(date);
+}
+
+function formatDateLabel(value) {
+  if (!value) return 'Sin fecha';
+  const parts = extractDateParts(value);
+  if (parts) return `${parts.day}/${parts.month}/${parts.year}`;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('es-CL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+}
+
+function formatDateTimeLabel(value) {
+  if (!value) return 'Sin fecha';
+  const parts = extractDateParts(value);
+  if (parts) {
+    if (!parts.hours || !parts.minutes) return `${parts.day}/${parts.month}/${parts.year}`;
+    return `${parts.day}/${parts.month}/${parts.year} ${parts.hours}:${parts.minutes}`;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function formatDateRange(startValue, endValue) {
+  const start = formatDateLabel(startValue);
+  const end = formatDateLabel(endValue);
+  if (!startValue && !endValue) return 'Sin rango';
+  if (!startValue) return `Hasta ${end}`;
+  if (!endValue) return `Desde ${start}`;
+  return `${start} - ${end}`;
+}
+
+function extractDateParts(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+  if (!match) return null;
+  const [, year, month, day, hours, minutes] = match;
+  return { year, month, day, hours, minutes };
+}
+
 function estadoColor(estado, fallback = '#25306B') {
   if (estado === 'cerrado') return '#22C55E';
   if (estado === 'en_curso') return fallback || '#006BB9';
@@ -186,7 +256,7 @@ function Metric({ label, value }) {
   return (
     <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
       <p className="text-xs font-semibold text-gray-500 mb-1">{label}</p>
-      <p className="text-sm text-navy font-semibold">{value}</p>
+      <p className="text-sm text-navy font-semibold leading-6 break-words">{value}</p>
     </div>
   );
 }
