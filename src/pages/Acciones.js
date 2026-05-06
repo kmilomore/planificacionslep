@@ -5,8 +5,39 @@ import AccionesFilters from '../components/acciones/AccionesFilters';
 import AccionesTable from '../components/acciones/AccionesTable';
 import ResumenAcciones from '../components/acciones/ResumenAcciones';
 import { useAcciones } from '../hooks/useApi';
-import Spinner from '../components/ui/Spinner';
 import Alert from '../components/ui/Alert';
+import Skeleton from '../components/ui/Skeleton';
+
+function AccionesSkeleton() {
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="bg-white rounded-card shadow-card border border-slate-100 p-5 space-y-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-2 w-full rounded-full" rounded="rounded-full" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        ))}
+      </section>
+
+      <section className="bg-white rounded-card shadow-card border border-slate-100 p-6 space-y-5">
+        <div className="grid gap-4 lg:grid-cols-4">
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-16 w-full" />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
 
 export default function Acciones() {
   const [filters, setFilters] = useState({
@@ -117,9 +148,7 @@ export default function Acciones() {
       {error ? <Alert type="error" message={error.message} /> : null}
 
       {isLoading ? (
-        <div className="bg-white rounded-card shadow-card border border-slate-100 p-10 flex justify-center">
-          <Spinner size="lg" />
-        </div>
+        <AccionesSkeleton />
       ) : (
         <>
           <ResumenAcciones cards={resumenCards} />
