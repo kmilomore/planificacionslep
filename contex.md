@@ -199,6 +199,7 @@ Acciones:
 - próximos cortes
 - gráfico comparativo con Recharts
 - acceso al calendario y al detalle del instrumento
+- skeleton visual rico durante carga inicial
 
 ### Detalle de Instrumento
 - selector de corte activo
@@ -219,6 +220,8 @@ Acciones:
 - representación de cortes por mes
 - colores por estado
 - modal con métricas del corte seleccionado
+- skeleton estructurado durante carga
+- modal de detalle expandido a ancho casi completo de pantalla
 
 ### Admin
 - tab usuarios
@@ -230,10 +233,13 @@ Acciones:
 ### Acciones
 - listado principal con KPIs reales desde backend
 - skeletons en loading del módulo
+- precarga de datos entre rutas desde el shell y el sidebar
+- barra superior de progreso durante navegación y fetch
 - filtros por búsqueda, estado, instrumento y equipo responsable
 - tabla moderna con navegación a detalle
 - formulario real de creación en `/acciones/nueva`
 - detalle base en `/acciones/:id`
+- overlay de carga mientras se sube un medio de verificación
 - integración con backend Apps Script
 - soporte inicial de medios de verificación en backend
 
@@ -244,16 +250,20 @@ Acciones:
 Frontend:
 - sidebar y rutas del módulo ya operativas
 - pantalla `/acciones` con cards KPI, filtros y tabla
-- carga visual con skeleton en vez de spinner en el listado
+- carga visual con skeleton en vez de spinner en listado, dashboard y gantt
+- precarga silenciosa de dashboard, acciones y gantt desde el shell para mejorar navegación
+- barra superior de progreso para navegación y consultas activas
 - pantalla `/acciones/nueva` conectada a instrumentos e indicadores activos
 - creación real usando `createAccion`
 - pantalla `/acciones/:id` con detalle base
 - pantalla `/acciones/:id` con carga real de medios desde frontend, edición de nombre visible y descripción previa al upload
+- pantalla `/acciones/:id` con overlay de carga al subir medios para evitar sensación de bloqueo
 - lenguaje de UI ya alineado a “Equipo responsable”
 
 Backend:
 - `Acciones.gs` implementa lectura, detalle, creación, actualización, cambio de estado y medios
 - `Code.gs` ya expone todas las acciones del módulo
+- `Code.gs` incorpora `autorizarServicios()` para forzar autorización de Drive con las constantes reales del proyecto
 - `Setup.gs` ya define hojas `acciones` y `medios_verificacion`
 - invalidación de cache de acciones integrada a `Utils`
 
@@ -326,6 +336,14 @@ Backend:
 - existe cache corta por hoja maestra para `usuarios`, `instrumentos`, `indicadores`, `cortes`, `avances`, `acciones` y `medios_verificacion`
 - `appendRow()` y `updateRowById()` invalidan automáticamente la cache de la hoja afectada
 - las mutaciones de avances, cortes, instrumentos, indicadores y acciones invalidan también la cache agregada correspondiente
+
+### Percepción de carga en frontend
+
+- `AppShell.js` precarga en segundo plano dashboard, acciones y gantt al entrar a la aplicación
+- `Sidebar.js` vuelve a precargar vistas clave al pasar el mouse o enfocar opciones del menú
+- existe barra superior de progreso visual durante navegación y fetch activo
+- dashboard, acciones y gantt usan skeletons estructurados en vez de spinners duros
+- la subida de medios en detalle de acción muestra un overlay de progreso para evitar sensación de congelamiento
 
 TTLs actuales relevantes:
 - `usuarios`: 120 segundos
@@ -400,6 +418,28 @@ Consecuencia:
 - es esperable en el estado actual
 - si en el futuro se busca optimización, revisar carga diferida o división más fina de pantallas
 
+### Autorización de Drive en Apps Script
+
+Hallazgo:
+- la subida de medios puede fallar con errores como `No cuentas con el permiso para llamar a DriveApp.getFoldersByName`
+- ese fallo no depende del frontend sino de permisos pendientes del Web App de Apps Script
+
+Decisión tomada:
+- agregar `autorizarServicios()` en `Code.gs` usando `Config.SHEET_ID` y `Drive.getOrCreateRootFolder_()`
+
+Consecuencia:
+- después de copiar el backend al proyecto real, hay que ejecutar manualmente `autorizarServicios()` desde Apps Script
+- luego se debe volver a publicar el Web App para que la subida a Drive funcione en ambiente real
+
+### Assets con hash en frontend
+
+Hallazgo:
+- errores `404` sobre archivos como `main.<hash>.css` suelen indicar desalineación entre el HTML desplegado y los assets de la build más reciente
+
+Consecuencia:
+- no confundir ese problema con permisos de Drive
+- cuando cambian hashes del bundle, hace falta redeploy del frontend y eventualmente limpiar caché del navegador o CDN
+
 ## Cosas que No se Deben Tocar Sin Revisar Impacto
 
 ### Integración Apps Script
@@ -407,6 +447,7 @@ Consecuencia:
 - no asumir que editar este repo actualiza automáticamente Apps Script
 - no asumir que el backend ya está desplegado solo porque el frontend compila
 - no tocar las acciones del router en `Code.gs` sin actualizar los hooks del frontend correspondientes
+- no olvidar ejecutar y autorizar `autorizarServicios()` si la subida a Drive empieza a fallar por permisos
 
 ### Auth
 - no reintroducir popup OAuth con `window.opener`
@@ -433,6 +474,7 @@ Consecuencia:
 - el backend Apps Script no se actualiza automáticamente desde este repo
 - cualquier cambio en archivos `.gs` requiere copiar al proyecto Apps Script y republicar el Web App
 - la migración CDC existe en código pero requiere ejecución manual con `migracionCDC()`
+- la autorización de Drive también requiere ejecución manual de `autorizarServicios()` en Apps Script cuando corresponda
 - Vercel requiere redeploy para reflejar cambios del frontend
 - las mejoras de rendimiento backend no tienen efecto real hasta republicar el Web App de Apps Script
 
@@ -450,11 +492,12 @@ Dependencias importantes:
 
 Código implementado localmente:
 - fases 1 a 4 completas
-- módulo Acciones en estado funcional inicial
+- módulo Acciones en estado funcional operativo con carga de medios, loaders ricos y navegación optimizada
 - build frontend validado después de los cambios recientes
 
 Pendiente de operación manual o despliegue según ambiente:
 - copiar backend actualizado al proyecto real de Apps Script
+- ejecutar `autorizarServicios()` para conceder permisos de Drive al proyecto publicado
 - volver a desplegar el Web App de Apps Script cuando se agregan o modifican archivos `.gs`
 - desplegar frontend en Vercel después de cambios relevantes
 - ejecutar `migracionCDC()` si la batería CDC aún no fue cargada
@@ -464,9 +507,9 @@ Pendiente de operación manual o despliegue según ambiente:
 
 ### Módulo Acciones
 - edición completa desde frontend
-- carga de medios desde frontend
 - timeline operativo más completo
 - revisión de nombres internos del dominio
+- manejo más fino de errores backend para subida de medios y autorización de Drive
 
 ### Fase 5
 - `Emails.gs`
@@ -494,6 +537,6 @@ Pendiente de operación manual o despliegue según ambiente:
 
 Siguiente corte recomendado:
 1. habilitar edición visual de acciones
-2. habilitar carga de medios desde frontend
+2. mejorar mensajes de error backend en subida de medios y autorización de Drive
 3. revisar si conviene refactor end-to-end de `responsable` a `equipo_responsable`
 4. luego retomar Fase 5 de correos automáticos

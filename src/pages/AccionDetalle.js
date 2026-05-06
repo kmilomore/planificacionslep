@@ -195,7 +195,7 @@ export default function AccionDetalle() {
 
       {feedback ? <Alert type={feedback.type} message={feedback.message} onClose={() => setFeedback(null)} /> : null}
 
-      <section className="bg-white rounded-card shadow-card border border-slate-100 p-6 lg:p-8 max-w-6xl space-y-6">
+      <section className="w-full bg-white rounded-card shadow-card border border-slate-100 p-6 lg:p-8 space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-blue font-semibold font-body">Detalle de acción</p>
@@ -505,6 +505,9 @@ function SummaryRow({ label, value }) {
 
 function formatDate(value) {
   if (!value) return 'Sin fecha';
+  const normalized = normalizeDateValue(value);
+  if (normalized) return normalized;
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('es-CL', {
@@ -516,12 +519,44 @@ function formatDate(value) {
 
 function formatDateTime(value) {
   if (!value) return 'Sin registro';
+  const normalized = normalizeDateTimeValue(value);
+  if (normalized) return normalized;
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('es-CL', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
+}
+
+function normalizeDateValue(value) {
+  const parts = extractDateParts(value);
+  if (!parts) return '';
+
+  return `${parts.day}/${parts.month}/${parts.year}`;
+}
+
+function normalizeDateTimeValue(value) {
+  const parts = extractDateParts(value);
+  if (!parts) return '';
+
+  if (!parts.hours || !parts.minutes) {
+    return `${parts.day}/${parts.month}/${parts.year}`;
+  }
+
+  return `${parts.day}/${parts.month}/${parts.year} ${parts.hours}:${parts.minutes}`;
+}
+
+function extractDateParts(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+  if (!match) return null;
+
+  const [, year, month, day, hours, minutes] = match;
+  return { year, month, day, hours, minutes };
 }
 
 function humanizeTipo(tipo) {
