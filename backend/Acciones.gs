@@ -253,6 +253,8 @@ const Acciones = {
   },
 
   getBundle_(user) {
+    ensureAccionesSchema();
+
     return {
       acciones: Utils.getSheetObjectsCached(Config.SHEETS.ACCIONES, 60).filter((accion) => this.isActive_(accion)),
       medios: Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 60),

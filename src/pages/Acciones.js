@@ -124,11 +124,11 @@ export default function Acciones() {
         indicador: accion.indicador_nombre || accion.indicador_codigo || 'Indicador sin nombre',
         instrumento: accion.instrumento_codigo || 'Sin instrumento',
         responsable: accion.responsable_display || accion.responsable || 'Sin responsable',
-        fechaCompromiso: accion.fecha_compromiso || 'Sin fecha',
+        fechaCompromiso: formatDateTime(accion.fecha_compromiso),
         estado: accion.estado,
         avance: Number(accion.avance || 0),
         medios: accion.medios_count || 0,
-        actualizado: accion.updated_at || accion.created_at || 'Sin actualización',
+        actualizado: formatDateTime(accion.updated_at || accion.created_at),
       }));
   }, [acciones, filters.instrumento]);
 
@@ -161,7 +161,7 @@ export default function Acciones() {
               Gestión operativa vinculada a indicadores institucionales
             </h1>
             <p className="mt-3 text-sm lg:text-base text-slate-500 font-body max-w-2xl">
-              Esta primera entrega deja lista la navegación, la estructura visual y el modelo inicial de seguimiento para avanzar luego con Apps Script, Google Sheets y medios de verificación en Drive.
+              SLEP COLCHAGUA
             </p>
           </div>
 
@@ -215,4 +215,28 @@ export default function Acciones() {
       )}
     </div>
   );
+}
+
+function formatDateTime(value) {
+  if (!value) return 'Sin fecha';
+  const normalized = normalizeDateTimeValue(value);
+  if (normalized) return normalized;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat('es-CL', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function normalizeDateTimeValue(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+  if (!match) return '';
+
+  const [, year, month, day, hours, minutes] = match;
+  if (!hours || !minutes) return `${day}/${month}/${year}`;
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
