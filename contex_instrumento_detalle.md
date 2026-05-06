@@ -35,7 +35,6 @@ Al abrir el detalle de un indicador, el usuario debe ver:
 - resumen visual rapido con cumplimiento, estado de gestion, responsable y cantidad de acciones relacionadas
 - bloque operativo con semaforo, corte activo y fecha objetivo
 - ficha del indicador en lectura o modo edicion
-- ultimo avance del corte activo
 - listado de acciones relacionadas con acceso directo a cada una
 
 ### Nivel 3. Accion concreta
@@ -63,7 +62,6 @@ La pagina:
 - enlaza a `/avance/:indicador_id/:corte_id` para operar el avance
 - consulta acciones relacionadas con `useAccionesPorIndicador(indicadorId)` cuando un indicador esta abierto
 - permite navegar a `/acciones` y `/acciones/:id` desde el detalle
-- resincroniza el modal abierto con la fila actual del indicador para reflejar el ultimo avance visible del corte
 - muestra feedback con `Alert`
 
 ## Dependencias principales
@@ -128,19 +126,6 @@ Debe sentirse como una ficha de control, no solo como un formulario.
 #### Ficha del indicador
 - campos estructurales en lectura
 - campos editables en modo formulario
-
-#### Avance del corte
-- valor reportado
-- porcentaje de cumplimiento
-- semaforo
-- estado de gestion
-- fecha del ultimo avance visible
-- estado de revision del registro visible
-- comentario
-- evidencia
-
-Comportamiento esperado:
-- si el modal esta abierto y cambian los datos del corte o del indicador, el bloque de avance debe refrescarse con la fila mas reciente derivada en frontend
 
 #### Acciones relacionadas
 Si hay acciones asociadas al indicador, mostrar:
@@ -251,7 +236,6 @@ Cada usuario debe incluir:
 - la columna `Acciones declaradas` muestra el total de acciones del instrumento agrupadas por `indicador_id`, sin filtrar por estado
 - en esta vista el responsable visible del indicador es `subdimension`
 - las acciones relacionadas se consultan solo cuando un indicador esta abierto
-- si el modal del indicador permanece abierto y cambian `filas`, el avance mostrado se actualiza con el registro vigente de ese indicador
 - el estado de gestion visible se sigue calculando en frontend con `getEstadoGestion(avance)`
 
 ## Estados especiales
@@ -294,9 +278,6 @@ Orden de prioridad:
 ### Apertura profunda desde URL
 Si llega `requestedIndicadorId`, se busca la fila y se ejecuta `abrirDetalle(indicador, avance)`.
 
-### Resincronizacion del modal
-Si el detalle de un indicador ya esta abierto y `filas` cambia por refresco de avances o acciones, el modal actualiza su `indicador` y su `avance` con la fila vigente para evitar mostrar datos stale.
-
 ### Estado de gestion
 `getEstadoGestion(avance)` clasifica en:
 - `pendiente`
@@ -317,7 +298,6 @@ La relacion clave del modulo ahora es:
 - cambiar nombres de campos en indicadores, avances o acciones rompe lectura del modal sin fallar de forma evidente
 - si backend deja de soportar `indicador_id` en acciones, el bloque relacionado se vacia aunque existan datos
 - si backend deja de exponer acciones del instrumento, la nueva columna puede mostrar conteos incorrectos
-- si se rompe la resincronizacion entre `filas` y `detalle`, el modal puede volver a mostrar un avance viejo aunque la tabla ya tenga el nuevo
 - modificar permisos en frontend sin alinear backend puede exponer CTAs que luego fallen
 - alterar la seleccion automatica de corte puede romper deep links desde Gantt o Dashboard
 - si `subdimension` deja de representar responsable operativo, la vista mostrara un responsable incorrecto aunque compile

@@ -60,6 +60,7 @@ Archivos y zonas relevantes:
 - `hooks/useApi.js`: hooks de consulta y mutación contra el backend
 - `pages/Login.js`: login con Google OAuth redirect
 - `pages/Dashboard.js`: resumen visual de instrumentos
+- `pages/Indicadores.js`: vista global de indicadores con filtros
 - `pages/InstrumentoDetalle.js`: tabla de indicadores por corte
 - `pages/IngresarAvance.js`: formulario de avance
 - `pages/Gantt.js`: calendario anual de cortes
@@ -110,6 +111,7 @@ Responsabilidades:
 Rutas actuales del frontend:
 - `/login`
 - `/dashboard`
+- `/indicadores`
 - `/acciones`
 - `/acciones/nueva`
 - `/acciones/:id`
@@ -121,6 +123,7 @@ Rutas actuales del frontend:
 Comportamiento por ruta:
 - `/login`: recibe el retorno de OAuth, procesa `sessionStorage`, valida sesión contra backend
 - `/dashboard`: muestra tarjetas por instrumento, comparativo de cumplimiento y resumen de próximos cortes
+- `/indicadores`: muestra todos los indicadores del sistema con filtros por tipo, responsable e instrumento
 - `/acciones`: muestra KPIs, filtros y tabla de acciones reales
 - `/acciones/nueva`: crea una acción real asociada a un indicador activo
 - `/acciones/:id`: muestra detalle base, métricas principales y bitácora/medios de la acción
@@ -204,12 +207,18 @@ Acciones:
 - acceso al calendario y al detalle del instrumento
 - skeleton visual rico durante carga inicial
 
+### Indicadores
+- vista global de indicadores sin exigir seleccionar instrumento al entrar
+- filtros por texto, tipo de indicador, responsable e instrumento
+- KPIs simples de visibles, activos, sin meta y responsables unicos
+- acceso directo al detalle del indicador dentro de su instrumento
+
 ### Detalle de Instrumento
 - selector de corte activo
 - tabla de indicadores
 - acceso a ingreso/edición de avance
 - aprobación y observación de avances
-- modal con detalle completo del indicador y del último avance
+- modal con detalle del indicador y sus acciones relacionadas
 
 ### Ingreso de Avance
 - carga del indicador y del corte
