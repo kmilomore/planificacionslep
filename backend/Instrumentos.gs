@@ -6,6 +6,13 @@ const Instrumentos = {
 
   create(data, user) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede crear instrumentos');
+    if (!data.codigo || !data.nombre || !data.tipo_seguimiento) {
+      throw new Error('Código, nombre y tipo de seguimiento son obligatorios');
+    }
+
+    const existente = Utils.buscarEnSheet(Config.SHEETS.INSTRUMENTOS, 'codigo', data.codigo);
+    if (existente) throw new Error(`Ya existe el instrumento "${data.codigo}"`);
+
     const nuevo = {
       id:               Utils.uuid(),
       codigo:           data.codigo,

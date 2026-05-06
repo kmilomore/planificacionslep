@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
+  useCreateIndicador,
   useInstrumentos, useIndicadores,
   useUpdateIndicador, useDeleteIndicador,
   useUsuarios,
@@ -30,12 +31,19 @@ export default function TabIndicadores() {
 
   const [instId, setInstId]     = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [creando, setCreando]   = useState(false);
   const [editando, setEditando] = useState(null);
+  const [nuevo, setNuevo]       = useState({
+    codigo_indicador: '', nombre: '', dimension: '', subdimension: '', tipo_meta: 'porcentaje',
+    meta_valor: '', unidad: '%', peso: '', responsable_id: '', formula: '',
+    fuente_verificacion: '', descripcion: '',
+  });
   const [form, setForm]         = useState({});
   const [feedback, setFeedback] = useState(null);
 
   const { data: indicadores = [], isLoading: loadingInd } = useIndicadores(instId);
 
+  const createMut = useCreateIndicador(instId);
   const updateMut = useUpdateIndicador(instId);
   const deleteMut = useDeleteIndicador(instId);
 
@@ -53,6 +61,28 @@ export default function TabIndicadores() {
     setEditando(ind);
     setForm({ ...ind });
     setFeedback(null);
+  };
+
+  const abrirCreacion = () => {
+    setNuevo({
+      codigo_indicador: '', nombre: '', dimension: '', subdimension: '', tipo_meta: 'porcentaje',
+      meta_valor: '', unidad: '%', peso: '', responsable_id: '', formula: '',
+      fuente_verificacion: '', descripcion: '',
+    });
+    setFeedback(null);
+    setCreando(true);
+  };
+
+  const crear = async () => {
+    try {
+      await createMut.mutateAsync({
+        data: { ...nuevo, instrumento_id: instId },
+      });
+      setFeedback({ type: 'success', msg: 'Indicador creado.' });
+      setCreando(false);
+    } catch (e) {
+      setFeedback({ type: 'error', msg: e.message });
+    }
   };
 
   const guardar = async () => {
@@ -99,13 +129,21 @@ export default function TabIndicadores() {
         </select>
 
         {instId && (
-          <input
-            type="text"
-            placeholder="Buscar por código o nombre…"
-            className="flex-1 min-w-48 border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-          />
+          <>
+            <input
+              type="text"
+              placeholder="Buscar por código o nombre…"
+              className="flex-1 min-w-48 border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+            />
+            <button
+              onClick={abrirCreacion}
+              className="px-4 py-2 text-sm bg-blue text-white rounded-lg hover:bg-navy transition-colors font-body"
+            >
+              + Nuevo indicador
+            </button>
+          </>
         )}
       </div>
 
@@ -195,6 +233,50 @@ export default function TabIndicadores() {
           </div>
         </>
       )}
+
+      <Modal
+        open={creando}
+        onClose={() => setCreando(false)}
+        title="Nuevo indicador"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Código</label>
+            <input
+              type="text"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+              value={nuevo.codigo_indicador}
+              onChange={e => setNuevo(f => ({ ...f, codigo_indicador: e.target.value.toUpperCase() }))}
+            />
+          </div>
+          {CAMPOS_FORM.map(({ key, label, tipo }) => (
+            <FormField
+              key={key}
+              label={label}
+              tipo={tipo}
+              value={nuevo[key] ?? ''}
+              onChange={v => setNuevo(f => ({ ...f, [key]: v }))}
+              usuarios={usuarios}
+            />
+          ))}
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <button
+              onClick={() => setCreando(false)}
+              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-body"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={crear}
+              disabled={createMut.isPending}
+              className="px-4 py-2 text-sm bg-blue text-white rounded-lg hover:bg-navy transition-colors font-body disabled:opacity-50"
+            >
+              {createMut.isPending ? 'Creando…' : 'Crear indicador'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal edición */}
       <Modal

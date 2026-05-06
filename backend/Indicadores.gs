@@ -8,6 +8,15 @@ const Indicadores = {
 
   create(data, user) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede crear indicadores');
+    if (!data.instrumento_id || !data.codigo_indicador || !data.nombre) {
+      throw new Error('Instrumento, código y nombre son obligatorios');
+    }
+
+    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
+    const existente = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INDICADORES))
+      .find(i => i.codigo_indicador === data.codigo_indicador);
+    if (existente) throw new Error(`Ya existe el indicador "${data.codigo_indicador}"`);
+
     const nuevo = {
       id:                  Utils.uuid(),
       instrumento_id:      data.instrumento_id,

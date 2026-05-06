@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { useInstrumentos, useUpdateInstrumento, useUsuarios } from '../../hooks/useApi';
+import {
+  useCreateInstrumento,
+  useInstrumentos,
+  useUpdateInstrumento,
+  useUsuarios,
+} from '../../hooks/useApi';
 import Modal from '../ui/Modal';
 import Alert from '../ui/Alert';
 import Spinner from '../ui/Spinner';
@@ -10,19 +15,47 @@ const TIPO_LABELS = {
   anual_con_hitos:'Anual c/ hitos',
 };
 
+const FORM_NUEVO = {
+  codigo: '',
+  nombre: '',
+  descripcion: '',
+  tipo_seguimiento: 'semestral',
+  color_hex: '#25306B',
+  responsable_id: '',
+};
+
 export default function TabInstrumentos() {
   const { data: instrumentos = [], isLoading } = useInstrumentos();
   const { data: usuarios = [] } = useUsuarios();
+  const createMut = useCreateInstrumento();
   const updateMut = useUpdateInstrumento();
 
+  const [creando, setCreando]   = useState(false);
   const [editando, setEditando] = useState(null);
+  const [nuevo, setNuevo]       = useState(FORM_NUEVO);
   const [form, setForm]         = useState({});
   const [feedback, setFeedback] = useState(null);
+
+  const abrirCreacion = () => {
+    setNuevo(FORM_NUEVO);
+    setFeedback(null);
+    setCreando(true);
+  };
 
   const abrirEdicion = (inst) => {
     setEditando(inst);
     setForm({ nombre: inst.nombre, descripcion: inst.descripcion || '', responsable_id: inst.responsable_id || '' });
     setFeedback(null);
+  };
+
+  const crear = async () => {
+    try {
+      await createMut.mutateAsync({ data: nuevo });
+      setFeedback({ type: 'success', msg: '¡Instrumento creado!' });
+      setCreando(false);
+    } catch (e) {
+      setFeedback({ type: 'error', msg: e.message });
+    }
   };
 
   const guardar = async () => {
@@ -47,6 +80,15 @@ export default function TabInstrumentos() {
       {feedback && (
         <Alert type={feedback.type} message={feedback.msg} onClose={() => setFeedback(null)} />
       )}
+
+      <div className="flex justify-end">
+        <button
+          onClick={abrirCreacion}
+          className="px-4 py-2 text-sm bg-blue text-white rounded-lg hover:bg-navy transition-colors font-body"
+        >
+          + Nuevo instrumento
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {instrumentos.map(inst => (
@@ -79,6 +121,89 @@ export default function TabInstrumentos() {
           </div>
         ))}
       </div>
+
+      <Modal open={creando} onClose={() => setCreando(false)} title="Nuevo instrumento">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Código</label>
+              <input
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+                value={nuevo.codigo}
+                onChange={e => setNuevo(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Tipo de seguimiento</label>
+              <select
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+                value={nuevo.tipo_seguimiento}
+                onChange={e => setNuevo(f => ({ ...f, tipo_seguimiento: e.target.value }))}
+              >
+                <option value="semestral">Semestral</option>
+                <option value="trimestral">Trimestral</option>
+                <option value="anual_con_hitos">Anual c/ hitos</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Nombre</label>
+            <input
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+              value={nuevo.nombre}
+              onChange={e => setNuevo(f => ({ ...f, nombre: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Descripción</label>
+            <textarea
+              rows={3}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30 resize-none"
+              value={nuevo.descripcion}
+              onChange={e => setNuevo(f => ({ ...f, descripcion: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Color</label>
+              <input
+                type="color"
+                className="w-full h-10 border border-gray-200 rounded-lg px-1 py-1"
+                value={nuevo.color_hex}
+                onChange={e => setNuevo(f => ({ ...f, color_hex: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Responsable</label>
+              <select
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+                value={nuevo.responsable_id}
+                onChange={e => setNuevo(f => ({ ...f, responsable_id: e.target.value }))}
+              >
+                <option value="">— Sin asignar —</option>
+                {usuarios.filter(u => u.activo === true || u.activo === 'TRUE' || u.activo === 'true').map(u => (
+                  <option key={u.id} value={u.id}>{u.nombre} ({u.rol})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setCreando(false)}
+              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 font-body"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={crear}
+              disabled={createMut.isPending}
+              className="px-4 py-2 text-sm bg-blue text-white rounded-lg hover:bg-navy transition-colors font-body disabled:opacity-50"
+            >
+              {createMut.isPending ? 'Creando…' : 'Crear'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal edición */}
       <Modal open={!!editando} onClose={() => setEditando(null)} title={`Editar: ${editando?.codigo}`}>

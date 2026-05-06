@@ -26,6 +26,10 @@ export function useInstrumentos() {
   return useApiQuery('instrumentos', 'getInstrumentos');
 }
 
+export function useCreateInstrumento() {
+  return useApiMutation('createInstrumento', ['instrumentos']);
+}
+
 export function useUpdateInstrumento() {
   return useApiMutation('updateInstrumento', ['instrumentos']);
 }
@@ -40,8 +44,8 @@ export function useIndicadores(instrumento_id) {
   );
 }
 
-export function useCreateIndicador() {
-  return useApiMutation('createIndicador', []);
+export function useCreateIndicador(instrumento_id) {
+  return useApiMutation('createIndicador', [['indicadores', instrumento_id]]);
 }
 
 export function useUpdateIndicador(instrumento_id) {
@@ -66,8 +70,8 @@ export function useTodosLosCortes() {
   return useApiQuery('cortes_all', 'getAllCortes');
 }
 
-export function useCreateCorte() {
-  return useApiMutation('createCorte', ['cortes_all']);
+export function useCreateCorte(instrumento_id) {
+  return useApiMutation('createCorte', [['cortes', instrumento_id], 'cortes_all']);
 }
 
 export function useCerrarCorte(instrumento_id) {
