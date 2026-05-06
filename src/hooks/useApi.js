@@ -118,6 +118,33 @@ export function useObservarAvance(corte_id, instrumento_id) {
   ]);
 }
 
+// --- Dashboard ---
+export function useDashboardResumen() {
+  return useApiQuery('dashboard_resumen', 'getDashboardResumen');
+}
+
+export function useDashboardInstrumento(instrumento_id) {
+  return useApiQuery(
+    ['dashboard_instrumento', instrumento_id],
+    'getDashboardInstrumento',
+    { filtros: { instrumento_id } },
+    { enabled: !!instrumento_id }
+  );
+}
+
+export function useGanttData() {
+  return useApiQuery('gantt_data', 'getGanttData');
+}
+
+export function useMetricasCorte(corte_id) {
+  return useApiQuery(
+    ['metricas_corte', corte_id],
+    'getMetricasCorte',
+    { filtros: { corte_id } },
+    { enabled: !!corte_id }
+  );
+}
+
 // --- Usuarios ---
 export function useUsuarios() {
   return useApiQuery('usuarios', 'getUsuarios');
