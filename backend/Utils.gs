@@ -188,6 +188,22 @@ const Utils = {
     CacheService.getScriptCache().remove(this.getSheetCacheKey(sheetName));
   },
 
+  invalidateAccionesCaches(options) {
+    const opts = options || {};
+    const keys = [
+      this.getSheetCacheKey(Config.SHEETS.ACCIONES),
+      this.getSheetCacheKey(Config.SHEETS.MEDIOS_VERIFICACION),
+    ];
+
+    CacheService.getScriptCache().removeAll(Array.from(new Set(keys)));
+
+    if (opts.includeIndicadores) {
+      this.invalidateSheetCache(Config.SHEETS.INDICADORES);
+    }
+
+    this.invalidateDashboardCaches({ instrumentoId: opts.instrumentoId, corteId: opts.corteId });
+  },
+
   getCorteIdsByInstrumento(instrumentoId) {
     if (!instrumentoId) return [];
     return this.getSheetObjects(Config.SHEETS.CORTES)

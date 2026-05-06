@@ -1,14 +1,16 @@
 import { NavLink } from 'react-router-dom';
+import { CalendarRange, ClipboardCheck, LayoutDashboard, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard',    icon: '▦' },
-  { to: '/gantt',     label: 'Calendario',   icon: '▤' },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/acciones', label: 'Acciones', icon: ClipboardCheck },
+  { to: '/gantt', label: 'Calendario', icon: CalendarRange },
 ];
 
 const ADMIN_ITEMS = [
-  { to: '/admin', label: 'Administración', icon: '⚙' },
+  { to: '/admin', label: 'Administración', icon: Settings },
 ];
 
 export default function Sidebar({ onClose }) {
@@ -75,6 +77,8 @@ export default function Sidebar({ onClose }) {
 }
 
 function SidebarLink({ to, label, icon, onClose }) {
+  const Icon = icon;
+
   return (
     <NavLink
       to={to}
@@ -88,7 +92,7 @@ function SidebarLink({ to, label, icon, onClose }) {
         )
       }
     >
-      <span className="text-base leading-none">{icon}</span>
+      <Icon size={18} strokeWidth={2.1} />
       {label}
     </NavLink>
   );

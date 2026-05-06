@@ -53,6 +53,15 @@ function doPost(e) {
       'getGanttData':            () => Dashboard.getGanttData(user),
       'getMetricasCorte':        () => Dashboard.getMetricasCorte(filtros.corte_id, user),
 
+      // Acciones
+      'getAcciones':             () => Acciones.getAll(filtros || {}, user),
+      'getAccion':               () => Acciones.getById(id, user),
+      'createAccion':            () => Acciones.create(data, user),
+      'updateAccion':            () => Acciones.update(id, data, user),
+      'updateEstadoAccion':      () => Acciones.updateEstado(id, data, user),
+      'uploadMedioVerificacion': () => Acciones.uploadMedio(id, data, user),
+      'getMediosAccion':         () => Acciones.getMedios(id || filtros.accion_id, user),
+
       // Emails (admin)
       'enviarReporteManual': () => Emails.enviarReporteCorte(filtros.corte_id),
     };

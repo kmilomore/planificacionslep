@@ -9,7 +9,23 @@ const Config = {
     CORTES:       'cortes',
     INDICADORES:  'indicadores',
     AVANCES:      'avances',
+    ACCIONES:     'acciones',
+    MEDIOS_VERIFICACION: 'medios_verificacion',
     ALERTAS_LOG:  'alertas_log',
+  },
+
+  DRIVE: {
+    ROOT_FOLDER_NAME: 'Planificacion',
+    MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
+    ALLOWED_EXTENSIONS: ['pdf', 'docx', 'xlsx', 'png', 'jpg', 'jpeg', 'webp'],
+    ALLOWED_MIME_TYPES: [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+    ],
   },
 
   SEMAFORO: {

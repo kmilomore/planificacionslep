@@ -9,6 +9,9 @@ import Admin     from './pages/Admin';
 import InstrumentoDetalle from './pages/InstrumentoDetalle';
 import IngresarAvance from './pages/IngresarAvance';
 import Gantt from './pages/Gantt';
+import Acciones from './pages/Acciones';
+import NuevaAccion from './pages/NuevaAccion';
+import AccionDetalle from './pages/AccionDetalle';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +39,9 @@ export default function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/acciones" element={<Acciones />} />
+              <Route path="/acciones/nueva" element={<NuevaAccion />} />
+              <Route path="/acciones/:id" element={<AccionDetalle />} />
               <Route path="/gantt" element={<Gantt />} />
               <Route path="/instrumento/:id" element={<InstrumentoDetalle />} />
               <Route path="/avance/:indicador_id/:corte_id" element={<IngresarAvance />} />
