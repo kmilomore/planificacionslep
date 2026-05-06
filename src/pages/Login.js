@@ -17,6 +17,14 @@ export default function Login() {
     if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
+  useEffect(() => {
+    const logoutMessage = sessionStorage.getItem('auth_logout_message');
+    if (!logoutMessage) return;
+
+    sessionStorage.removeItem('auth_logout_message');
+    setError(logoutMessage);
+  }, []);
+
   const handleToken = useCallback(async (idToken) => {
     setLoading(true);
     setError('');
