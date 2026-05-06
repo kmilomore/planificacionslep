@@ -1095,30 +1095,30 @@ export const useAuth = () => useContext(AuthContext);
 
 ### Fase 1 — Infraestructura base (Semana 1–2)
 - [ ] Crear Google Sheet maestro con todas las hojas y cabeceras
-- [ ] Implementar `Config.gs`, `Utils.gs`, `Auth.gs`
-- [ ] Implementar `Code.gs` (router básico)
-- [ ] Desplegar Apps Script como Web App
-- [ ] Scaffold frontend Vite + React Router + Tailwind
-- [ ] Implementar `AuthContext.jsx` + página `Login.jsx`
-- [ ] Implementar `callApi()` y validar comunicación frontend→backend
+- [x] Implementar `Config.gs`, `Utils.gs`, `Auth.gs`
+- [x] Implementar `Code.gs` (router básico)
+- [x] Desplegar Apps Script como Web App
+- [x] Scaffold frontend + React Router + Tailwind
+- [x] Implementar `AuthContext.jsx` + página `Login.jsx`
+- [x] Implementar `callApi()` y validar comunicación frontend→backend
 
 ### Fase 2 — CRUD de datos maestros (Semana 2–3)
-- [ ] `Instrumentos.gs` + página `Admin.jsx` (tab instrumentos)
-- [ ] `Indicadores.gs` + CRUD en Admin (tab indicadores)
-- [ ] `Cortes.gs` + CRUD en Admin (tab cortes)
-- [ ] Migrar indicadores CDC desde Excel a Google Sheets
+- [x] `Instrumentos.gs` + página `Admin.jsx` (tab instrumentos)
+- [x] `Indicadores.gs` + CRUD en Admin (tab indicadores)
+- [x] `Cortes.gs` + CRUD en Admin (tab cortes)
+- [x] Preparar migración CDC desde Excel a Google Sheets (`migracionCDC()`)
 
 ### Fase 3 — Ingreso de avances (Semana 3–4)
-- [ ] `Avances.gs` (upsert, aprobar, observar)
-- [ ] Página `InstrumentoDetalle.jsx` con tabla de indicadores
-- [ ] Formulario `IngresarAvance.jsx` con cálculo en tiempo real
-- [ ] Validaciones de negocio (comentario obligatorio, corte cerrado)
+- [x] `Avances.gs` (upsert, aprobar, observar)
+- [x] Página `InstrumentoDetalle.jsx` con tabla de indicadores
+- [x] Formulario `IngresarAvance.jsx` con cálculo en tiempo real
+- [x] Validaciones de negocio (comentario obligatorio, corte cerrado)
 
 ### Fase 4 — Dashboard y visualizaciones (Semana 4–5)
-- [ ] `Dashboard.gs` (agregaciones)
-- [ ] Página `Dashboard.jsx` con 4 tarjetas
-- [ ] Gráfico de barras (Recharts)
-- [ ] `Gantt.jsx` con línea de tiempo SVG
+- [x] `Dashboard.gs` (agregaciones)
+- [x] Página `Dashboard.jsx` con 4 tarjetas
+- [x] Gráfico de barras (Recharts)
+- [x] `Gantt.jsx` con línea de tiempo SVG
 
 ### Fase 5 — Automatización de correos (Semana 5–6)
 - [ ] `Emails.gs` + `Templates.gs` con HTML institucional

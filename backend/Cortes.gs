@@ -31,18 +31,23 @@ const Cortes = {
       año:              data.año || new Date().getFullYear(),
     };
     Utils.appendRow(Config.SHEETS.CORTES, nuevo);
+    Utils.invalidateDashboardCaches({ instrumentoId: data.instrumento_id, corteId: nuevo.id });
     return nuevo;
   },
 
   cerrar(id, user) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede cerrar cortes');
+    const corte = Utils.buscarEnSheet(Config.SHEETS.CORTES, 'id', id);
     Utils.updateRowById(Config.SHEETS.CORTES, id, { estado: 'cerrado' });
+    Utils.invalidateDashboardCaches({ instrumentoId: corte?.instrumento_id, corteId: id });
     return { ok: true };
   },
 
   reabrir(id, user) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede reabrir cortes');
+    const corte = Utils.buscarEnSheet(Config.SHEETS.CORTES, 'id', id);
     Utils.updateRowById(Config.SHEETS.CORTES, id, { estado: 'en_curso' });
+    Utils.invalidateDashboardCaches({ instrumentoId: corte?.instrumento_id, corteId: id });
     return { ok: true };
   },
 };

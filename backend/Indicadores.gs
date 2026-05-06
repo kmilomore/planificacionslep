@@ -42,6 +42,7 @@ const Indicadores = {
       activo:              true,
     };
     Utils.appendRow(Config.SHEETS.INDICADORES, nuevo);
+    Utils.invalidateDashboardCaches({ instrumentoId: data.instrumento_id });
     return nuevo;
   },
 
@@ -52,14 +53,18 @@ const Indicadores = {
       meta_valor: true, unidad: true, peso: true, fuente_verificacion: true,
       responsable_id: true, dimension: true, subdimension: true, activo: true,
     };
+    const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', id);
     const updates = Object.fromEntries(Object.entries(data).filter(([k]) => allowed[k]));
     Utils.updateRowById(Config.SHEETS.INDICADORES, id, updates);
+    Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id });
     return { ok: true };
   },
 
   softDelete(id, user) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede desactivar indicadores');
+    const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', id);
     Utils.updateRowById(Config.SHEETS.INDICADORES, id, { activo: false });
+    Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id });
     return { ok: true };
   },
 };

@@ -1,66 +1,66 @@
 const Dashboard = {
   getResumenGeneral(user) {
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    const instrumentos = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INSTRUMENTOS))
-      .filter(i => i.activo === true || i.activo === 'TRUE' || i.activo === 'true');
-    const cortes = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.CORTES));
-    const indicadores = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INDICADORES));
-    const avances = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.AVANCES));
+    const cacheKey = Utils.getCacheKey('resumen');
+    const cached = Utils.getCachedJson(cacheKey);
+    if (cached) return cached;
 
-    return instrumentos.map(inst => this._buildInstrumentSummary(inst, cortes, indicadores, avances));
+    const context = this._loadContext();
+    const result = context.instrumentos.map(inst => this._buildInstrumentSummary(inst, context));
+    return Utils.putCachedJson(cacheKey, result, 120);
   },
 
   getResumenInstrumento(instrumento_id, user) {
     if (!instrumento_id) throw new Error('instrumento_id requerido');
 
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    const instrumentos = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INSTRUMENTOS));
-    const cortes = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.CORTES));
-    const indicadores = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INDICADORES));
-    const avances = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.AVANCES));
+    const cacheKey = Utils.getCacheKey('instrumento', instrumento_id);
+    const cached = Utils.getCachedJson(cacheKey);
+    if (cached) return cached;
 
-    const instrumento = instrumentos.find(i => i.id === instrumento_id);
+    const context = this._loadContext();
+    const instrumento = context.instrumentosById[instrumento_id];
     if (!instrumento) throw new Error('Instrumento no encontrado');
 
-    return this._buildInstrumentSummary(instrumento, cortes, indicadores, avances);
+    const result = this._buildInstrumentSummary(instrumento, context);
+    return Utils.putCachedJson(cacheKey, result, 120);
   },
 
   getGanttData(user) {
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    const instrumentos = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INSTRUMENTOS))
-      .filter(i => i.activo === true || i.activo === 'TRUE' || i.activo === 'true');
-    const cortes = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.CORTES));
+    const cacheKey = Utils.getCacheKey('gantt');
+    const cached = Utils.getCachedJson(cacheKey);
+    if (cached) return cached;
 
-    return instrumentos.map(inst => ({
+    const context = this._loadContext();
+    const result = context.instrumentos.map(inst => ({
       instrumento: inst,
-      cortes: cortes
-        .filter(c => c.instrumento_id === inst.id)
-        .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite))
+      cortes: (context.cortesByInstrumentoId[inst.id] || [])
         .map(corte => ({
           ...corte,
           estado_visual: this._estadoEfectivo(corte),
           dias_para_cierre: Utils.diasHasta(corte.fecha_limite),
         })),
     }));
+    return Utils.putCachedJson(cacheKey, result, 300);
   },
 
   getMetricasCorte(corte_id, user) {
     if (!corte_id) throw new Error('corte_id requerido');
 
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    const corte = Utils.buscarEnSheet(Config.SHEETS.CORTES, 'id', corte_id);
+    const cacheKey = Utils.getCacheKey('metricas', corte_id);
+    const cached = Utils.getCachedJson(cacheKey);
+    if (cached) return cached;
+
+    const context = this._loadContext();
+    const corte = context.cortesById[corte_id];
     if (!corte) throw new Error('Corte no encontrado');
 
-    const indicadores = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INDICADORES))
-      .filter(i => i.instrumento_id === corte.instrumento_id && (i.activo === true || i.activo === 'TRUE' || i.activo === 'true'));
-    const avances = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.AVANCES))
-      .filter(a => a.corte_id === corte_id);
+    const indicadores = context.indicadoresByInstrumentoId[corte.instrumento_id] || [];
+    const avances = context.avancesByCorteId[corte_id] || [];
 
     const total = indicadores.length;
     const enviados = avances.length;
     const pendientes = Math.max(total - enviados, 0);
 
-    return {
+    const result = {
       corte,
       total_indicadores: total,
       indicadores_con_avance: enviados,
@@ -73,12 +73,16 @@ const Dashboard = {
         rojo: avances.filter(a => a.estado_semaforo === 'rojo').length,
       },
     };
+    return Utils.putCachedJson(cacheKey, result, 180);
   },
 
-  _buildInstrumentSummary(instrumento, cortes, indicadores, avances) {
-    const cortesInst = cortes.filter(c => c.instrumento_id === instrumento.id);
-    const indicadoresInst = indicadores.filter(i => i.instrumento_id === instrumento.id && (i.activo === true || i.activo === 'TRUE' || i.activo === 'true'));
-    const avancesInst = avances.filter(a => indicadoresInst.some(i => i.id === a.indicador_id));
+  _buildInstrumentSummary(instrumento, context) {
+    const cortesInst = context.cortesByInstrumentoId[instrumento.id] || [];
+    const indicadoresInst = context.indicadoresByInstrumentoId[instrumento.id] || [];
+    const avancesInst = indicadoresInst
+      .map(ind => context.latestAvanceByIndicadorId[ind.id])
+      .filter(Boolean);
+    const indicadoresConAvance = avancesInst.length;
 
     const proximo_corte = cortesInst
       .filter(c => c.estado !== 'cerrado')
@@ -88,9 +92,7 @@ const Dashboard = {
     let totalPeso = 0;
 
     indicadoresInst.forEach(ind => {
-      const avance = avancesInst
-        .filter(a => a.indicador_id === ind.id)
-        .sort((a, b) => new Date(b.modificado_en || b.ingresado_en || 0) - new Date(a.modificado_en || a.ingresado_en || 0))[0];
+      const avance = context.latestAvanceByIndicadorId[ind.id];
       const peso = parseFloat(ind.peso) || 0;
       const pct = avance ? parseFloat(avance.porcentaje_cumplimiento) || 0 : 0;
       cumplimientoPonderado += pct * peso;
@@ -106,8 +108,8 @@ const Dashboard = {
       cumplimiento_global: cumplimiento,
       semaforo: Utils.calcularSemaforo(cumplimiento),
       total_indicadores: indicadoresInst.length,
-      indicadores_con_avance: new Set(avancesInst.map(a => a.indicador_id)).size,
-      indicadores_pendientes: Math.max(indicadoresInst.length - new Set(avancesInst.map(a => a.indicador_id)).size, 0),
+      indicadores_con_avance: indicadoresConAvance,
+      indicadores_pendientes: Math.max(indicadoresInst.length - indicadoresConAvance, 0),
       proximo_corte,
       dias_para_corte: proximo_corte ? Utils.diasHasta(proximo_corte.fecha_limite) : null,
       desglose_semaforos: {
@@ -122,18 +124,33 @@ const Dashboard = {
     };
   },
 
+  _loadContext() {
+    const ss = Utils.getSpreadsheet();
+    const instrumentos = Utils.getSheetObjects(Config.SHEETS.INSTRUMENTOS, ss)
+      .filter(i => Utils.isTruthy(i.activo));
+    const cortes = Utils.getSheetObjects(Config.SHEETS.CORTES, ss)
+      .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
+    const indicadores = Utils.getSheetObjects(Config.SHEETS.INDICADORES, ss)
+      .filter(i => Utils.isTruthy(i.activo));
+    const avances = Utils.getSheetObjects(Config.SHEETS.AVANCES, ss);
+
+    return {
+      instrumentos,
+      instrumentosById: Utils.indexBy(instrumentos, 'id'),
+      cortesById: Utils.indexBy(cortes, 'id'),
+      cortesByInstrumentoId: Utils.groupBy(cortes, 'instrumento_id'),
+      indicadoresByInstrumentoId: Utils.groupBy(indicadores, 'instrumento_id'),
+      avancesByCorteId: Utils.groupBy(avances, 'corte_id'),
+      latestAvanceByIndicadorId: Utils.latestBy(avances, 'indicador_id', ['modificado_en', 'ingresado_en']),
+    };
+  },
+
   _cumplimientoSimple(indicadores, avances) {
     if (!indicadores.length) return 0;
-    const avanceByIndicador = new Map();
-    avances.forEach(av => {
-      const current = avanceByIndicador.get(av.indicador_id);
-      if (!current || new Date(av.modificado_en || av.ingresado_en || 0) > new Date(current.modificado_en || current.ingresado_en || 0)) {
-        avanceByIndicador.set(av.indicador_id, av);
-      }
-    });
+    const avanceByIndicador = Utils.indexBy(avances, 'indicador_id');
 
     const total = indicadores.reduce((acc, ind) => {
-      const pct = parseFloat(avanceByIndicador.get(ind.id)?.porcentaje_cumplimiento) || 0;
+      const pct = parseFloat((avanceByIndicador[ind.id] || {}).porcentaje_cumplimiento) || 0;
       return acc + pct;
     }, 0);
 

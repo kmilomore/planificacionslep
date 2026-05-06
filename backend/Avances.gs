@@ -42,6 +42,7 @@ const Avances = {
 
     if (existente) {
       Utils.updateRowById(Config.SHEETS.AVANCES, existente.id, payload);
+      Utils.invalidateDashboardCaches({ instrumentoId: indicador.instrumento_id, corteId: data.corte_id });
       return { ...existente, ...payload, id: existente.id };
     }
 
@@ -54,6 +55,7 @@ const Avances = {
       aprobado_en: '',
     };
     Utils.appendRow(Config.SHEETS.AVANCES, nuevo);
+    Utils.invalidateDashboardCaches({ instrumentoId: indicador.instrumento_id, corteId: data.corte_id });
     return nuevo;
   },
 
@@ -78,6 +80,8 @@ const Avances = {
       aprobado_en: Utils.ahora(),
       modificado_en: Utils.ahora(),
     });
+    const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', avance.indicador_id);
+    Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id, corteId: avance.corte_id });
     return { ok: true };
   },
 
@@ -97,6 +101,8 @@ const Avances = {
       comentario: String(comentario).trim(),
       modificado_en: Utils.ahora(),
     });
+    const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', avance.indicador_id);
+    Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id, corteId: avance.corte_id });
     return { ok: true };
   },
 };

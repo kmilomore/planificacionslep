@@ -26,6 +26,7 @@ const Instrumentos = {
       creado_en:        Utils.ahora(),
     };
     Utils.appendRow(Config.SHEETS.INSTRUMENTOS, nuevo);
+    Utils.invalidateDashboardCaches({ instrumentoId: nuevo.id });
     return nuevo;
   },
 
@@ -34,6 +35,7 @@ const Instrumentos = {
     const allowed = { nombre: true, descripcion: true, responsable_id: true, color_hex: true, activo: true };
     const updates = Object.fromEntries(Object.entries(data).filter(([k]) => allowed[k]));
     Utils.updateRowById(Config.SHEETS.INSTRUMENTOS, id, updates);
+    Utils.invalidateDashboardCaches({ instrumentoId: id });
     return { ok: true };
   },
 };
