@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
 import { callApi } from '../../config/api';
 import Sidebar from './Sidebar';
+import NavigationProgress from '../ui/NavigationProgress';
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -45,6 +46,8 @@ export default function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-light font-body">
+      <NavigationProgress />
+
       {/* Sidebar desktop */}
       <div className="hidden lg:flex">
         <Sidebar onPrefetchRoute={prefetchRouteData} />

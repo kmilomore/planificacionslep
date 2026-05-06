@@ -2,8 +2,61 @@ import { useState } from 'react';
 import Modal from '../components/ui/Modal';
 import Spinner from '../components/ui/Spinner';
 import { useGanttData, useMetricasCorte } from '../hooks/useApi';
+import Skeleton from '../components/ui/Skeleton';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function GanttSkeleton() {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+      </div>
+
+      <div className="bg-white rounded-card shadow-card p-5 overflow-x-auto">
+        <div className="min-w-[980px] space-y-3">
+          <div className="grid grid-cols-[220px_repeat(12,minmax(0,1fr))] gap-2 items-center">
+            <Skeleton className="h-4 w-24" />
+            {MONTHS.map((month) => (
+              <Skeleton key={month} className="mx-auto h-4 w-8" />
+            ))}
+          </div>
+
+          {Array.from({ length: 4 }).map((_, rowIndex) => (
+            <div key={rowIndex} className="grid grid-cols-[220px_repeat(12,minmax(0,1fr))] gap-2 items-stretch">
+              <div className="rounded-xl border border-gray-100 px-4 py-3 bg-gray-50 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3 w-3 rounded-full" rounded="rounded-full" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <Skeleton className="h-4 w-40" />
+              </div>
+
+              {MONTHS.map((month, monthIndex) => (
+                <div key={`${month}-${monthIndex}`} className="min-h-20 rounded-xl border border-gray-100 p-2 bg-white">
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                    {monthIndex % 3 === 0 ? <Skeleton className="h-7 w-3/4 rounded-lg" /> : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Skeleton className="h-3 w-3 rounded-full" rounded="rounded-full" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Gantt() {
   const { data = [], isLoading } = useGanttData();
@@ -11,7 +64,7 @@ export default function Gantt() {
   const { data: metricas, isLoading: loadingMetricas } = useMetricasCorte(selectedCorte?.id);
 
   if (isLoading) {
-    return <div className="p-6 flex justify-center"><Spinner size="lg" /></div>;
+    return <GanttSkeleton />;
   }
 
   return (

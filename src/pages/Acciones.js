@@ -11,13 +11,35 @@ import Skeleton from '../components/ui/Skeleton';
 function AccionesSkeleton() {
   return (
     <div className="space-y-6">
+      <section className="relative overflow-hidden rounded-[28px] bg-white shadow-card border border-slate-100 p-6 lg:p-8">
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-sky-50 via-cyan-50 to-transparent pointer-events-none" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-10 w-full max-w-2xl" />
+            <Skeleton className="h-4 w-full max-w-xl" />
+            <Skeleton className="h-4 w-5/6 max-w-lg" />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Skeleton className="h-12 w-40" />
+            <Skeleton className="h-12 w-40" />
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="bg-white rounded-card shadow-card border border-slate-100 p-5 space-y-4">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-20" />
+            <div className="flex items-center justify-between gap-3">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-8 rounded-full" rounded="rounded-full" />
+            </div>
+            <Skeleton className="h-10 w-24" />
             <Skeleton className="h-2 w-full rounded-full" rounded="rounded-full" />
-            <Skeleton className="h-3 w-32" />
+            <div className="flex items-center justify-between gap-3">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-3 w-12" />
+            </div>
           </div>
         ))}
       </section>
@@ -29,9 +51,28 @@ function AccionesSkeleton() {
           <Skeleton className="h-11 w-full" />
           <Skeleton className="h-11 w-full" />
         </div>
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-8 w-28 rounded-full" rounded="rounded-full" />
+          ))}
+        </div>
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-16 w-full" />
+            <div key={index} className="grid gap-3 rounded-2xl border border-slate-100 p-4 lg:grid-cols-[1.6fr_1fr_160px_140px]">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <Skeleton className="h-10 w-full rounded-full" rounded="rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20 ml-auto" />
+                <Skeleton className="h-3 w-24 ml-auto" />
+              </div>
+            </div>
           ))}
         </div>
       </section>
