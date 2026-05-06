@@ -47,7 +47,7 @@ export default function AccionDetalle() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <Metric label="Responsable" value={accion.responsable_display || accion.responsable} />
+          <Metric label="Equipo responsable" value={accion.responsable_display || accion.responsable} />
           <Metric label="Instrumento" value={accion.instrumento_nombre || accion.instrumento_codigo || 'Sin instrumento'} />
           <Metric label="Avance" value={`${accion.avance}%`} />
           <Metric label="Estado actual" value={accion.estado.replace('_', ' ')} />

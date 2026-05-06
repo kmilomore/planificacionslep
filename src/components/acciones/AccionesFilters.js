@@ -8,7 +8,7 @@ export default function AccionesFilters({ filters, onChange, instrumentos, respo
             type="search"
             value={filters.search}
             onChange={(event) => onChange('search', event.target.value)}
-            placeholder="Acción, indicador o responsable"
+            placeholder="Acción, indicador o equipo"
             className="rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:border-blue"
           />
         </label>
@@ -43,7 +43,7 @@ export default function AccionesFilters({ filters, onChange, instrumentos, respo
         </label>
 
         <label className="flex flex-col gap-2 text-sm font-body text-slate-600">
-          Responsable
+          Equipo responsable
           <select
             value={filters.responsable}
             onChange={(event) => onChange('responsable', event.target.value)}

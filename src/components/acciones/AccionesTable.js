@@ -12,7 +12,7 @@ export default function AccionesTable({ acciones }) {
               <th className="text-left px-5 py-4 font-semibold">Acción</th>
               <th className="text-left px-5 py-4 font-semibold">Indicador</th>
               <th className="text-left px-5 py-4 font-semibold">Instrumento</th>
-              <th className="text-left px-5 py-4 font-semibold">Responsable</th>
+              <th className="text-left px-5 py-4 font-semibold">Equipo responsable</th>
               <th className="text-left px-5 py-4 font-semibold">Compromiso</th>
               <th className="text-left px-5 py-4 font-semibold">Estado</th>
               <th className="text-left px-5 py-4 font-semibold">Avance</th>
