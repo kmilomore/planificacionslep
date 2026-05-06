@@ -36,7 +36,7 @@ export default function TabCortes() {
   const autocodigo = () => {
     if (!instrActual || !form.nombre_corte) return '';
     const prefijo = instrActual.codigo;
-    const clean   = form.nombre_corte.replace(/\s+/g, '-').toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+    const clean   = form.nombre_corte.replace(/\s+/g, '-').toUpperCase().replace(/[^A-Z0-9-]/g, '');
     return `${prefijo}-${clean}`;
   };
 
