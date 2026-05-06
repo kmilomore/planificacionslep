@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   useAprobarAvance,
+  useAccionesPorIndicador,
   useAvancesPorCorte,
   useCortesPorInstrumento,
   useIndicadores,
@@ -56,28 +57,35 @@ export default function InstrumentoDetalle() {
       return;
     }
 
-    const abierto = cortes.find(c => c.estado !== 'cerrado');
-    setCorteId(actual => actual || abierto?.id || cortes[0].id);
+    const abierto = cortes.find((corte) => corte.estado !== 'cerrado');
+    setCorteId((actual) => actual || abierto?.id || cortes[0].id);
   }, [cortes, requestedCorteId]);
 
   const { data: avances = [], isLoading: loadingAvances } = useAvancesPorCorte(corteId);
   const aprobarMut = useAprobarAvance(corteId, id);
   const observarMut = useObservarAvance(corteId, id);
   const updateIndicadorMut = useUpdateIndicador(id);
+  const indicadorDetalleId = detalle?.indicador?.id || '';
+  const { data: accionesRelacionadasData, isLoading: loadingAccionesRelacionadas } = useAccionesPorIndicador(indicadorDetalleId);
 
-  const instrumento = instrumentos.find(inst => inst.id === id);
-  const corteActual = cortes.find(c => c.id === corteId);
+  const instrumento = instrumentos.find((inst) => inst.id === id);
+  const corteActual = cortes.find((corte) => corte.id === corteId);
   const puedeEditarIndicador = user?.rol === 'admin';
 
   const filas = useMemo(() => {
-    const avanceByIndicador = new Map(avances.map(av => [av.indicador_id, av]));
-    return indicadores.map(ind => ({
-      indicador: ind,
-      avance: avanceByIndicador.get(ind.id) || null,
-      puedeEditar: user?.rol === 'admin' || ind.responsable_id === user?.id,
+    const avanceByIndicador = new Map(avances.map((avance) => [avance.indicador_id, avance]));
+    return indicadores.map((indicador) => ({
+      indicador,
+      avance: avanceByIndicador.get(indicador.id) || null,
+      puedeEditar: user?.rol === 'admin' || indicador.responsable_id === user?.id,
       puedeRevisar: user?.rol === 'admin' || user?.rol === 'director_ejecutivo',
     }));
   }, [avances, indicadores, user]);
+
+  const accionesRelacionadas = useMemo(() => {
+    if (Array.isArray(accionesRelacionadasData)) return accionesRelacionadasData;
+    return accionesRelacionadasData?.items || [];
+  }, [accionesRelacionadasData]);
 
   useEffect(() => {
     if (!requestedIndicadorId || !filas.length) return;
@@ -92,7 +100,7 @@ export default function InstrumentoDetalle() {
     setSearchParams(nextParams, { replace: true });
   }, [filas, requestedIndicadorId, searchParams, setSearchParams]);
 
-  const nombreUsuario = (userId) => usuarios.find(u => u.id === userId)?.nombre || '—';
+  const nombreUsuario = (userId) => usuarios.find((entry) => entry.id === userId)?.nombre || '—';
 
   const abrirDetalle = (indicador, avance) => {
     setDetalle({ indicador, avance });
@@ -139,9 +147,11 @@ export default function InstrumentoDetalle() {
     if (!detalle?.indicador?.id) return;
     try {
       await updateIndicadorMut.mutateAsync({ id: detalle.indicador.id, data: detalleForm });
-      setDetalle(actual => actual
-        ? { ...actual, indicador: { ...actual.indicador, ...detalleForm } }
-        : actual);
+      setDetalle((actual) => (
+        actual
+          ? { ...actual, indicador: { ...actual.indicador, ...detalleForm } }
+          : actual
+      ));
       setFeedback({ type: 'success', msg: 'Indicador actualizado.' });
       setEditandoDetalle(false);
     } catch (error) {
@@ -178,9 +188,9 @@ export default function InstrumentoDetalle() {
           <select
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
             value={corteId}
-            onChange={e => setCorteId(e.target.value)}
+            onChange={(e) => setCorteId(e.target.value)}
           >
-            {cortes.map(corte => (
+            {cortes.map((corte) => (
               <option key={corte.id} value={corte.id}>{corte.nombre_corte}</option>
             ))}
           </select>
@@ -209,14 +219,6 @@ export default function InstrumentoDetalle() {
           </thead>
           <tbody>
             {filas.map(({ indicador, avance, puedeEditar, puedeRevisar }, index) => {
-              const badge = avance?.estado_semaforo === 'verde'
-                ? 'bg-green-100 text-green-700'
-                : avance?.estado_semaforo === 'amarillo'
-                  ? 'bg-yellow-100 text-yellow-700'
-                  : avance?.estado_semaforo === 'rojo'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-gray-100 text-gray-500';
-
               const estadoGestion = getEstadoGestion(avance);
 
               return (
@@ -235,7 +237,7 @@ export default function InstrumentoDetalle() {
                   </td>
                   <td className="px-4 py-3 text-center font-semibold text-navy">{avance ? `${avance.porcentaje_cumplimiento}%` : '—'}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSemaforoBadgeClass(avance?.estado_semaforo)}`}>
                       {avance?.estado_semaforo || 'sin dato'}
                     </span>
                   </td>
@@ -306,44 +308,112 @@ export default function InstrumentoDetalle() {
         open={!!detalle}
         onClose={cerrarDetalle}
         title={detalle ? `${detalle.indicador.codigo_indicador} · ${detalle.indicador.nombre}` : 'Detalle del indicador'}
-        size="lg"
+        size="xl"
       >
         {detalle && (
           <div className="space-y-5 font-body text-sm">
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-xs text-gray-500">Revisa el indicador y el avance asociado al corte seleccionado.</p>
-              {puedeEditarIndicador && (
-                <div className="flex items-center gap-2">
-                  {editandoDetalle ? (
-                    <>
+              <p className="text-xs text-gray-500">Revisa el indicador, su avance y las acciones vinculadas al corte seleccionado.</p>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) && (
+                  <Link
+                    to={`/avance/${detalle.indicador.id}/${corteId}`}
+                    className="px-3 py-1.5 text-xs border border-blue/20 text-blue rounded-lg hover:bg-blue/5"
+                  >
+                    {detalle.avance?.id ? 'Editar avance' : 'Ingresar avance'}
+                  </Link>
+                )}
+                <Link
+                  to="/acciones"
+                  className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:border-blue hover:text-blue"
+                >
+                  Ir a acciones
+                </Link>
+                {puedeEditarIndicador && (
+                  <div className="flex items-center gap-2">
+                    {editandoDetalle ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            setDetalleForm(buildDetalleForm(detalle.indicador));
+                            setEditandoDetalle(false);
+                          }}
+                          className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Cancelar edición
+                        </button>
+                        <button
+                          onClick={guardarDetalle}
+                          disabled={updateIndicadorMut.isPending}
+                          className="px-3 py-1.5 text-xs bg-blue text-white rounded-lg hover:bg-navy disabled:opacity-50"
+                        >
+                          {updateIndicadorMut.isPending ? 'Guardando…' : 'Guardar indicador'}
+                        </button>
+                      </>
+                    ) : (
                       <button
-                        onClick={() => {
-                          setDetalleForm(buildDetalleForm(detalle.indicador));
-                          setEditandoDetalle(false);
-                        }}
-                        className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                        onClick={() => setEditandoDetalle(true)}
+                        className="px-3 py-1.5 text-xs bg-navy text-white rounded-lg hover:bg-blue"
                       >
-                        Cancelar edición
+                        Editar información
                       </button>
-                      <button
-                        onClick={guardarDetalle}
-                        disabled={updateIndicadorMut.isPending}
-                        className="px-3 py-1.5 text-xs bg-blue text-white rounded-lg hover:bg-navy disabled:opacity-50"
-                      >
-                        {updateIndicadorMut.isPending ? 'Guardando…' : 'Guardar indicador'}
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => setEditandoDetalle(true)}
-                      className="px-3 py-1.5 text-xs bg-navy text-white rounded-lg hover:bg-blue"
-                    >
-                      Editar información
-                    </button>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+              <ResumenCard
+                label="Cumplimiento"
+                value={detalle.avance ? `${detalle.avance.porcentaje_cumplimiento}%` : 'Sin dato'}
+                helper={detalle.indicador.meta_valor ? `Meta ${detalle.indicador.meta_valor} ${detalle.indicador.unidad || ''}`.trim() : 'Sin meta registrada'}
+                tone="blue"
+              />
+              <ResumenCard
+                label="Estado de gestión"
+                value={getEstadoGestion(detalle.avance).label}
+                helper={detalle.avance?.estado_revision || 'Sin revisión'}
+                tone="emerald"
+              />
+              <ResumenCard
+                label="Responsable"
+                value={nombreUsuario(detalle.indicador.responsable_id)}
+                helper={detalle.indicador.dimension || 'Sin dimensión'}
+                tone="slate"
+              />
+              <ResumenCard
+                label="Acciones relacionadas"
+                value={String(accionesRelacionadas.length)}
+                helper={loadingAccionesRelacionadas ? 'Buscando acciones...' : 'Vinculadas a este indicador'}
+                tone="amber"
+              />
+            </div>
+
+            {!editandoDetalle && (
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Vista operativa</p>
+                    <h3 className="mt-1 text-base font-semibold text-navy">Lectura rápida del indicador</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 font-medium ${getSemaforoBadgeClass(detalle.avance?.estado_semaforo)}`}>
+                      Semáforo: {detalle.avance?.estado_semaforo || 'sin dato'}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 font-medium text-slate-600 border border-slate-200">
+                      Corte: {corteActual?.nombre_corte || 'Sin corte'}
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 font-medium text-slate-600 border border-slate-200">
+                      Fecha objetivo: {formatDateValue(detalle.indicador.fecha_cumplimiento_2026)}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {detalle.indicador.descripcion || 'Este indicador aún no tiene descripción operativa registrada.'}
+                </p>
+              </div>
+            )}
 
             {editandoDetalle ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -353,7 +423,7 @@ export default function InstrumentoDetalle() {
                     label={label}
                     tipo={tipo}
                     value={detalleForm[key] ?? ''}
-                    onChange={value => setDetalleForm(actual => ({ ...actual, [key]: value }))}
+                    onChange={(value) => setDetalleForm((actual) => ({ ...actual, [key]: value }))}
                     usuarios={usuarios}
                   />
                 ))}
@@ -392,6 +462,59 @@ export default function InstrumentoDetalle() {
               <DetalleBlock label="Comentario" value={detalle.avance?.comentario || 'Sin comentario'} />
               <DetalleBlock label="Evidencia" value={detalle.avance?.evidencia_url || 'Sin evidencia'} isLink={!!detalle.avance?.evidencia_url} />
             </div>
+
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-sm font-semibold text-navy">Acciones relacionadas con este indicador</h3>
+                  <p className="text-xs text-gray-500 mt-1">Si existen acciones ligadas al indicador, se muestran aquí para seguimiento cruzado.</p>
+                </div>
+                <Link to="/acciones/nueva" className="text-xs font-medium text-blue hover:underline">
+                  Crear nueva acción
+                </Link>
+              </div>
+
+              {loadingAccionesRelacionadas ? (
+                <div className="flex justify-center py-6"><Spinner /></div>
+              ) : accionesRelacionadas.length ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {accionesRelacionadas.map((accion) => (
+                    <div key={accion.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-navy">{accion.nombre || 'Acción sin nombre'}</p>
+                          <p className="text-xs text-slate-500 mt-1">{accion.descripcion || 'Sin descripción operativa registrada.'}</p>
+                        </div>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${getAccionEstadoBadgeClass(accion.estado)}`}>
+                          {accion.estado || 'sin estado'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                        <MiniMetric label="Avance" value={`${Number(accion.avance || 0)}%`} />
+                        <MiniMetric label="Responsable" value={accion.responsable_display || accion.responsable || '—'} />
+                        <MiniMetric label="Compromiso" value={formatDateValue(accion.fecha_compromiso)} />
+                        <MiniMetric label="Actualizada" value={formatDateValue(accion.updated_at || accion.created_at)} />
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <span className="text-[11px] text-slate-400">
+                          {accion.indicador_nombre || detalle.indicador.nombre || 'Indicador relacionado'}
+                        </span>
+                        <Link to={`/acciones/${accion.id}`} className="text-xs font-medium text-blue hover:underline">
+                          Ver acción
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+                  <p className="text-sm font-medium text-slate-600">No hay acciones vinculadas a este indicador.</p>
+                  <p className="mt-1 text-xs text-slate-500">Puedes crear una acción para convertir el seguimiento del indicador en gestión operativa.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>
@@ -412,7 +535,7 @@ export default function InstrumentoDetalle() {
             rows={5}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30 resize-none"
             value={comentarioObservacion}
-            onChange={e => setComentarioObservacion(e.target.value)}
+            onChange={(e) => setComentarioObservacion(e.target.value)}
           />
           <div className="flex justify-end gap-2">
             <button
@@ -462,6 +585,32 @@ function DetalleBlock({ label, value, isLink = false }) {
   );
 }
 
+function ResumenCard({ label, value, helper, tone = 'slate' }) {
+  const tones = {
+    blue: 'border-blue-100 bg-blue-50/80 text-blue',
+    emerald: 'border-emerald-100 bg-emerald-50/80 text-emerald-700',
+    amber: 'border-amber-100 bg-amber-50/80 text-amber-700',
+    slate: 'border-slate-200 bg-slate-50 text-slate-700',
+  };
+
+  return (
+    <div className={`rounded-2xl border p-4 ${tones[tone] || tones.slate}`}>
+      <p className="text-[11px] uppercase tracking-[0.18em] opacity-80">{label}</p>
+      <p className="mt-2 text-xl font-semibold">{value}</p>
+      <p className="mt-1 text-xs opacity-80">{helper}</p>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }) {
+  return (
+    <div className="rounded-xl bg-slate-50 px-3 py-2">
+      <p className="text-[11px] uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <p className="mt-1 text-sm font-medium text-slate-700">{value || '—'}</p>
+    </div>
+  );
+}
+
 function buildDetalleForm(indicador) {
   return {
     nombre: indicador.nombre || '',
@@ -505,6 +654,36 @@ function getEstadoGestion(avance) {
   return { label: 'borrador', badgeClassName: 'bg-gray-100 text-gray-500' };
 }
 
+function getSemaforoBadgeClass(estado) {
+  if (estado === 'verde') return 'bg-emerald-100 text-emerald-700';
+  if (estado === 'amarillo') return 'bg-amber-100 text-amber-700';
+  if (estado === 'rojo') return 'bg-red-100 text-red-700';
+  return 'bg-gray-100 text-gray-500';
+}
+
+function getAccionEstadoBadgeClass(estado) {
+  if (estado === 'completada') return 'bg-emerald-100 text-emerald-700';
+  if (estado === 'reportada') return 'bg-amber-100 text-amber-700';
+  if (estado === 'en_progreso') return 'bg-blue-100 text-blue';
+  if (estado === 'planificada') return 'bg-slate-100 text-slate-600';
+  return 'bg-gray-100 text-gray-500';
+}
+
+function formatDateValue(value) {
+  if (!value) return '—';
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(parsed);
+  }
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return String(value);
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
 function FormField({ label, tipo, value, onChange, usuarios }) {
   return (
     <div className={tipo === 'textarea' ? 'md:col-span-2' : ''}>
@@ -514,16 +693,16 @@ function FormField({ label, tipo, value, onChange, usuarios }) {
           rows={4}
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30 resize-none"
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
         />
       ) : tipo === 'select_user' ? (
         <select
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
         >
           <option value="">— Selecciona responsable —</option>
-          {usuarios.map(usuario => (
+          {usuarios.map((usuario) => (
             <option key={usuario.id} value={usuario.id}>{usuario.nombre}</option>
           ))}
         </select>
@@ -531,9 +710,9 @@ function FormField({ label, tipo, value, onChange, usuarios }) {
         <select
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
         >
-          {TIPO_META_OPS.map(opcion => (
+          {TIPO_META_OPS.map((opcion) => (
             <option key={opcion} value={opcion}>{opcion}</option>
           ))}
         </select>
@@ -542,7 +721,7 @@ function FormField({ label, tipo, value, onChange, usuarios }) {
           type="text"
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
         />
       )}
     </div>

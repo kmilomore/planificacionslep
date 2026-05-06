@@ -166,6 +166,15 @@ export function useAcciones(filtros = {}) {
   );
 }
 
+export function useAccionesPorIndicador(indicador_id) {
+  return useApiQuery(
+    ['acciones', { indicador_id }],
+    'getAcciones',
+    { filtros: { indicador_id } },
+    { enabled: !!indicador_id }
+  );
+}
+
 export function useAccion(id) {
   return useApiQuery(
     ['accion', id],
