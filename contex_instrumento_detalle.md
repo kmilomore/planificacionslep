@@ -28,7 +28,7 @@ La pantalla debe comportarse como una consola de seguimiento por instrumento.
 ### Nivel 1. Vista general del instrumento
 - encabezado con identidad del instrumento
 - selector de corte activo
-- tabla de indicadores con estado, responsable y acciones disponibles
+- tabla de indicadores con estado, responsable, cantidad de acciones planificadas y acciones disponibles
 
 ### Nivel 2. Vista operativa del indicador
 Al abrir el detalle de un indicador, el usuario debe ver:
@@ -56,6 +56,7 @@ La pagina:
 - carga cortes del instrumento con `useCortesPorInstrumento(id)`
 - selecciona automaticamente el corte inicial
 - carga avances del corte activo con `useAvancesPorCorte(corteId)`
+- carga acciones del instrumento con `useAcciones({ instrumento_id: id })` para calcular cantidades por indicador
 - deriva filas con permisos de edicion y revision
 - abre el detalle del indicador al hacer click o al aterrizar por deep link
 - permite editar campos del indicador cuando el usuario es `admin`
@@ -73,6 +74,7 @@ La pagina:
 - `useIndicadores(id)` para poblar el instrumento
 - `useCortesPorInstrumento(id)` para el control del corte
 - `useAvancesPorCorte(corteId)` para el estado del corte actual
+- `useAcciones({ instrumento_id: id })` para contar acciones planificadas por indicador en la tabla
 - `useUpdateIndicador(id)` para guardar cambios estructurales
 - `useAprobarAvance()` y `useObservarAvance()` para revision de avances
 - `useAccionesPorIndicador(indicadorId)` para mostrar acciones relacionadas
@@ -93,10 +95,11 @@ Cada fila debe priorizar lectura operativa. Muestra:
 - nombre del indicador
 - dimension y equipo o subdimension
 - meta y fecha objetivo
+- cantidad de acciones planificadas asociadas al indicador
 - cumplimiento del corte
 - semaforo
 - estado de gestion
-- responsable
+- responsable, entendido como `subdimension`
 - ultimo comentario
 - acciones por fila
 
@@ -112,7 +115,7 @@ Debe sentirse como una ficha de control, no solo como un formulario.
 #### Resumen visual
 - card de cumplimiento
 - card de estado de gestion
-- card de responsable
+- card de responsable, usando `subdimension`
 - card de cantidad de acciones relacionadas
 
 #### Lectura rapida
@@ -187,6 +190,10 @@ Cada indicador debe incluir:
 - `nota_tecnica_2026`
 - `estado_indicador`
 
+Nota de negocio visible:
+- para esta vista, `subdimension` se considera el dato principal de responsable operativo
+- `responsable_id` queda como respaldo para mostrar nombre de usuario solo si `subdimension` viene vacio
+
 ### `useAvancesPorCorte(corteId)`
 Cada avance debe incluir:
 - `id`
@@ -213,6 +220,13 @@ La consulta debe exponer acciones filtradas por `indicador_id` y cada item debie
 - `updated_at`
 - `indicador_nombre`
 
+### `useAcciones({ instrumento_id: id })`
+La consulta se reutiliza tambien para construir la columna de acciones planificadas en la tabla.
+
+Regla de conteo esperada:
+- agrupar por `indicador_id`
+- contar solo acciones con `estado === planificada`
+
 ### `useUsuarios()`
 Cada usuario debe incluir:
 - `id`
@@ -228,6 +242,8 @@ Cada usuario debe incluir:
 - puede editar avance el `admin` o el responsable del indicador
 - pueden revisar avances `admin` y `director_ejecutivo`
 - si el corte actual esta cerrado, no se habilita ingreso o edicion de avance
+- la columna `Acciones planificadas` muestra solo acciones del instrumento cuyo estado sea `planificada`, agrupadas por `indicador_id`
+- en esta vista el responsable visible del indicador es `subdimension`
 - las acciones relacionadas se consultan solo cuando un indicador esta abierto
 - el estado de gestion visible se sigue calculando en frontend con `getEstadoGestion(avance)`
 
@@ -264,6 +280,7 @@ Orden de prioridad:
 
 ### Filas derivadas
 `filas` usa `useMemo` para unir indicadores con avances y calcular:
+- `accionesPlanificadas`
 - `puedeEditar`
 - `puedeRevisar`
 
@@ -283,14 +300,16 @@ Si llega `requestedIndicadorId`, se busca la fila y se ejecuta `abrirDetalle(ind
 La relacion clave del modulo ahora es:
 - `indicador.id` -> filtro `indicador_id`
 - `getAcciones({ indicador_id })` -> listado operativo dentro del detalle del indicador
+- `getAcciones({ instrumento_id })` -> conteo de acciones planificadas por indicador en la tabla principal
 
 ## Riesgos al tocar este modulo
 
 - cambiar nombres de campos en indicadores, avances o acciones rompe lectura del modal sin fallar de forma evidente
 - si backend deja de soportar `indicador_id` en acciones, el bloque relacionado se vacia aunque existan datos
+- si backend deja de exponer acciones del instrumento o cambia el estado `planificada`, la nueva columna puede mostrar conteos incorrectos
 - modificar permisos en frontend sin alinear backend puede exponer CTAs que luego fallen
 - alterar la seleccion automatica de corte puede romper deep links desde Gantt o Dashboard
-- si cambia el shape de `usuarios`, el responsable puede quedar en blanco
+- si `subdimension` deja de representar responsable operativo, la vista mostrara un responsable incorrecto aunque compile
 
 ## Mejoras visuales, UI y UX propuestas
 
@@ -301,6 +320,7 @@ La relacion clave del modulo ahora es:
 5. Mostrar tooltips con definiciones de semaforo, estado de gestion y tipo de meta.
 6. Resaltar automaticamente la fila del indicador abierta en el modal.
 7. Incorporar filtros rapidos por responsable, semaforo y estado de gestion dentro del instrumento.
+Responsable aqui debe mapear a `subdimension`.
 8. Permitir busqueda por codigo o nombre del indicador sin salir de la vista.
 9. Mostrar contadores por estado encima de la tabla como chips clickeables.
 10. Cambiar los badges actuales por una paleta mas consistente y con mejor contraste.
@@ -315,7 +335,7 @@ La relacion clave del modulo ahora es:
 19. Mostrar chips de contexto como dimension, subdimension y equipo con jerarquia visual real.
 20. Incluir un panel lateral con `proximos vencimientos` del instrumento.
 21. Habilitar un modo `solo pendientes` para que jefaturas vean rapido lo que requiere accion.
-22. Mostrar si un indicador no tiene responsable asignado con una alerta visual clara.
+22. Mostrar si un indicador no tiene `subdimension` asignada con una alerta visual clara.
 23. Transformar el empty state de acciones en un CTA contextual que precargue el indicador al crear la accion.
 24. Incorporar confirmaciones mas claras y resumidas tras aprobar u observar un avance.
 25. Agregar navegacion entre indicadores dentro del modal sin cerrarlo.

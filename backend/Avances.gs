@@ -61,8 +61,12 @@ const Avances = {
 
   getByCorte(corte_id, user) {
     if (!corte_id) throw new Error('corte_id requerido');
-    return Utils.getSheetObjectsCached(Config.SHEETS.AVANCES, 45)
+    const rows = Utils.getSheetObjectsCached(Config.SHEETS.AVANCES, 45)
       .filter(r => r.corte_id === corte_id);
+
+    return Object.values(
+      Utils.latestBy(rows, 'indicador_id', ['modificado_en', 'ingresado_en'])
+    );
   },
 
   aprobar(id, user) {
