@@ -77,11 +77,11 @@ export default function InstrumentoDetalle() {
     if (Array.isArray(accionesInstrumentoData)) return accionesInstrumentoData;
     return accionesInstrumentoData?.items || [];
   }, [accionesInstrumentoData]);
-  const accionesPlanificadasPorIndicador = useMemo(() => {
+  const accionesDeclaradasPorIndicador = useMemo(() => {
     const counts = new Map();
 
     accionesInstrumento.forEach((accion) => {
-      if (accion.estado !== 'planificada' || !accion.indicador_id) return;
+      if (!accion.indicador_id) return;
       counts.set(accion.indicador_id, (counts.get(accion.indicador_id) || 0) + 1);
     });
 
@@ -93,11 +93,11 @@ export default function InstrumentoDetalle() {
     return indicadores.map((indicador) => ({
       indicador,
       avance: avanceByIndicador.get(indicador.id) || null,
-      accionesPlanificadas: accionesPlanificadasPorIndicador.get(indicador.id) || 0,
+      accionesDeclaradas: accionesDeclaradasPorIndicador.get(indicador.id) || 0,
       puedeEditar: user?.rol === 'admin' || indicador.responsable_id === user?.id,
       puedeRevisar: user?.rol === 'admin' || user?.rol === 'director_ejecutivo',
     }));
-  }, [accionesPlanificadasPorIndicador, avances, indicadores, user]);
+  }, [accionesDeclaradasPorIndicador, avances, indicadores, user]);
 
   const accionesRelacionadas = useMemo(() => {
     if (Array.isArray(accionesRelacionadasData)) return accionesRelacionadasData;
@@ -116,6 +116,22 @@ export default function InstrumentoDetalle() {
     nextParams.delete('indicador');
     setSearchParams(nextParams, { replace: true });
   }, [filas, requestedIndicadorId, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!detalle?.indicador?.id || !filas.length) return;
+
+    const filaActualizada = filas.find(({ indicador }) => indicador.id === detalle.indicador.id);
+    if (!filaActualizada) return;
+
+    setDetalle((actual) => {
+      if (!actual) return actual;
+      return {
+        ...actual,
+        indicador: filaActualizada.indicador,
+        avance: filaActualizada.avance,
+      };
+    });
+  }, [detalle?.indicador?.id, filas]);
 
   const nombreUsuario = (userId) => usuarios.find((entry) => entry.id === userId)?.nombre || '—';
   const responsableOperativo = (indicador) => {
@@ -230,7 +246,7 @@ export default function InstrumentoDetalle() {
               <th className="px-4 py-3">Código</th>
               <th className="px-4 py-3">Indicador</th>
               <th className="px-4 py-3">Meta</th>
-              <th className="px-4 py-3 text-center">Acciones planificadas</th>
+              <th className="px-4 py-3 text-center">Acciones declaradas</th>
               <th className="px-4 py-3 text-center">Cumplimiento</th>
               <th className="px-4 py-3 text-center">Semáforo</th>
               <th className="px-4 py-3 text-center">Estado de gestión</th>
@@ -240,7 +256,7 @@ export default function InstrumentoDetalle() {
             </tr>
           </thead>
           <tbody>
-            {filas.map(({ indicador, avance, accionesPlanificadas, puedeEditar, puedeRevisar }, index) => {
+            {filas.map(({ indicador, avance, accionesDeclaradas, puedeEditar, puedeRevisar }, index) => {
               const estadoGestion = getEstadoGestion(avance);
 
               return (
@@ -259,7 +275,7 @@ export default function InstrumentoDetalle() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="inline-flex min-w-10 items-center justify-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                      {accionesPlanificadas}
+                      {accionesDeclaradas}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center font-semibold text-navy">{avance ? `${avance.porcentaje_cumplimiento}%` : '—'}</td>
