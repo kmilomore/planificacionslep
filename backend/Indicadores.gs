@@ -8,8 +8,7 @@ const Indicadores = {
 
   getByInstrumento(instrumento_id, user) {
     if (!instrumento_id) throw new Error('instrumento_id requerido');
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    return Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INDICADORES))
+    return Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90)
       .filter(i => i.instrumento_id === instrumento_id);
   },
 
@@ -19,8 +18,7 @@ const Indicadores = {
       throw new Error('Instrumento, código y nombre son obligatorios');
     }
 
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    const existente = Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INDICADORES))
+    const existente = Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90)
       .find(i => i.codigo_indicador === data.codigo_indicador);
     if (existente) throw new Error(`Ya existe el indicador "${data.codigo_indicador}"`);
 

@@ -61,9 +61,8 @@ const Avances = {
 
   getByCorte(corte_id, user) {
     if (!corte_id) throw new Error('corte_id requerido');
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    const sheet = ss.getSheetByName(Config.SHEETS.AVANCES);
-    return Utils.sheetToObjects(sheet).filter(r => r.corte_id === corte_id);
+    return Utils.getSheetObjectsCached(Config.SHEETS.AVANCES, 45)
+      .filter(r => r.corte_id === corte_id);
   },
 
   aprobar(id, user) {

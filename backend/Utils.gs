@@ -1,5 +1,7 @@
 const Utils = {
   DASHBOARD_CACHE_VERSION: 'v1',
+  SHEET_CACHE_VERSION: 'v1',
+  DEFAULT_SHEET_CACHE_TTL: 60,
 
   uuid() {
     return Utilities.getUuid();
@@ -37,6 +39,15 @@ const Utils = {
 
   getSheetObjects(sheetName, ss) {
     return this.sheetToObjects(this.getSheet(sheetName, ss));
+  },
+
+  getSheetObjectsCached(sheetName, ttlSeconds) {
+    const cacheKey = this.getSheetCacheKey(sheetName);
+    const cached = this.getCachedJson(cacheKey);
+    if (cached) return cached;
+
+    const rows = this.getSheetObjects(sheetName);
+    return this.putCachedJson(cacheKey, rows, ttlSeconds || this.DEFAULT_SHEET_CACHE_TTL);
   },
 
   indexBy(rows, field) {
@@ -82,6 +93,7 @@ const Utils = {
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const row     = headers.map(h => obj[h] !== undefined ? obj[h] : '');
     sheet.appendRow(row);
+    this.invalidateSheetCache(sheetName);
     return obj;
   },
 
@@ -98,6 +110,7 @@ const Utils = {
           updates[header] !== undefined ? updates[header] : data[i][index]
         );
         sheet.getRange(i + 1, 1, 1, headers.length).setValues([nextRow]);
+        this.invalidateSheetCache(sheetName);
         return true;
       }
     }
@@ -105,10 +118,7 @@ const Utils = {
   },
 
   buscarEnSheet(sheetName, campo, valor, filtroExtra) {
-    const ss = this.getSpreadsheet();
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) return null;
-    const rows = this.sheetToObjects(sheet);
+    const rows = this.getSheetObjectsCached(sheetName);
     return rows.find(r => r[campo] === valor && (!filtroExtra || filtroExtra(r))) || null;
   },
 
@@ -131,6 +141,10 @@ const Utils = {
     return id
       ? `dashboard:${scope}:${id}:${this.DASHBOARD_CACHE_VERSION}`
       : `dashboard:${scope}:${this.DASHBOARD_CACHE_VERSION}`;
+  },
+
+  getSheetCacheKey(sheetName) {
+    return `sheet:${sheetName}:${this.SHEET_CACHE_VERSION}`;
   },
 
   getCachedJson(key) {
@@ -168,6 +182,10 @@ const Utils = {
     }
 
     cache.removeAll(Array.from(new Set(keys)));
+  },
+
+  invalidateSheetCache(sheetName) {
+    CacheService.getScriptCache().remove(this.getSheetCacheKey(sheetName));
   },
 
   getCorteIdsByInstrumento(instrumentoId) {

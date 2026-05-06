@@ -1,7 +1,6 @@
 const Instrumentos = {
   getAll(user) {
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    return Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.INSTRUMENTOS));
+    return Utils.getSheetObjectsCached(Config.SHEETS.INSTRUMENTOS, 120);
   },
 
   create(data, user) {

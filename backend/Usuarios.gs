@@ -1,9 +1,7 @@
 const Usuarios = {
   getAll(user) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede listar usuarios');
-    const ss    = SpreadsheetApp.openById(Config.SHEET_ID);
-    const sheet = ss.getSheetByName(Config.SHEETS.USUARIOS);
-    return Utils.sheetToObjects(sheet);
+    return Utils.getSheetObjectsCached(Config.SHEETS.USUARIOS, 120);
   },
 
   update(id, data, user) {

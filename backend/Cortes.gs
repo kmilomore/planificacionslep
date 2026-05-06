@@ -1,13 +1,11 @@
 const Cortes = {
   getAll(user) {
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    return Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.CORTES));
+    return Utils.getSheetObjectsCached(Config.SHEETS.CORTES, 120);
   },
 
   getByInstrumento(instrumento_id, user) {
     if (!instrumento_id) throw new Error('instrumento_id requerido');
-    const ss = SpreadsheetApp.openById(Config.SHEET_ID);
-    return Utils.sheetToObjects(ss.getSheetByName(Config.SHEETS.CORTES))
+    return Utils.getSheetObjectsCached(Config.SHEETS.CORTES, 120)
       .filter(c => c.instrumento_id === instrumento_id)
       .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
   },
