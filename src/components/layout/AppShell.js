@@ -1,15 +1,53 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Outlet } from 'react-router-dom';
+import { callApi } from '../../config/api';
 import Sidebar from './Sidebar';
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const prefetchRouteData = useCallback((routeKey) => {
+    const emptyAccionesFilters = {
+      search: '',
+      estado: '',
+      instrumento_id: '',
+      responsable: '',
+    };
+
+    const strategies = {
+      dashboard: () => queryClient.prefetchQuery({
+        queryKey: ['dashboard_resumen'],
+        queryFn: () => callApi('getDashboardResumen'),
+        staleTime: 1000 * 60 * 5,
+      }),
+      acciones: () => queryClient.prefetchQuery({
+        queryKey: ['acciones', emptyAccionesFilters],
+        queryFn: () => callApi('getAcciones', { filtros: emptyAccionesFilters }),
+        staleTime: 1000 * 60 * 5,
+      }),
+      gantt: () => queryClient.prefetchQuery({
+        queryKey: ['gantt_data'],
+        queryFn: () => callApi('getGanttData'),
+        staleTime: 1000 * 60 * 5,
+      }),
+    };
+
+    return strategies[routeKey]?.();
+  }, [queryClient]);
+
+  useEffect(() => {
+    prefetchRouteData('dashboard');
+    prefetchRouteData('acciones');
+    prefetchRouteData('gantt');
+  }, [prefetchRouteData]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-light font-body">
       {/* Sidebar desktop */}
       <div className="hidden lg:flex">
-        <Sidebar />
+        <Sidebar onPrefetchRoute={prefetchRouteData} />
       </div>
 
       {/* Sidebar mobile overlay */}
@@ -20,7 +58,7 @@ export default function AppShell() {
             onClick={() => setSidebarOpen(false)}
           />
           <div className="relative z-50">
-            <Sidebar onClose={() => setSidebarOpen(false)} />
+            <Sidebar onClose={() => setSidebarOpen(false)} onPrefetchRoute={prefetchRouteData} />
           </div>
         </div>
       )}

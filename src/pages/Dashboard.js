@@ -12,19 +12,71 @@ import {
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardResumen } from '../hooks/useApi';
-import Spinner from '../components/ui/Spinner';
 import Alert from '../components/ui/Alert';
+import Skeleton from '../components/ui/Skeleton';
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="mt-3 h-4 w-72" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="bg-white rounded-card shadow-card p-6 space-y-4">
+            <Skeleton className="h-6 w-16 rounded-full" rounded="rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" rounded="rounded-full" />
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-10 w-28" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6">
+        <section className="bg-white rounded-card shadow-card p-5 space-y-4">
+          <Skeleton className="h-6 w-52" />
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-80 w-full" />
+        </section>
+        <section className="bg-white rounded-card shadow-card p-5 space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-44" />
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="border border-gray-100 rounded-xl p-4 space-y-3">
+              <div className="flex justify-between gap-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-5 w-20 rounded-full" rounded="rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-48" />
+              <div className="flex gap-2">
+                {Array.from({ length: 4 }).map((__, innerIndex) => (
+                  <Skeleton key={innerIndex} className="h-2 flex-1 rounded-full" rounded="rounded-full" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: resumen = [], isLoading, error } = useDashboardResumen();
 
   if (isLoading) {
-    return (
-      <div className="p-6 flex justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

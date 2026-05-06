@@ -13,7 +13,7 @@ const ADMIN_ITEMS = [
   { to: '/admin', label: 'Administración', icon: Settings },
 ];
 
-export default function Sidebar({ onClose }) {
+export default function Sidebar({ onClose, onPrefetchRoute }) {
   const { user, logout } = useAuth();
 
   return (
@@ -36,7 +36,7 @@ export default function Sidebar({ onClose }) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => (
-          <SidebarLink key={item.to} {...item} onClose={onClose} />
+          <SidebarLink key={item.to} {...item} onClose={onClose} onPrefetchRoute={onPrefetchRoute} />
         ))}
 
         {user?.rol === 'admin' && (
@@ -45,7 +45,7 @@ export default function Sidebar({ onClose }) {
               <p className="text-xs font-semibold text-white/40 uppercase tracking-widest font-body">Admin</p>
             </div>
             {ADMIN_ITEMS.map((item) => (
-              <SidebarLink key={item.to} {...item} onClose={onClose} />
+              <SidebarLink key={item.to} {...item} onClose={onClose} onPrefetchRoute={onPrefetchRoute} />
             ))}
           </>
         )}
@@ -75,13 +75,25 @@ export default function Sidebar({ onClose }) {
   );
 }
 
-function SidebarLink({ to, label, icon, onClose }) {
+function SidebarLink({ to, label, icon, onClose, onPrefetchRoute }) {
   const Icon = icon;
+  const routeKeyByPath = {
+    '/dashboard': 'dashboard',
+    '/acciones': 'acciones',
+    '/gantt': 'gantt',
+  };
+
+  const handlePrefetch = () => {
+    const routeKey = routeKeyByPath[to];
+    if (routeKey) onPrefetchRoute?.(routeKey);
+  };
 
   return (
     <NavLink
       to={to}
       onClick={onClose}
+      onMouseEnter={handlePrefetch}
+      onFocus={handlePrefetch}
       className={({ isActive }) =>
         clsx(
           'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body transition-colors',
