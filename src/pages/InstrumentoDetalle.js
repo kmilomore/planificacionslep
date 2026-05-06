@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   useAprobarAvance,
+  useAcciones,
   useAccionesPorIndicador,
   useAvancesPorCorte,
   useCortesPorInstrumento,
@@ -62,6 +63,7 @@ export default function InstrumentoDetalle() {
   }, [cortes, requestedCorteId]);
 
   const { data: avances = [], isLoading: loadingAvances } = useAvancesPorCorte(corteId);
+  const { data: accionesInstrumentoData } = useAcciones({ instrumento_id: id });
   const aprobarMut = useAprobarAvance(corteId, id);
   const observarMut = useObservarAvance(corteId, id);
   const updateIndicadorMut = useUpdateIndicador(id);
@@ -71,16 +73,31 @@ export default function InstrumentoDetalle() {
   const instrumento = instrumentos.find((inst) => inst.id === id);
   const corteActual = cortes.find((corte) => corte.id === corteId);
   const puedeEditarIndicador = user?.rol === 'admin';
+  const accionesInstrumento = useMemo(() => {
+    if (Array.isArray(accionesInstrumentoData)) return accionesInstrumentoData;
+    return accionesInstrumentoData?.items || [];
+  }, [accionesInstrumentoData]);
+  const accionesPlanificadasPorIndicador = useMemo(() => {
+    const counts = new Map();
+
+    accionesInstrumento.forEach((accion) => {
+      if (accion.estado !== 'planificada' || !accion.indicador_id) return;
+      counts.set(accion.indicador_id, (counts.get(accion.indicador_id) || 0) + 1);
+    });
+
+    return counts;
+  }, [accionesInstrumento]);
 
   const filas = useMemo(() => {
     const avanceByIndicador = new Map(avances.map((avance) => [avance.indicador_id, avance]));
     return indicadores.map((indicador) => ({
       indicador,
       avance: avanceByIndicador.get(indicador.id) || null,
+      accionesPlanificadas: accionesPlanificadasPorIndicador.get(indicador.id) || 0,
       puedeEditar: user?.rol === 'admin' || indicador.responsable_id === user?.id,
       puedeRevisar: user?.rol === 'admin' || user?.rol === 'director_ejecutivo',
     }));
-  }, [avances, indicadores, user]);
+  }, [accionesPlanificadasPorIndicador, avances, indicadores, user]);
 
   const accionesRelacionadas = useMemo(() => {
     if (Array.isArray(accionesRelacionadasData)) return accionesRelacionadasData;
@@ -101,6 +118,10 @@ export default function InstrumentoDetalle() {
   }, [filas, requestedIndicadorId, searchParams, setSearchParams]);
 
   const nombreUsuario = (userId) => usuarios.find((entry) => entry.id === userId)?.nombre || '—';
+  const responsableOperativo = (indicador) => {
+    const equipo = String(indicador?.equipo_trabajo || indicador?.subdimension || '').trim();
+    return equipo || nombreUsuario(indicador?.responsable_id);
+  };
 
   const abrirDetalle = (indicador, avance) => {
     setDetalle({ indicador, avance });
@@ -209,6 +230,7 @@ export default function InstrumentoDetalle() {
               <th className="px-4 py-3">Código</th>
               <th className="px-4 py-3">Indicador</th>
               <th className="px-4 py-3">Meta</th>
+              <th className="px-4 py-3 text-center">Acciones planificadas</th>
               <th className="px-4 py-3 text-center">Cumplimiento</th>
               <th className="px-4 py-3 text-center">Semáforo</th>
               <th className="px-4 py-3 text-center">Estado de gestión</th>
@@ -218,7 +240,7 @@ export default function InstrumentoDetalle() {
             </tr>
           </thead>
           <tbody>
-            {filas.map(({ indicador, avance, puedeEditar, puedeRevisar }, index) => {
+            {filas.map(({ indicador, avance, accionesPlanificadas, puedeEditar, puedeRevisar }, index) => {
               const estadoGestion = getEstadoGestion(avance);
 
               return (
@@ -235,6 +257,11 @@ export default function InstrumentoDetalle() {
                     <div>{indicador.meta_valor || '—'} {indicador.unidad || ''}</div>
                     <div className="text-xs text-gray-400 mt-1">{indicador.fecha_cumplimiento_2026 || 'Sin fecha de cumplimiento'}</div>
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex min-w-10 items-center justify-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      {accionesPlanificadas}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-center font-semibold text-navy">{avance ? `${avance.porcentaje_cumplimiento}%` : '—'}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSemaforoBadgeClass(avance?.estado_semaforo)}`}>
@@ -246,7 +273,7 @@ export default function InstrumentoDetalle() {
                       {estadoGestion.label}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{nombreUsuario(indicador.responsable_id)}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{responsableOperativo(indicador)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs max-w-xs">{avance?.comentario || 'Sin comentario'}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3 flex-wrap">
@@ -295,7 +322,7 @@ export default function InstrumentoDetalle() {
             })}
             {!filas.length && !loadingAvances && (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-400">No hay indicadores para este instrumento.</td>
+                <td colSpan={10} className="px-4 py-8 text-center text-gray-400">No hay indicadores para este instrumento.</td>
               </tr>
             )}
           </tbody>
@@ -378,7 +405,7 @@ export default function InstrumentoDetalle() {
               />
               <ResumenCard
                 label="Responsable"
-                value={nombreUsuario(detalle.indicador.responsable_id)}
+                value={responsableOperativo(detalle.indicador)}
                 helper={detalle.indicador.dimension || 'Sin dimensión'}
                 tone="slate"
               />
@@ -441,7 +468,7 @@ export default function InstrumentoDetalle() {
                   <DetalleItem label="Ámbito de control" value={detalle.indicador.ambito_control || '—'} />
                   <DetalleItem label="Expresión de fórmula" value={detalle.indicador.expresion_formula || '—'} />
                   <DetalleItem label="Fecha de cumplimiento" value={detalle.indicador.fecha_cumplimiento_2026 || '—'} />
-                  <DetalleItem label="Responsable" value={nombreUsuario(detalle.indicador.responsable_id)} />
+                  <DetalleItem label="Responsable" value={responsableOperativo(detalle.indicador)} />
                 </div>
 
                 <DetalleBlock label="Descripción" value={detalle.indicador.descripcion || 'Sin descripción'} />
