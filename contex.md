@@ -180,6 +180,9 @@ Acciones:
 - `createAccion`
 - `updateAccion`
 - `updateEstadoAccion`
+- `addComentarioAccion`
+- `updateComentarioAccion`
+- `deleteComentarioAccion`
 - `uploadMedioVerificacion`
 - `getMediosAccion`
 
@@ -222,6 +225,8 @@ Acciones:
 - modal con métricas del corte seleccionado
 - skeleton estructurado durante carga
 - modal de detalle expandido a ancho casi completo de pantalla
+- normalización visual de fechas en tarjetas y modal de corte
+- resaltado visual automático del corte abierto más próximo a vencer
 
 ### Admin
 - tab usuarios
@@ -237,6 +242,8 @@ Acciones:
 - barra superior de progreso durante navegación y fetch
 - filtros por búsqueda, estado, instrumento y equipo responsable
 - tabla moderna con navegación a detalle
+- tabla compactada para mejorar visibilidad horizontal en escritorio
+- fechas de compromiso y actualización normalizadas en el listado
 - formulario real de creación en `/acciones/nueva`
 - detalle base en `/acciones/:id`
 - overlay de carga mientras se sube un medio de verificación
@@ -258,13 +265,18 @@ Frontend:
 - pantalla `/acciones/:id` con detalle base
 - pantalla `/acciones/:id` con carga real de medios desde frontend, edición de nombre visible y descripción previa al upload
 - pantalla `/acciones/:id` con overlay de carga al subir medios para evitar sensación de bloqueo
+- pantalla `/acciones/:id` con comentarios operativos persistidos en backend
+- creación de comentarios con optimistic update para aparición inmediata en UI
+- edición y eliminación de comentarios persistidos desde el sidebar
 - lenguaje de UI ya alineado a “Equipo responsable”
 
 Backend:
 - `Acciones.gs` implementa lectura, detalle, creación, actualización, cambio de estado y medios
+- `Acciones.gs` implementa además comentarios persistidos con alta, edición y eliminación lógica
 - `Code.gs` ya expone todas las acciones del módulo
 - `Code.gs` incorpora `autorizarServicios()` para forzar autorización de Drive con las constantes reales del proyecto
-- `Setup.gs` ya define hojas `acciones` y `medios_verificacion`
+- `Setup.gs` ya define hojas `acciones`, `medios_verificacion` y `comentarios_accion`
+- `Acciones.gs` fuerza `ensureAccionesSchema()` al cargar el bundle para autocurar faltantes de esquema del módulo
 - invalidación de cache de acciones integrada a `Utils`
 
 ### Cómo funciona hoy “Equipo responsable”
@@ -431,6 +443,34 @@ Consecuencia:
 - después de copiar el backend al proyecto real, hay que ejecutar manualmente `autorizarServicios()` desde Apps Script
 - luego se debe volver a publicar el Web App para que la subida a Drive funcione en ambiente real
 
+### Esquema mínimo de Acciones en Apps Script
+
+Hallazgo:
+- al incorporar comentarios persistidos, el módulo Acciones pasó a depender también de la hoja `comentarios_accion`
+- si esa hoja no existe en el Apps Script publicado, el listado puede dejar de mostrar acciones aunque los datos existan
+
+Decisión tomada:
+- extender `Setup.gs` con `setupAcciones()` para crear o completar el esquema del módulo
+- ejecutar `ensureAccionesSchema()` también al cargar el bundle de `Acciones.gs`
+
+Consecuencia:
+- en despliegues existentes conviene ejecutar manualmente `setupAcciones()` después de copiar backend nuevo
+- luego se debe volver a publicar el Web App para que el ambiente real use ese esquema actualizado
+
+### Fechas ISO desde backend
+
+Hallazgo:
+- varias vistas estaban imprimiendo fechas ISO crudas como `2026-10-31T07:00:00.000Z`
+- el problema no estaba en el dato sino en la falta de normalización de presentación por pantalla
+
+Decisión tomada:
+- normalizar fechas explícitamente en `Acciones.js`, `AccionDetalle.js` y `Gantt.js`
+- diferenciar cuándo mostrar solo fecha y cuándo mostrar fecha con hora
+
+Consecuencia:
+- la UI ya no debe exponer strings ISO directamente en compromiso, actualización o cortes
+- cualquier vista nueva que consuma fechas del backend debe aplicar el mismo criterio de formateo antes de renderizar
+
 ### Assets con hash en frontend
 
 Hallazgo:
@@ -448,6 +488,7 @@ Consecuencia:
 - no asumir que el backend ya está desplegado solo porque el frontend compila
 - no tocar las acciones del router en `Code.gs` sin actualizar los hooks del frontend correspondientes
 - no olvidar ejecutar y autorizar `autorizarServicios()` si la subida a Drive empieza a fallar por permisos
+- no olvidar ejecutar `setupAcciones()` cuando el backend del módulo cambie su esquema en Sheets
 
 ### Auth
 - no reintroducir popup OAuth con `window.opener`
@@ -492,16 +533,17 @@ Dependencias importantes:
 
 Código implementado localmente:
 - fases 1 a 4 completas
-- módulo Acciones en estado funcional operativo con carga de medios, loaders ricos y navegación optimizada
+- módulo Acciones en estado funcional operativo con carga de medios, loaders ricos, comentarios persistidos y navegación optimizada
 - build frontend validado después de los cambios recientes
 
 Pendiente de operación manual o despliegue según ambiente:
 - copiar backend actualizado al proyecto real de Apps Script
+- ejecutar `setupAcciones()` si el ambiente publicado aún no tiene `comentarios_accion`
 - ejecutar `autorizarServicios()` para conceder permisos de Drive al proyecto publicado
 - volver a desplegar el Web App de Apps Script cuando se agregan o modifican archivos `.gs`
 - desplegar frontend en Vercel después de cambios relevantes
 - ejecutar `migracionCDC()` si la batería CDC aún no fue cargada
-- validar en ambiente real creación de acciones, detalle y permisos por rol
+- validar en ambiente real creación de acciones, detalle, comentarios y permisos por rol
 
 ## Pendientes Actuales
 
@@ -510,6 +552,7 @@ Pendiente de operación manual o despliegue según ambiente:
 - timeline operativo más completo
 - revisión de nombres internos del dominio
 - manejo más fino de errores backend para subida de medios y autorización de Drive
+- eventual extracción de utilitarios compartidos de formateo de fecha entre vistas
 
 ### Fase 5
 - `Emails.gs`

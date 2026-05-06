@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -74,10 +75,26 @@ function DashboardSkeleton() {
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: resumen = [], isLoading, error } = useDashboardResumen();
+  const [urgencyFilter, setUrgencyFilter] = useState('all');
 
   if (isLoading) {
     return <DashboardSkeleton />;
   }
+
+  const resumenOrdenado = [...resumen].sort(compareByUrgency);
+  const resumenFiltrado = resumenOrdenado.filter(item => matchesUrgencyFilter(item, urgencyFilter));
+  const totalInstrumentos = resumen.length;
+  const instrumentosEnRojo = resumen.filter(item => item.semaforo === 'rojo').length;
+  const instrumentosConCorteUrgente = resumen.filter(item => isUrgentCutoff(item.dias_para_corte)).length;
+  const cumplimientoPromedio = totalInstrumentos
+    ? Math.round(resumen.reduce((acc, item) => acc + normalizeNumber(item.cumplimiento_global), 0) / totalInstrumentos)
+    : 0;
+  const totalIndicadores = resumen.reduce((acc, item) => acc + normalizeNumber(item.total_indicadores), 0);
+  const totalIndicadoresConAvance = resumen.reduce((acc, item) => acc + normalizeNumber(item.indicadores_con_avance), 0);
+  const coberturaAvance = totalIndicadores
+    ? Math.round((totalIndicadoresConAvance / totalIndicadores) * 100)
+    : 0;
+  const metaGapPromedio = cumplimientoPromedio - 80;
 
   return (
     <div className="p-6">
@@ -99,9 +116,67 @@ export default function Dashboard() {
         />
       ) : null}
 
+      {!error && resumen.length ? (
+        <section className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Cumplimiento promedio"
+            value={`${cumplimientoPromedio}%`}
+            hint={formatGoalGap(metaGapPromedio)}
+          />
+          <MetricCard
+            label="Instrumentos en rojo"
+            value={instrumentosEnRojo}
+            hint={`${Math.round((instrumentosEnRojo / totalInstrumentos) * 100)}% del total`}
+            accent="text-red"
+          />
+          <MetricCard
+            label="Cortes en 7 dias"
+            value={instrumentosConCorteUrgente}
+            hint="Con vencimiento cercano o ya vencidos"
+            accent="text-yellow-700"
+          />
+          <MetricCard
+            label="Cobertura de avance"
+            value={`${coberturaAvance}%`}
+            hint={`${totalIndicadoresConAvance}/${totalIndicadores} indicadores con avance`}
+            accent="text-blue"
+          />
+        </section>
+      ) : null}
+
+      {!error && resumen.length ? (
+        <section className="bg-white rounded-card shadow-card p-4 mb-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-sm font-display font-bold text-navy">Filtro por urgencia temporal</h2>
+              <p className="text-xs text-gray-500 font-body mt-1">Prioriza instrumentos por cercania del proximo corte.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {URGENCY_FILTERS.map(filter => {
+                const isActive = urgencyFilter === filter.value;
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setUrgencyFilter(filter.value)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold font-body border transition-colors ${isActive ? 'bg-navy text-white border-navy' : 'bg-white text-gray-600 border-gray-200 hover:border-blue hover:text-blue'}`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {/* Tarjetas por instrumento */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {resumen.map((item) => (
+        {resumenFiltrado.map((item) => {
+          const coverage = calculateCoverage(item.indicadores_con_avance, item.total_indicadores);
+          const goalGap = normalizeNumber(item.cumplimiento_global) - 80;
+
+          return (
           <div key={item.instrumento.id} className="bg-white rounded-card shadow-card p-6 flex flex-col gap-4">
             <div
               className="text-white text-xs font-semibold px-3 py-1 rounded-full self-start font-body"
@@ -133,12 +208,24 @@ export default function Dashboard() {
                 <span className={`px-2 py-0.5 rounded-full font-medium ${semaforoBadge(item.semaforo)}`}>
                   {item.semaforo}
                 </span>
-                <span className="text-gray-500">{item.indicadores_con_avance}/{item.total_indicadores} avances</span>
+                <span className="text-gray-500">Cobertura {coverage}%</span>
               </div>
             </div>
             <div className="text-xs text-gray-500 font-body space-y-1">
+              <p>
+                Brecha meta 80%:{' '}
+                <span className={goalGap >= 0 ? 'text-green-700 font-semibold' : 'text-red font-semibold'}>
+                  {formatGoalGap(goalGap)}
+                </span>
+              </p>
+              <p>Indicadores con avance: <span className="text-navy font-medium">{item.indicadores_con_avance}/{item.total_indicadores}</span></p>
               <p>Próximo corte: <span className="text-navy font-medium">{item.proximo_corte?.nombre_corte || '—'}</span></p>
-              <p>Días restantes: <span className={item.dias_para_corte !== null && item.dias_para_corte <= 7 ? 'text-red font-semibold' : 'text-navy font-medium'}>{item.dias_para_corte ?? '—'}</span></p>
+              <p>
+                Plazo:{' '}
+                <span className={deadlineTone(item.dias_para_corte)}>
+                  {formatDeadlineLabel(item.dias_para_corte)}
+                </span>
+              </p>
             </div>
             <div className="pt-2">
               <Link
@@ -149,8 +236,17 @@ export default function Dashboard() {
               </Link>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
+
+      {!error && resumen.length && !resumenFiltrado.length ? (
+        <Alert
+          type="warning"
+          message="No hay instrumentos que coincidan con el filtro de urgencia seleccionado."
+          className="mt-6"
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6 mt-6">
         <section className="bg-white rounded-card shadow-card p-5">
@@ -162,18 +258,22 @@ export default function Dashboard() {
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={resumen.map(item => ({
+              <BarChart data={resumenOrdenado.map(item => ({
                 codigo: item.instrumento.codigo,
                 cumplimiento: item.cumplimiento_global,
                 color: semaforoColor(item.semaforo),
+                semaforo: item.semaforo,
+                dias_para_corte: item.dias_para_corte,
+                indicadores_con_avance: item.indicadores_con_avance,
+                total_indicadores: item.total_indicadores,
               }))}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="codigo" tickLine={false} axisLine={false} />
                 <YAxis domain={[0, 100]} tickLine={false} axisLine={false} />
-                <Tooltip />
-                <Line type="monotone" dataKey={() => 80} stroke="#25306B" dot={false} activeDot={false} />
+                <Tooltip content={<DashboardTooltip />} />
+                <ReferenceLine y={80} stroke="#25306B" strokeDasharray="4 4" label={{ value: 'Meta 80%', position: 'insideTopRight', fill: '#25306B', fontSize: 12 }} />
                 <Bar dataKey="cumplimiento" radius={[10, 10, 0, 0]}>
-                  {resumen.map(item => (
+                  {resumenOrdenado.map(item => (
                     <Cell key={item.instrumento.id} fill={semaforoColor(item.semaforo)} />
                   ))}
                 </Bar>
@@ -191,7 +291,7 @@ export default function Dashboard() {
             <Link to="/gantt" className="text-sm text-blue hover:underline font-body">Ver calendario</Link>
           </div>
           <div className="space-y-4">
-            {resumen.map(item => (
+            {resumenOrdenado.map(item => (
               <div key={item.instrumento.id} className="border border-gray-100 rounded-xl p-4">
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -200,7 +300,13 @@ export default function Dashboard() {
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${semaforoBadge(item.semaforo)}`}>{item.semaforo}</span>
                 </div>
-                <p className="text-xs text-gray-500 font-body">{item.proximo_corte?.nombre_corte || 'Sin corte pendiente'}{item.proximo_corte ? ` · ${item.proximo_corte.fecha_limite}` : ''}</p>
+                <p className="text-xs text-gray-500 font-body">
+                  {item.proximo_corte?.nombre_corte || 'Sin corte pendiente'}
+                  {item.proximo_corte ? ` · ${item.proximo_corte.fecha_limite}` : ''}
+                </p>
+                <p className="text-xs font-body mt-2">
+                  <span className={deadlineTone(item.dias_para_corte)}>{formatDeadlineLabel(item.dias_para_corte)}</span>
+                </p>
                 <div className="mt-3 flex items-center gap-2">
                   {(item.cortes || []).slice(0, 4).map(corte => (
                     <div
@@ -218,6 +324,111 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function MetricCard({ label, value, hint, accent = 'text-navy' }) {
+  return (
+    <article className="bg-white rounded-card shadow-card p-5">
+      <p className="text-xs uppercase tracking-[0.16em] text-gray-500 font-body">{label}</p>
+      <p className={`mt-3 text-3xl font-display font-bold ${accent}`}>{value}</p>
+      <p className="mt-2 text-xs text-gray-500 font-body">{hint}</p>
+    </article>
+  );
+}
+
+function DashboardTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+
+  const point = payload[0].payload;
+  const goalGap = normalizeNumber(point.cumplimiento) - 80;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl shadow-card px-4 py-3">
+      <p className="text-sm font-semibold text-navy font-body">{label}</p>
+      <p className="text-xs text-gray-500 font-body mt-2">Cumplimiento: <span className="text-navy font-semibold">{point.cumplimiento}%</span></p>
+      <p className="text-xs text-gray-500 font-body">Brecha meta: <span className={goalGap >= 0 ? 'text-green-700 font-semibold' : 'text-red font-semibold'}>{formatGoalGap(goalGap)}</span></p>
+      <p className="text-xs text-gray-500 font-body">Semaforo: <span className="text-navy font-semibold capitalize">{point.semaforo}</span></p>
+      <p className="text-xs text-gray-500 font-body">Cobertura: <span className="text-navy font-semibold">{calculateCoverage(point.indicadores_con_avance, point.total_indicadores)}%</span></p>
+      <p className="text-xs text-gray-500 font-body">Plazo: <span className={deadlineTone(point.dias_para_corte)}>{formatDeadlineLabel(point.dias_para_corte)}</span></p>
+    </div>
+  );
+}
+
+const URGENCY_FILTERS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'overdue', label: 'Vencidos' },
+  { value: '7days', label: 'Vence en 7 dias' },
+  { value: '15days', label: 'Vence en 15 dias' },
+  { value: 'no-cutoff', label: 'Sin corte proximo' },
+];
+
+function matchesUrgencyFilter(item, filter) {
+  const days = item.dias_para_corte;
+
+  if (filter === 'all') return true;
+  if (filter === 'overdue') return typeof days === 'number' && days < 0;
+  if (filter === '7days') return typeof days === 'number' && days >= 0 && days <= 7;
+  if (filter === '15days') return typeof days === 'number' && days >= 0 && days <= 15;
+  if (filter === 'no-cutoff') return days === null || days === undefined;
+
+  return true;
+}
+
+function compareByUrgency(a, b) {
+  const scoreA = urgencyScore(a.dias_para_corte);
+  const scoreB = urgencyScore(b.dias_para_corte);
+
+  if (scoreA !== scoreB) return scoreA - scoreB;
+  return normalizeNumber(a.cumplimiento_global) - normalizeNumber(b.cumplimiento_global);
+}
+
+function urgencyScore(days) {
+  if (days === null || days === undefined) return 9999;
+  if (days < 0) return days - 1000;
+  return days;
+}
+
+function calculateCoverage(done, total) {
+  const normalizedTotal = normalizeNumber(total);
+  if (!normalizedTotal) return 0;
+  return Math.round((normalizeNumber(done) / normalizedTotal) * 100);
+}
+
+function formatGoalGap(value) {
+  const normalized = normalizeNumber(value);
+  if (normalized === 0) return 'En meta';
+  return `${normalized > 0 ? '+' : ''}${normalized} pts`;
+}
+
+function formatDeadlineLabel(days) {
+  if (days === null || days === undefined) return 'Sin corte programado';
+  if (days < 0) {
+    const overdueDays = Math.abs(days);
+    return overdueDays === 1 ? 'Vencido ayer' : `Vencido hace ${overdueDays} dias`;
+  }
+  if (days === 0) return 'Vence hoy';
+  if (days === 1) return 'Vence manana';
+  if (days <= 7) return `Vence en ${days} dias`;
+  if (days <= 15) return `Vence en ${days} dias`;
+  const weeks = Math.round(days / 7);
+  return weeks <= 1 ? 'Vence en 1 semana' : `Vence en ${weeks} semanas`;
+}
+
+function deadlineTone(days) {
+  if (days === null || days === undefined) return 'text-gray-500 font-medium';
+  if (days < 0) return 'text-red font-semibold';
+  if (days <= 7) return 'text-red font-semibold';
+  if (days <= 15) return 'text-yellow-700 font-semibold';
+  return 'text-navy font-medium';
+}
+
+function isUrgentCutoff(days) {
+  return typeof days === 'number' && days <= 7;
+}
+
+function normalizeNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function semaforoColor(semaforo) {
