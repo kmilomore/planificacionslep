@@ -87,6 +87,10 @@ const Utils = {
     return value === true || value === 'TRUE' || value === 'true';
   },
 
+  isActiveFlag(value) {
+    return value !== false && value !== 'FALSE' && value !== 'false';
+  },
+
   appendRow(sheetName, obj) {
     const ss      = this.getSpreadsheet();
     const sheet   = this.getSheet(sheetName, ss);

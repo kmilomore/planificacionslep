@@ -329,6 +329,6 @@ const Acciones = {
   },
 
   isActive_(row) {
-    return row && row.activo !== false && row.activo !== 'FALSE' && row.activo !== 'false';
+    return row && Utils.isActiveFlag(row.activo);
   },
 };

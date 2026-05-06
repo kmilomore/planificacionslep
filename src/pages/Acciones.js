@@ -4,61 +4,9 @@ import { ArrowRight, Plus } from 'lucide-react';
 import AccionesFilters from '../components/acciones/AccionesFilters';
 import AccionesTable from '../components/acciones/AccionesTable';
 import ResumenAcciones from '../components/acciones/ResumenAcciones';
-
-const ACCIONES_MOCK = [
-  {
-    id: 'acc-001',
-    nombre: 'Jornada territorial abril',
-    descripcion: 'Coordinación y ejecución de jornada con comunidades escolares para levantar compromisos del trimestre.',
-    indicador: 'Participación efectiva de consejos escolares',
-    instrumento: 'CDC',
-    responsable: 'María González',
-    fechaCompromiso: '2026-04-28',
-    estado: 'reportada',
-    avance: 75,
-    medios: 3,
-    actualizado: '2026-04-24',
-  },
-  {
-    id: 'acc-002',
-    nombre: 'Mesa técnica de convivencia',
-    descripcion: 'Seguimiento interáreas para consolidar plan de apoyo territorial y medidas de contención.',
-    indicador: 'Implementación de apoyos de convivencia',
-    instrumento: 'PAL',
-    responsable: 'Carlos Riquelme',
-    fechaCompromiso: '2026-05-10',
-    estado: 'en_progreso',
-    avance: 48,
-    medios: 1,
-    actualizado: '2026-05-03',
-  },
-  {
-    id: 'acc-003',
-    nombre: 'Actualización de protocolo interno',
-    descripcion: 'Revisión jurídica y difusión del protocolo con equipos directivos priorizados.',
-    indicador: 'Protocolos institucionales vigentes',
-    instrumento: 'PMG',
-    responsable: 'Daniela Soto',
-    fechaCompromiso: '2026-05-20',
-    estado: 'planificada',
-    avance: 12,
-    medios: 0,
-    actualizado: '2026-05-01',
-  },
-  {
-    id: 'acc-004',
-    nombre: 'Cierre de reporte semestral',
-    descripcion: 'Consolidación final de evidencias y validación de cumplimiento con jefaturas.',
-    indicador: 'Reporte oportuno de gestión institucional',
-    instrumento: 'PEL',
-    responsable: 'María González',
-    fechaCompromiso: '2026-04-15',
-    estado: 'completada',
-    avance: 100,
-    medios: 4,
-    actualizado: '2026-04-16',
-  },
-];
+import { useAcciones } from '../hooks/useApi';
+import Spinner from '../components/ui/Spinner';
+import Alert from '../components/ui/Alert';
 
 export default function Acciones() {
   const [filters, setFilters] = useState({
@@ -68,45 +16,67 @@ export default function Acciones() {
     responsable: 'todos',
   });
 
+  const apiFilters = useMemo(() => ({
+    search: filters.search || '',
+    estado: filters.estado === 'todos' ? '' : filters.estado,
+    instrumento_id: '',
+    responsable: filters.responsable === 'todos' ? '' : filters.responsable,
+  }), [filters]);
+
+  const { data, isLoading, error } = useAcciones(apiFilters);
+  const acciones = useMemo(() => data?.items || [], [data]);
+  const resumen = useMemo(() => data?.resumen || ({
+    total: 0,
+    planificadas: 0,
+    en_progreso: 0,
+    reportadas: 0,
+    completadas: 0,
+  }), [data]);
+
   const instrumentos = useMemo(
-    () => [...new Set(ACCIONES_MOCK.map((accion) => accion.instrumento))],
-    []
+    () => [...new Set(acciones.map((accion) => accion.instrumento_codigo).filter(Boolean))],
+    [acciones]
   );
   const responsables = useMemo(
-    () => [...new Set(ACCIONES_MOCK.map((accion) => accion.responsable))],
-    []
+    () => [...new Set(acciones.map((accion) => accion.responsable).filter(Boolean))],
+    [acciones]
   );
 
   const accionesFiltradas = useMemo(() => {
-    const search = filters.search.trim().toLowerCase();
-
-    return ACCIONES_MOCK.filter((accion) => {
-      const matchesSearch = !search || [accion.nombre, accion.indicador, accion.responsable]
-        .some((value) => value.toLowerCase().includes(search));
-      const matchesEstado = filters.estado === 'todos' || accion.estado === filters.estado;
-      const matchesInstrumento = filters.instrumento === 'todos' || accion.instrumento === filters.instrumento;
-      const matchesResponsable = filters.responsable === 'todos' || accion.responsable === filters.responsable;
-
-      return matchesSearch && matchesEstado && matchesInstrumento && matchesResponsable;
-    });
-  }, [filters]);
+    return acciones
+      .filter((accion) => filters.instrumento === 'todos' || accion.instrumento_codigo === filters.instrumento)
+      .map((accion) => ({
+        id: accion.id,
+        nombre: accion.nombre,
+        descripcion: accion.descripcion || 'Sin descripción registrada.',
+        indicador: accion.indicador_nombre || accion.indicador_codigo || 'Indicador sin nombre',
+        instrumento: accion.instrumento_codigo || 'Sin instrumento',
+        responsable: accion.responsable || 'Sin responsable',
+        fechaCompromiso: accion.fecha_compromiso || 'Sin fecha',
+        estado: accion.estado,
+        avance: Number(accion.avance || 0),
+        medios: accion.medios_count || 0,
+        actualizado: accion.updated_at || accion.created_at || 'Sin actualización',
+      }));
+  }, [acciones, filters.instrumento]);
 
   const resumenCards = useMemo(() => {
-    const total = ACCIONES_MOCK.length || 1;
-    const count = (estado) => ACCIONES_MOCK.filter((accion) => accion.estado === estado).length;
+    const total = resumen.total || 1;
 
     return [
-      { key: 'total', label: 'Total acciones', value: ACCIONES_MOCK.length, helper: 'Base inicial del módulo', percent: 100, tint: '#EEF2FF', iconColor: '#25306B' },
-      { key: 'planificada', label: 'Planificadas', value: count('planificada'), helper: 'Pendientes por activar', percent: Math.round((count('planificada') / total) * 100), tint: '#F1F5F9', iconColor: '#475569' },
-      { key: 'en_progreso', label: 'En progreso', value: count('en_progreso'), helper: 'Seguimiento operativo', percent: Math.round((count('en_progreso') / total) * 100), tint: '#E0F2FE', iconColor: '#0369A1' },
-      { key: 'reportada', label: 'Reportadas', value: count('reportada'), helper: 'Con evidencia parcial', percent: Math.round((count('reportada') / total) * 100), tint: '#FEF3C7', iconColor: '#B45309' },
-      { key: 'completada', label: 'Completadas', value: count('completada'), helper: 'Cierre validado', percent: Math.round((count('completada') / total) * 100), tint: '#DCFCE7', iconColor: '#15803D' },
+      { key: 'total', label: 'Total acciones', value: resumen.total, helper: 'Dato real desde backend', percent: 100, tint: '#EEF2FF', iconColor: '#25306B' },
+      { key: 'planificada', label: 'Planificadas', value: resumen.planificadas, helper: 'Pendientes por activar', percent: Math.round((resumen.planificadas / total) * 100), tint: '#F1F5F9', iconColor: '#475569' },
+      { key: 'en_progreso', label: 'En progreso', value: resumen.en_progreso, helper: 'Seguimiento operativo', percent: Math.round((resumen.en_progreso / total) * 100), tint: '#E0F2FE', iconColor: '#0369A1' },
+      { key: 'reportada', label: 'Reportadas', value: resumen.reportadas, helper: 'Con evidencia parcial', percent: Math.round((resumen.reportadas / total) * 100), tint: '#FEF3C7', iconColor: '#B45309' },
+      { key: 'completada', label: 'Completadas', value: resumen.completadas, helper: 'Cierre validado', percent: Math.round((resumen.completadas / total) * 100), tint: '#DCFCE7', iconColor: '#15803D' },
     ];
-  }, []);
+  }, [resumen]);
 
   const updateFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
   };
+
+  const firstAccionId = accionesFiltradas[0]?.id;
 
   return (
     <div className="p-6 space-y-6">
@@ -131,27 +101,48 @@ export default function Acciones() {
               <Plus size={18} />
               Nueva acción
             </Link>
-            <Link
-              to="/acciones/acc-001"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-slate-700 font-semibold font-body hover:border-blue hover:text-blue transition-colors"
-            >
-              Ver detalle piloto
-              <ArrowRight size={18} />
-            </Link>
+            {firstAccionId ? (
+              <Link
+                to={`/acciones/${firstAccionId}`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-slate-700 font-semibold font-body hover:border-blue hover:text-blue transition-colors"
+              >
+                Ver primera acción
+                <ArrowRight size={18} />
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <ResumenAcciones cards={resumenCards} />
+      {error ? <Alert type="error" message={error.message} /> : null}
 
-      <AccionesFilters
-        filters={filters}
-        onChange={updateFilter}
-        instrumentos={instrumentos}
-        responsables={responsables}
-      />
+      {isLoading ? (
+        <div className="bg-white rounded-card shadow-card border border-slate-100 p-10 flex justify-center">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <>
+          <ResumenAcciones cards={resumenCards} />
 
-      <AccionesTable acciones={accionesFiltradas} />
+          <AccionesFilters
+            filters={filters}
+            onChange={updateFilter}
+            instrumentos={instrumentos}
+            responsables={responsables}
+          />
+
+          {accionesFiltradas.length ? (
+            <AccionesTable acciones={accionesFiltradas} />
+          ) : (
+            <section className="bg-white rounded-card shadow-card border border-slate-100 p-8 text-center">
+              <h2 className="text-xl font-display font-bold text-navy">No hay acciones registradas</h2>
+              <p className="mt-2 text-sm text-slate-500 font-body">
+                El módulo ya está consultando datos reales. Si esperabas ver registros, revisa la hoja acciones o crea la primera acción desde esta vista.
+              </p>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 }

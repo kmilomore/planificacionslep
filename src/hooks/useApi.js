@@ -145,6 +145,49 @@ export function useMetricasCorte(corte_id) {
   );
 }
 
+// --- Acciones ---
+export function useAcciones(filtros = {}) {
+  return useApiQuery(
+    ['acciones', filtros],
+    'getAcciones',
+    { filtros }
+  );
+}
+
+export function useAccion(id) {
+  return useApiQuery(
+    ['accion', id],
+    'getAccion',
+    { id },
+    { enabled: !!id }
+  );
+}
+
+export function useCreateAccion() {
+  return useApiMutation('createAccion', ['acciones']);
+}
+
+export function useUpdateAccion(id) {
+  return useApiMutation('updateAccion', ['acciones', ['accion', id]]);
+}
+
+export function useUpdateEstadoAccion(id) {
+  return useApiMutation('updateEstadoAccion', ['acciones', ['accion', id]]);
+}
+
+export function useMediosAccion(accionId) {
+  return useApiQuery(
+    ['medios_accion', accionId],
+    'getMediosAccion',
+    { filtros: { accion_id: accionId } },
+    { enabled: !!accionId }
+  );
+}
+
+export function useUploadMedioVerificacion(accionId) {
+  return useApiMutation('uploadMedioVerificacion', ['acciones', ['accion', accionId], ['medios_accion', accionId]]);
+}
+
 // --- Usuarios ---
 export function useUsuarios() {
   return useApiQuery('usuarios', 'getUsuarios');

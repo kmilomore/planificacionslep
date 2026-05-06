@@ -127,11 +127,11 @@ const Dashboard = {
   _loadContext() {
     const ss = Utils.getSpreadsheet();
     const instrumentos = Utils.getSheetObjects(Config.SHEETS.INSTRUMENTOS, ss)
-      .filter(i => Utils.isTruthy(i.activo));
+      .filter(i => Utils.isActiveFlag(i.activo));
     const cortes = Utils.getSheetObjects(Config.SHEETS.CORTES, ss)
       .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
     const indicadores = Utils.getSheetObjects(Config.SHEETS.INDICADORES, ss)
-      .filter(i => Utils.isTruthy(i.activo));
+      .filter(i => Utils.isActiveFlag(i.activo));
     const avances = Utils.getSheetObjects(Config.SHEETS.AVANCES, ss);
 
     return {

@@ -13,10 +13,11 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useDashboardResumen } from '../hooks/useApi';
 import Spinner from '../components/ui/Spinner';
+import Alert from '../components/ui/Alert';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { data: resumen = [], isLoading } = useDashboardResumen();
+  const { data: resumen = [], isLoading, error } = useDashboardResumen();
 
   if (isLoading) {
     return (
@@ -35,6 +36,16 @@ export default function Dashboard() {
         Bienvenido/a, <span className="font-semibold text-navy">{user?.nombre}</span>
         {' '}· <span className="capitalize">{user?.rol?.replace('_', ' ')}</span>
       </p>
+
+      {error ? <Alert type="error" message={error.message} className="mb-6" /> : null}
+
+      {!error && !resumen.length ? (
+        <Alert
+          type="warning"
+          message="El dashboard no recibió instrumentos activos desde backend. Si tus hojas son antiguas, vuelve a desplegar Apps Script con esta corrección y espera a que expire la cache." 
+          className="mb-6"
+        />
+      ) : null}
 
       {/* Tarjetas por instrumento */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,27 +1,36 @@
 import { useParams } from 'react-router-dom';
+import { useAccion } from '../hooks/useApi';
 import EstadoBadge from '../components/acciones/EstadoBadge';
-
-const DETAIL_MOCK = {
-  'acc-001': {
-    nombre: 'Jornada territorial abril',
-    indicador: 'Participación efectiva de consejos escolares',
-    instrumento: 'CDC',
-    responsable: 'María González',
-    estado: 'reportada',
-    avance: 75,
-  },
-};
+import Spinner from '../components/ui/Spinner';
+import Alert from '../components/ui/Alert';
 
 export default function AccionDetalle() {
   const { id } = useParams();
-  const accion = DETAIL_MOCK[id] || {
-    nombre: 'Acción en preparación',
-    indicador: 'Sin indicador cargado aún',
-    instrumento: 'Pendiente',
-    responsable: 'Pendiente',
-    estado: 'planificada',
-    avance: 0,
-  };
+  const { data: accion, isLoading, error } = useAccion(id);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Alert type="error" message={error.message} />
+      </div>
+    );
+  }
+
+  if (!accion) {
+    return (
+      <div className="p-6">
+        <Alert type="warning" message="La acción solicitada no existe o no está disponible para tu perfil." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -31,7 +40,7 @@ export default function AccionDetalle() {
             <p className="text-xs uppercase tracking-[0.24em] text-blue font-semibold font-body">Detalle de acción</p>
             <h1 className="mt-3 text-3xl font-display font-bold text-navy">{accion.nombre}</h1>
             <p className="mt-2 text-sm text-slate-500 font-body">
-              {accion.instrumento} · {accion.indicador}
+              {accion.instrumento_codigo || 'Sin instrumento'} · {accion.indicador_nombre || 'Sin indicador'}
             </p>
           </div>
           <EstadoBadge estado={accion.estado} />
@@ -39,15 +48,15 @@ export default function AccionDetalle() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <Metric label="Responsable" value={accion.responsable} />
-          <Metric label="Instrumento" value={accion.instrumento} />
+          <Metric label="Instrumento" value={accion.instrumento_nombre || accion.instrumento_codigo || 'Sin instrumento'} />
           <Metric label="Avance" value={`${accion.avance}%`} />
           <Metric label="Estado actual" value={accion.estado.replace('_', ' ')} />
         </div>
 
         <div className="rounded-2xl border border-dashed border-slate-200 p-5 bg-slate-50">
-          <h2 className="text-lg font-display font-bold text-navy">Siguiente corte</h2>
+          <h2 className="text-lg font-display font-bold text-navy">Bitácora y medios</h2>
           <p className="mt-2 text-sm text-slate-500 font-body">
-            Aquí irán el timeline operativo, los medios de verificación y la bitácora de cambios cuando el backend de acciones quede conectado a Apps Script y Google Drive.
+            Medios registrados: {accion.medios?.length || 0}. Timeline disponible: {accion.timeline?.length || 0} eventos.
           </p>
         </div>
       </section>

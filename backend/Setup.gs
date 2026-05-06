@@ -29,6 +29,8 @@ function setupInicial() {
       'evidencia_url', 'estado_revision', 'ingresado_por', 'ingresado_en',
       'modificado_en', 'aprobado_por', 'aprobado_en',
     ],
+    acciones: _getAccionesHeaders(),
+    medios_verificacion: _getMediosVerificacionHeaders(),
     alertas_log: [
       'id', 'tipo_alerta', 'destinatario_email', 'instrumento_id',
       'corte_id', 'asunto', 'enviado_en', 'exito', 'error_msg',
@@ -63,6 +65,37 @@ function setupInicial() {
   Logger.log('🎉 Setup completado. Agrega usuarios en la hoja "usuarios".');
 }
 
+function setupAcciones() {
+  const ss = SpreadsheetApp.openById(Config.SHEET_ID);
+  const hojas = {
+    acciones: _getAccionesHeaders(),
+    medios_verificacion: _getMediosVerificacionHeaders(),
+  };
+
+  Object.entries(hojas).forEach(([nombre, headers]) => {
+    let sheet = ss.getSheetByName(nombre);
+    if (!sheet) {
+      sheet = ss.insertSheet(nombre);
+      Logger.log(`✅ Hoja creada: ${nombre}`);
+    } else {
+      Logger.log(`⚠️  Hoja ya existe: ${nombre} (no se modificó)`);
+    }
+
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length)
+        .setBackground('#25306B')
+        .setFontColor('#FFFFFF')
+        .setFontWeight('bold');
+    }
+  });
+
+  Utils.invalidateSheetCache(Config.SHEETS.ACCIONES);
+  Utils.invalidateSheetCache(Config.SHEETS.MEDIOS_VERIFICACION);
+
+  Logger.log('✅ Setup de Acciones completado.');
+}
+
 function _getIndicadoresHeaders() {
   return [
     'id', 'instrumento_id', 'servicio', 'numero_indicador', 'codigo_indicador',
@@ -72,6 +105,21 @@ function _getIndicadoresHeaders() {
     'efectivo_2026', 'unidad', 'numerador_2026', 'denominador_2026',
     'fecha_cumplimiento_2026', 'peso', 'fuente_verificacion',
     'medios_verificacion_2026', 'nota_tecnica_2026', 'responsable_id', 'activo',
+  ];
+}
+
+function _getAccionesHeaders() {
+  return [
+    'id', 'indicador_id', 'nombre', 'descripcion', 'responsable',
+    'fecha_inicio', 'fecha_compromiso', 'estado', 'avance', 'activo',
+    'created_at', 'updated_at', 'created_by',
+  ];
+}
+
+function _getMediosVerificacionHeaders() {
+  return [
+    'id', 'accion_id', 'tipo', 'nombre_archivo', 'url_drive', 'file_id',
+    'usuario', 'fecha_subida',
   ];
 }
 
@@ -215,6 +263,8 @@ function migracionCDC() {
     'evidencia_url', 'estado_revision', 'ingresado_por', 'ingresado_en',
     'modificado_en', 'aprobado_por', 'aprobado_en',
   ]);
+  _resetSheetWithHeaders(ss, Config.SHEETS.ACCIONES, _getAccionesHeaders());
+  _resetSheetWithHeaders(ss, Config.SHEETS.MEDIOS_VERIFICACION, _getMediosVerificacionHeaders());
 
   Utils.appendRow(Config.SHEETS.INSTRUMENTOS, instrumentoCDC);
   _seedCortes(ss);
@@ -239,6 +289,8 @@ function migracionCDC() {
     Config.SHEETS.CORTES,
     Config.SHEETS.INDICADORES,
     Config.SHEETS.AVANCES,
+    Config.SHEETS.ACCIONES,
+    Config.SHEETS.MEDIOS_VERIFICACION,
   ].forEach(sheetName => Utils.invalidateSheetCache(sheetName));
   Utils.invalidateDashboardCaches({ instrumentoId: instrumentoCDC.id });
 
