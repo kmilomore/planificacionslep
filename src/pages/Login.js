@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { callApi } from '../config/api';
@@ -6,9 +6,11 @@ import { callApi } from '../config/api';
 export default function Login() {
   const { loginWithGoogle, user } = useAuth();
   const navigate  = useNavigate();
-  const popupRef  = useRef(null);
   const [error,   setError]   = useState('');
-  const [loading, setLoading] = useState(false);
+  // Si venimos de vuelta de OAuth ya hay un resultado pendiente → arrancar en loading
+  const [loading, setLoading] = useState(
+    () => !!sessionStorage.getItem('google_auth_result')
+  );
 
   // Si ya hay sesión activa, redirigir
   useEffect(() => {
@@ -31,30 +33,30 @@ export default function Login() {
     }
   }, [loginWithGoogle, navigate]);
 
-  // Escuchar mensaje del popup de OAuth
+  // Recoger el resultado que auth_callback.html dejó en sessionStorage
   useEffect(() => {
-    const handler = (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
-        handleToken(event.data.idToken);
-      } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+    const raw = sessionStorage.getItem('google_auth_result');
+    if (!raw) return;
+    sessionStorage.removeItem('google_auth_result');
+    try {
+      const result = JSON.parse(raw);
+      if (result.type === 'GOOGLE_AUTH_SUCCESS') {
+        handleToken(result.idToken);
+      } else {
         setError('Error al autenticar con Google. Intenta de nuevo.');
         setLoading(false);
       }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    } catch {
+      setError('Error al autenticar con Google. Intenta de nuevo.');
+      setLoading(false);
+    }
   }, [handleToken]);
 
   const abrirSelectorCuentas = () => {
     if (loading) return;
+    setLoading(true);
+    setError('');
 
-    // Cerrar popup anterior si sigue abierto
-    if (popupRef.current && !popupRef.current.closed) {
-      popupRef.current.close();
-    }
-
-    // Nonce aleatorio para seguridad
     const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
     const params = new URLSearchParams({
@@ -63,32 +65,11 @@ export default function Login() {
       response_type: 'id_token',
       scope:         'openid email profile',
       nonce:         nonce,
-      prompt:        'select_account',   // ← siempre muestra el selector
+      prompt:        'select_account',
     });
 
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-
-    // Centrar el popup en la pantalla
-    const w = 480, h = 600;
-    const left = Math.round(window.screenX + (window.outerWidth  - w) / 2);
-    const top  = Math.round(window.screenY + (window.outerHeight - h) / 2);
-
-    popupRef.current = window.open(
-      url,
-      'google-auth',
-      `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`
-    );
-
-    setLoading(true);
-    setError('');
-
-    // Si el usuario cierra el popup sin autenticar
-    const timer = setInterval(() => {
-      if (popupRef.current?.closed) {
-        clearInterval(timer);
-        setLoading(false);
-      }
-    }, 500);
+    // Redirect directo: evita el problema de COOP con popups
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   };
 
   return (

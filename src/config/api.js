@@ -6,7 +6,7 @@ export async function callApi(action, payload = {}) {
 
   const response = await fetch(`${API_URL}?token=${encodeURIComponent(token)}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify({ action, ...payload }),
     redirect: 'follow',
   });

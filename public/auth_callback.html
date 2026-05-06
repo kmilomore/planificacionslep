@@ -9,29 +9,20 @@
     const idToken = params.get('id_token');
     const error   = params.get('error');
 
-    if (window.opener) {
-      if (idToken) {
-        window.opener.postMessage(
-          { type: 'GOOGLE_AUTH_SUCCESS', idToken },
-          window.location.origin
-        );
-      } else {
-        window.opener.postMessage(
-          { type: 'GOOGLE_AUTH_ERROR', error: error || 'Sin token' },
-          window.location.origin
-        );
-      }
-      window.close();
+    if (idToken) {
+      sessionStorage.setItem('google_auth_result',
+        JSON.stringify({ type: 'GOOGLE_AUTH_SUCCESS', idToken }));
+    } else {
+      sessionStorage.setItem('google_auth_result',
+        JSON.stringify({ type: 'GOOGLE_AUTH_ERROR', error: error || 'Sin token' }));
     }
   } catch (e) {
-    if (window.opener) {
-      window.opener.postMessage(
-        { type: 'GOOGLE_AUTH_ERROR', error: e.message },
-        window.location.origin
-      );
-      window.close();
-    }
+    sessionStorage.setItem('google_auth_result',
+      JSON.stringify({ type: 'GOOGLE_AUTH_ERROR', error: e.message }));
   }
+
+  // Redirect sin dejar auth_callback en el historial
+  window.location.replace('/login');
 </script>
 </body>
 </html>
