@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   useAprobarAvance,
@@ -33,6 +33,7 @@ const CAMPOS_EDITABLES_INDICADOR = [
 
 export default function InstrumentoDetalle() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { data: instrumentos = [], isLoading: loadingInst } = useInstrumentos();
   const { data: usuarios = [] } = useUsuarios();
@@ -45,12 +46,19 @@ export default function InstrumentoDetalle() {
   const [editandoDetalle, setEditandoDetalle] = useState(false);
   const [observando, setObservando] = useState(null);
   const [comentarioObservacion, setComentarioObservacion] = useState('');
+  const requestedCorteId = searchParams.get('corte') || '';
+  const requestedIndicadorId = searchParams.get('indicador') || '';
 
   useEffect(() => {
     if (!cortes.length) return;
+    if (requestedCorteId && cortes.some((corte) => corte.id === requestedCorteId)) {
+      setCorteId(requestedCorteId);
+      return;
+    }
+
     const abierto = cortes.find(c => c.estado !== 'cerrado');
     setCorteId(actual => actual || abierto?.id || cortes[0].id);
-  }, [cortes]);
+  }, [cortes, requestedCorteId]);
 
   const { data: avances = [], isLoading: loadingAvances } = useAvancesPorCorte(corteId);
   const aprobarMut = useAprobarAvance(corteId, id);
@@ -70,6 +78,19 @@ export default function InstrumentoDetalle() {
       puedeRevisar: user?.rol === 'admin' || user?.rol === 'director_ejecutivo',
     }));
   }, [avances, indicadores, user]);
+
+  useEffect(() => {
+    if (!requestedIndicadorId || !filas.length) return;
+
+    const fila = filas.find(({ indicador }) => indicador.id === requestedIndicadorId);
+    if (!fila) return;
+
+    abrirDetalle(fila.indicador, fila.avance);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('indicador');
+    setSearchParams(nextParams, { replace: true });
+  }, [filas, requestedIndicadorId, searchParams, setSearchParams]);
 
   const nombreUsuario = (userId) => usuarios.find(u => u.id === userId)?.nombre || '—';
 

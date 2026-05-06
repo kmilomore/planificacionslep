@@ -36,7 +36,10 @@ const Dashboard = {
 
     const context = this._loadContext();
     const result = context.instrumentos.map(inst => ({
-      instrumento: inst,
+      instrumento: {
+        ...inst,
+        responsable_display: context.userNameById[inst.responsable_id]?.nombre || '',
+      },
       cortes: (context.cortesByInstrumentoId[inst.id] || [])
         .map(corte => ({
           ...corte,
@@ -60,6 +63,7 @@ const Dashboard = {
 
     const indicadores = context.indicadoresByInstrumentoId[corte.instrumento_id] || [];
     const avances = context.avancesByCorteId[corte_id] || [];
+    const avanceByIndicadorId = Utils.indexBy(avances, 'indicador_id');
 
     const total = indicadores.length;
     const enviados = avances.length;
@@ -70,6 +74,7 @@ const Dashboard = {
       total_indicadores: total,
       indicadores_con_avance: enviados,
       indicadores_pendientes: pendientes,
+      indicador_recomendado: this._buildIndicadorSuggestion(indicadores, avanceByIndicadorId, context),
       aprobados: avances.filter(a => a.estado_revision === 'aprobado').length,
       observados: avances.filter(a => a.estado_revision === 'observado').length,
       semaforos: {
@@ -137,10 +142,45 @@ const Dashboard = {
     };
   },
 
+  _buildIndicadorSuggestion(indicadores, avanceByIndicadorId, context) {
+    if (!indicadores.length) return null;
+
+    const buildPayload = (indicador, action) => {
+      const avance = avanceByIndicadorId[indicador.id] || null;
+      return {
+        id: indicador.id,
+        codigo_indicador: indicador.codigo_indicador || '',
+        nombre: indicador.nombre || '',
+        responsable_id: indicador.responsable_id || '',
+        responsable_display: context.userNameById[indicador.responsable_id]?.nombre || '',
+        tiene_avance: !!avance,
+        avance_id: avance?.id || '',
+        accion_sugerida: action,
+      };
+    };
+
+    const sinAvance = indicadores.find((indicador) => !avanceByIndicadorId[indicador.id]);
+    if (sinAvance) return buildPayload(sinAvance, 'ingresar_avance');
+
+    const observado = indicadores.find((indicador) => avanceByIndicadorId[indicador.id]?.estado_revision === 'observado');
+    if (observado) return buildPayload(observado, 'editar_avance');
+
+    const editable = indicadores.find((indicador) => {
+      const avance = avanceByIndicadorId[indicador.id];
+      if (!avance) return false;
+      return avance.estado_revision !== 'aprobado';
+    });
+    if (editable) return buildPayload(editable, 'editar_avance');
+
+    return buildPayload(indicadores[0], 'ver_indicador');
+  },
+
   _loadContext() {
     const ss = Utils.getSpreadsheet();
     const instrumentos = Utils.getSheetObjects(Config.SHEETS.INSTRUMENTOS, ss)
       .filter(i => Utils.isActiveFlag(i.activo));
+    const usuarios = Utils.getSheetObjects(Config.SHEETS.USUARIOS, ss)
+      .filter((row) => Utils.isActiveFlag(row.activo));
     const cortes = Utils.getSheetObjects(Config.SHEETS.CORTES, ss)
       .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
     const indicadores = Utils.getSheetObjects(Config.SHEETS.INDICADORES, ss)
@@ -150,6 +190,7 @@ const Dashboard = {
     return {
       instrumentos,
       instrumentosById: Utils.indexBy(instrumentos, 'id'),
+      userNameById: Utils.indexBy(usuarios, 'id'),
       cortesById: Utils.indexBy(cortes, 'id'),
       cortesByInstrumentoId: Utils.groupBy(cortes, 'instrumento_id'),
       indicadoresByInstrumentoId: Utils.groupBy(indicadores, 'instrumento_id'),
