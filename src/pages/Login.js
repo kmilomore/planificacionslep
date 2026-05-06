@@ -74,19 +74,20 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: 'linear-gradient(135deg, #2C3D9E 0%, #25306B 100%)' }}
+      className="min-h-screen flex items-center justify-center px-4 py-10 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: 'linear-gradient(rgba(19, 42, 88, 0.72), rgba(16, 34, 74, 0.82)), url(/auth.webp)' }}
     >
-      <div className="bg-white rounded-card shadow-card w-full max-w-sm p-10 flex flex-col items-center gap-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_40%)] pointer-events-none" />
+
+      <div className="relative bg-white/95 backdrop-blur-sm rounded-card shadow-card w-full max-w-sm p-10 flex flex-col items-center gap-6 border border-white/30">
 
         {/* Logo / cabecera */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-display font-bold"
-            style={{ background: 'linear-gradient(135deg, #006BB9 0%, #25306B 100%)' }}
-          >
-            SC
-          </div>
+          <img
+            src="/SLEPCOLCHAGUA.webp"
+            alt="Logo SLEP Colchagua"
+            className="w-20 h-20 object-contain drop-shadow-sm"
+          />
           <h1 className="text-xl font-display font-bold text-navy leading-tight">
             SLEP Colchagua
           </h1>

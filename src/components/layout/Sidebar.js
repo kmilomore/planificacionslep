@@ -21,12 +21,11 @@ export default function Sidebar({ onClose }) {
       {/* Header */}
       <div className="px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold font-display flex-shrink-0"
-            style={{ background: 'rgba(255,255,255,0.15)' }}
-          >
-            SC
-          </div>
+          <img
+            src="/SLEPCOLCHAGUA.webp"
+            alt="Logo SLEP Colchagua"
+            className="w-9 h-9 rounded-full object-cover flex-shrink-0 bg-white"
+          />
           <div className="min-w-0">
             <p className="text-sm font-display font-bold leading-tight truncate">SLEP Colchagua</p>
             <p className="text-xs text-white/60 font-body leading-tight">Gestión Institucional</p>

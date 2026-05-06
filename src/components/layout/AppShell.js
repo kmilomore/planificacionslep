@@ -38,6 +38,11 @@ export default function AppShell() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          <img
+            src="/SLEPCOLCHAGUA.webp"
+            alt="Logo SLEP Colchagua"
+            className="w-8 h-8 rounded-full object-cover bg-white flex-shrink-0"
+          />
           <span className="text-sm font-display font-bold">SLEP Colchagua</span>
         </header>
 
