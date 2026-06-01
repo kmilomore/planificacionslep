@@ -50,6 +50,17 @@ export default function AccionDetalle() {
     description: '',
   });
 
+  const accionView = useMemo(() => {
+    if (!accion) return accion;
+    if (!optimisticAccion) return accion;
+
+    return {
+      ...accion,
+      ...optimisticAccion,
+      timeline: optimisticAccion.timeline || accion.timeline || [],
+    };
+  }, [accion, optimisticAccion]);
+
   const requiredTipoOptions = useMemo(() => {
     const required = Array.isArray(accionView?.medios_requeridos) ? accionView.medios_requeridos : [];
     if (!required.length) return [];
@@ -66,17 +77,6 @@ export default function AccionDetalle() {
       tipo: requiredTipoOptions[0].value,
     }));
   }, [requiredTipoOptions, uploadForm.tipo]);
-
-  const accionView = useMemo(() => {
-    if (!accion) return accion;
-    if (!optimisticAccion) return accion;
-
-    return {
-      ...accion,
-      ...optimisticAccion,
-      timeline: optimisticAccion.timeline || accion.timeline || [],
-    };
-  }, [accion, optimisticAccion]);
 
   const permissions = useMemo(() => resolveActionPermissions(accionView, user), [accionView, user]);
 
