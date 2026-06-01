@@ -13,6 +13,7 @@ import {
   useAccion,
   useAddComentarioAccion,
   useDeleteComentarioAccion,
+  useUpdateAccion,
   useUpdateComentarioAccion,
   useUpdateEstadoAccion,
   useUploadMedioVerificacion,
@@ -35,6 +36,7 @@ export default function AccionDetalle() {
   const addComentario = useAddComentarioAccion(id);
   const updateComentario = useUpdateComentarioAccion(id);
   const deleteComentario = useDeleteComentarioAccion(id);
+  const updateAccion = useUpdateAccion(id);
   const updateEstado = useUpdateEstadoAccion(id);
   const uploadMedio = useUploadMedioVerificacion(id);
 
@@ -49,6 +51,7 @@ export default function AccionDetalle() {
     displayName: '',
     description: '',
   });
+  const [mediosForm, setMediosForm] = useState([]);
 
   const accionView = useMemo(() => {
     if (!accion) return accion;
@@ -79,6 +82,11 @@ export default function AccionDetalle() {
   }, [requiredTipoOptions, uploadForm.tipo]);
 
   const permissions = useMemo(() => resolveActionPermissions(accionView, user), [accionView, user]);
+  const isMediosDirty = useMemo(() => {
+    const current = Array.isArray(accion?.medios_requeridos) ? accion.medios_requeridos : [];
+    if (current.length !== mediosForm.length) return true;
+    return current.some((tipo) => !mediosForm.includes(tipo));
+  }, [accion, mediosForm]);
 
   useEffect(() => {
     if (!accion) return;
@@ -86,6 +94,7 @@ export default function AccionDetalle() {
       estado: accion.estado || 'planificada',
       avance: String(accion.avance ?? 0),
     });
+    setMediosForm(Array.isArray(accion.medios_requeridos) ? accion.medios_requeridos : []);
   }, [accion]);
 
   const timeline = useMemo(() => accionView?.timeline || [], [accionView]);
@@ -248,6 +257,32 @@ export default function AccionDetalle() {
     }
   };
 
+  const handleMediosSubmit = async () => {
+    setFeedback(null);
+
+    if (!mediosForm.length) {
+      setFeedback({ type: 'error', message: 'Debes mantener al menos un medio de verificación.' });
+      return;
+    }
+
+    try {
+      await updateAccion.mutateAsync({
+        id,
+        data: {
+          medios_requeridos: mediosForm,
+        },
+      });
+      setFeedback({ type: 'success', message: 'Tipos de medios actualizados.' });
+    } catch (submitError) {
+      setFeedback({ type: 'error', message: submitError.message });
+    }
+  };
+
+  const handleMediosReset = () => {
+    setMediosForm(Array.isArray(accion?.medios_requeridos) ? accion.medios_requeridos : []);
+    setFeedback(null);
+  };
+
   const handleCommentSubmit = async (event) => {
     event.preventDefault();
     setFeedback(null);
@@ -350,8 +385,15 @@ export default function AccionDetalle() {
 
             <AccionMediaSection
               canUpload={permissions.canUploadMedios}
+              canEditTipos={permissions.canQuickEdit}
               medios={medios}
               mediosRequeridos={accionView?.medios_requeridos || []}
+              mediosForm={mediosForm}
+              setMediosForm={setMediosForm}
+              onSaveTipos={handleMediosSubmit}
+              onResetTipos={handleMediosReset}
+              isSavingTipos={updateAccion.isPending}
+              isTiposDirty={isMediosDirty}
               uploadForm={uploadForm}
               setUploadForm={setUploadForm}
               onSubmit={handleUploadSubmit}

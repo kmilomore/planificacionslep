@@ -2,10 +2,25 @@ import { ExternalLink, FileText, FolderOpen, Image as ImageIcon, UploadCloud } f
 import Alert from '../../ui/Alert';
 import Spinner from '../../ui/Spinner';
 
+const ALL_TIPO_OPTIONS = [
+  { value: 'lista_asistencia', label: 'Lista de asistencia' },
+  { value: 'acta', label: 'Acta' },
+  { value: 'fotografia', label: 'Fotografia' },
+  { value: 'informe', label: 'Informe' },
+  { value: 'otro', label: 'Otro' },
+];
+
 export default function AccionMediaSection({
   canUpload,
+  canEditTipos,
   medios,
   mediosRequeridos,
+  mediosForm,
+  setMediosForm,
+  onSaveTipos,
+  onResetTipos,
+  isSavingTipos,
+  isTiposDirty,
   uploadForm,
   setUploadForm,
   onSubmit,
@@ -38,13 +53,45 @@ export default function AccionMediaSection({
 
       <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">Medios requeridos para esta acción</p>
-        {hasRequiredMedios ? (
+        {canEditTipos ? (
+          <div className="mt-3 space-y-3">
+            <select
+              multiple
+              value={mediosForm}
+              onChange={(event) => {
+                const selected = Array.from(event.target.selectedOptions || []).map((option) => option.value);
+                setMediosForm(selected);
+              }}
+              disabled={isSavingTipos}
+              className="w-full min-h-[120px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+            >
+              {ALL_TIPO_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onSaveTipos}
+                disabled={isSavingTipos || !isTiposDirty}
+                className="inline-flex items-center rounded-xl bg-navy px-3 py-2 text-xs font-semibold text-white hover:bg-blue transition-colors disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {isSavingTipos ? 'Guardando...' : 'Guardar tipos'}
+              </button>
+              <button
+                type="button"
+                onClick={onResetTipos}
+                disabled={isSavingTipos || !isTiposDirty}
+                className="inline-flex items-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+              >
+                Restablecer
+              </button>
+            </div>
+          </div>
+        ) : hasRequiredMedios ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {tipoOptions.map((option) => (
-              <span
-                key={option.value}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
-              >
+              <span key={option.value} className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
                 {option.label}
               </span>
             ))}
