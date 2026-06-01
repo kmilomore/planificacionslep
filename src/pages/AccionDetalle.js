@@ -50,6 +50,23 @@ export default function AccionDetalle() {
     description: '',
   });
 
+  const requiredTipoOptions = useMemo(() => {
+    const required = Array.isArray(accionView?.medios_requeridos) ? accionView.medios_requeridos : [];
+    if (!required.length) return [];
+    return TIPO_MEDIO_OPTIONS.filter((option) => required.includes(option.value));
+  }, [accionView]);
+
+  useEffect(() => {
+    if (!requiredTipoOptions.length) return;
+    const isCurrentAllowed = requiredTipoOptions.some((option) => option.value === uploadForm.tipo);
+    if (isCurrentAllowed) return;
+
+    setUploadForm((current) => ({
+      ...current,
+      tipo: requiredTipoOptions[0].value,
+    }));
+  }, [requiredTipoOptions, uploadForm.tipo]);
+
   const accionView = useMemo(() => {
     if (!accion) return accion;
     if (!optimisticAccion) return accion;
@@ -334,6 +351,7 @@ export default function AccionDetalle() {
             <AccionMediaSection
               canUpload={permissions.canUploadMedios}
               medios={medios}
+              mediosRequeridos={accionView?.medios_requeridos || []}
               uploadForm={uploadForm}
               setUploadForm={setUploadForm}
               onSubmit={handleUploadSubmit}
@@ -345,7 +363,7 @@ export default function AccionDetalle() {
               formatFileSize={formatFileSize}
               getFileExtension={getFileExtension}
               uploadStage={uploadStage}
-              tipoOptions={TIPO_MEDIO_OPTIONS}
+              tipoOptions={requiredTipoOptions}
             />
 
             <AccionTimelineSection timeline={timeline} formatDateTime={formatDateTime} />

@@ -233,7 +233,18 @@ const Acciones = {
     const tipo = String(data?.tipo || '').trim();
     if (!this.TIPOS_MEDIO[tipo]) throw new Error('Tipo de medio inválido');
 
+    const mediosRequeridos = this.parseMediosRequeridos_(accion.medios_requeridos);
+    if (!mediosRequeridos.includes(tipo)) {
+      throw new Error('El tipo de medio no está declarado para esta acción');
+    }
+
     ensureAccionesSchema();
+
+    const existentes = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 30)
+      .filter((medio) => medio.accion_id === accion.id && String(medio.tipo || '').trim() === tipo);
+    if (existentes.length) {
+      throw new Error('Ya existe un archivo para este medio de verificación en la acción');
+    }
 
     const indicador = this.getIndicador_(accion.indicador_id);
     const upload = Drive.uploadMedio(data, {

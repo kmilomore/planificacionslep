@@ -5,6 +5,7 @@ import Spinner from '../../ui/Spinner';
 export default function AccionMediaSection({
   canUpload,
   medios,
+  mediosRequeridos,
   uploadForm,
   setUploadForm,
   onSubmit,
@@ -18,13 +19,15 @@ export default function AccionMediaSection({
   uploadStage,
   tipoOptions,
 }) {
+  const hasRequiredMedios = Array.isArray(mediosRequeridos) && mediosRequeridos.length > 0;
+
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-display font-bold text-navy">Medios de verificación</h2>
           <p className="mt-1 text-sm text-slate-500 font-body">
-            Archivos guardados en Drive bajo la carpeta de la acción.
+            Archivos guardados en Drive bajo la carpeta de la acción. Solo se permiten medios declarados en el constructor de la acción.
           </p>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -33,7 +36,25 @@ export default function AccionMediaSection({
         </span>
       </div>
 
-      {canUpload ? (
+      <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">Medios requeridos para esta acción</p>
+        {hasRequiredMedios ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {tipoOptions.map((option) => (
+              <span
+                key={option.value}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
+              >
+                {option.label}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-slate-500 font-body">No hay medios declarados en el constructor. Debes definirlos para habilitar carga específica.</p>
+        )}
+      </div>
+
+      {canUpload && hasRequiredMedios ? (
         <form onSubmit={onSubmit} className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 space-y-4">
           <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-end">
             <label className="block space-y-2 text-sm text-slate-600 font-body">
@@ -119,7 +140,14 @@ export default function AccionMediaSection({
         </form>
       ) : (
         <div className="mt-5">
-          <Alert type="info" message="Tu perfil puede revisar el detalle, pero la carga de medios queda restringida por backend a perfiles de gestión sobre la acción." />
+          <Alert
+            type="info"
+            message={
+              canUpload
+                ? 'Debes declarar medios de verificación en el constructor de la acción para habilitar la carga.'
+                : 'Tu perfil puede revisar el detalle, pero la carga de medios queda restringida por backend a perfiles de gestión sobre la acción.'
+            }
+          />
         </div>
       )}
 
