@@ -15,7 +15,9 @@ const Avances = {
       throw new Error('No tienes permiso para editar este indicador');
     }
 
-    const pct = Utils.calcularPorcentaje(data.valor_reportado, indicador.meta_valor, indicador.tipo_meta);
+    const pctBase = Utils.calcularPorcentaje(data.valor_reportado, indicador.meta_valor, indicador.tipo_meta);
+    const pctMedios = this.calcularPctPorMedios_(indicador.id);
+    const pct = pctMedios.totalRequeridos > 0 ? pctMedios.pct : pctBase;
     const semaforo = Utils.calcularSemaforo(pct);
     const comentario = String(data.comentario || '').trim();
 
@@ -57,6 +59,44 @@ const Avances = {
     Utils.appendRow(Config.SHEETS.AVANCES, nuevo);
     Utils.invalidateDashboardCaches({ instrumentoId: indicador.instrumento_id, corteId: data.corte_id });
     return nuevo;
+  },
+
+  calcularPctPorMedios_(indicadorId) {
+    ensureAccionesSchema();
+
+    const acciones = Utils.getSheetObjectsCached(Config.SHEETS.ACCIONES, 45)
+      .filter((accion) => Utils.isActiveFlag(accion.activo) && accion.indicador_id === indicadorId);
+    const medios = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 45);
+
+    let totalRequeridos = 0;
+    let totalCumplidos = 0;
+
+    acciones.forEach((accion) => {
+      const requeridos = String(accion.medios_requeridos || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      if (!requeridos.length) return;
+
+      const tiposSubidos = medios
+        .filter((medio) => medio.accion_id === accion.id)
+        .map((medio) => String(medio.tipo || '').trim())
+        .filter(Boolean);
+
+      totalRequeridos += requeridos.length;
+      totalCumplidos += requeridos.filter((tipo) => tiposSubidos.includes(tipo)).length;
+    });
+
+    if (!totalRequeridos) {
+      return { pct: 0, totalRequeridos: 0, totalCumplidos: 0 };
+    }
+
+    return {
+      pct: Math.min(Math.round((totalCumplidos / totalRequeridos) * 100), 100),
+      totalRequeridos,
+      totalCumplidos,
+    };
   },
 
   getByCorte(corte_id, user) {

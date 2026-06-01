@@ -15,6 +15,14 @@ const ESTADOS = [
   { value: 'completada', label: 'Completada' },
 ];
 
+const MEDIOS_OPTIONS = [
+  { value: 'lista_asistencia', label: 'Lista de asistencia' },
+  { value: 'acta', label: 'Acta' },
+  { value: 'fotografia', label: 'Fotografia' },
+  { value: 'informe', label: 'Informe' },
+  { value: 'otro', label: 'Otro' },
+];
+
 const INITIAL_FORM = {
   instrumento_id: '',
   indicador_id: '',
@@ -25,6 +33,7 @@ const INITIAL_FORM = {
   fecha_compromiso: '',
   estado: 'planificada',
   avance: '0',
+  medios_requeridos: [],
 };
 
 function Field({ label, hint, required = false, children }) {
@@ -87,6 +96,10 @@ function validateForm(form) {
     return 'Una acción completada debe registrar avance 100.';
   }
 
+  if (!Array.isArray(form.medios_requeridos) || !form.medios_requeridos.length) {
+    return 'Debes seleccionar al menos un medio de verificación asociado.';
+  }
+
   return null;
 }
 
@@ -139,6 +152,10 @@ export default function NuevaAccion() {
         if (value === 'completada') return { ...current, estado: value, avance: '100' };
       }
 
+      if (key === 'medios_requeridos') {
+        return { ...current, medios_requeridos: value };
+      }
+
       return { ...current, [key]: value };
     });
   };
@@ -164,6 +181,7 @@ export default function NuevaAccion() {
           fecha_compromiso: form.fecha_compromiso,
           estado: form.estado,
           avance: Number(form.avance || 0),
+          medios_requeridos: form.medios_requeridos,
         },
       });
 
@@ -341,6 +359,29 @@ export default function NuevaAccion() {
               />
             </Field>
 
+            <Field
+              label="Medios de verificación asociados"
+              required
+              hint="Selecciona uno o más medios. El % de cumplimiento del indicador por acción dependerá de la evidencia cargada para estos medios."
+            >
+              <select
+                multiple
+                value={form.medios_requeridos}
+                onChange={(event) => {
+                  const selected = Array.from(event.target.selectedOptions || []).map((option) => option.value);
+                  updateField('medios_requeridos', selected);
+                }}
+                disabled={!canManage || createAccion.isPending}
+                className="w-full min-h-[140px] rounded-xl border border-slate-200 px-4 py-3 text-sm font-body text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30 disabled:bg-slate-50 disabled:text-slate-400"
+              >
+                {MEDIOS_OPTIONS.map((medio) => (
+                  <option key={medio.value} value={medio.value}>
+                    {medio.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-500 font-body">
                 La creación usa el endpoint real <span className="font-semibold text-navy">createAccion</span> y refresca automáticamente el listado de acciones.
@@ -400,6 +441,7 @@ export default function NuevaAccion() {
                 <li>El equipo responsable debe coincidir con equipo_trabajo del indicador.</li>
                 <li>La fecha compromiso no puede quedar antes de la fecha de inicio.</li>
                 <li>El avance debe ser coherente con el estado inicial declarado.</li>
+                <li>Debe existir al menos un medio de verificación asociado.</li>
               </ul>
             </section>
           </aside>

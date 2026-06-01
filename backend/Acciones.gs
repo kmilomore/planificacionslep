@@ -7,9 +7,11 @@ const Acciones = {
   },
 
   TIPOS_MEDIO: {
-    listado_asistencia: true,
-    reporte: true,
-    otros: true,
+    lista_asistencia: true,
+    acta: true,
+    fotografia: true,
+    informe: true,
+    otro: true,
   },
 
   getAll(filtros, user) {
@@ -68,6 +70,7 @@ const Acciones = {
       fecha_compromiso: data.fecha_compromiso,
       estado: data.estado || 'planificada',
       avance: this.normalizeAvance_(data.avance),
+      medios_requeridos: this.serializeMediosRequeridos_(data.medios_requeridos),
       activo: true,
       created_at: now,
       updated_at: now,
@@ -100,12 +103,17 @@ const Acciones = {
       fecha_compromiso: true,
       estado: true,
       avance: true,
+      medios_requeridos: true,
       activo: true,
     };
     const updates = Object.fromEntries(
       Object.entries(data)
         .filter(([key]) => allowed[key])
-        .map(([key, value]) => [key, key === 'avance' ? this.normalizeAvance_(value) : value])
+        .map(([key, value]) => {
+          if (key === 'avance') return [key, this.normalizeAvance_(value)];
+          if (key === 'medios_requeridos') return [key, this.serializeMediosRequeridos_(value)];
+          return [key, value];
+        })
     );
 
     if (Object.prototype.hasOwnProperty.call(updates, 'responsable')) {
@@ -271,12 +279,15 @@ const Acciones = {
       ? bundle.instrumentos.find((item) => item.id === indicador.instrumento_id) || null
       : null;
     const medios = bundle.medios.filter((medio) => medio.accion_id === accion.id);
+    const mediosRequeridos = this.parseMediosRequeridos_(accion.medios_requeridos);
+    const mediosCumplidos = this.countMediosCumplidos_(medios, mediosRequeridos);
     const equipoIndicador = this.getEquipoResponsable_(indicador);
     const responsableDisplay = String(accion.responsable || equipoIndicador || '').trim();
 
     return {
       ...accion,
       avance: Number(accion.avance || 0),
+      medios_requeridos: mediosRequeridos,
       indicador_nombre: indicador?.nombre || '',
       indicador_codigo: indicador?.codigo_indicador || '',
       indicador_equipo_trabajo: indicador?.equipo_trabajo || '',
@@ -285,6 +296,8 @@ const Acciones = {
       instrumento_nombre: instrumento?.nombre || '',
       responsable_display: responsableDisplay || 'Sin equipo',
       medios_count: medios.length,
+      medios_requeridos_count: mediosRequeridos.length,
+      medios_cumplidos_count: mediosCumplidos,
     };
   },
 
@@ -428,8 +441,45 @@ const Acciones = {
     if (!String(data?.responsable || '').trim()) throw new Error('Equipo responsable requerido');
     if (!String(data?.fecha_compromiso || '').trim()) throw new Error('Fecha compromiso requerida');
     if (data?.estado && !this.ESTADOS[data.estado]) throw new Error('Estado de acción inválido');
+    const mediosRequeridos = this.parseMediosRequeridos_(data?.medios_requeridos);
+    if (!mediosRequeridos.length) {
+      throw new Error('Debes declarar al menos un medio de verificación asociado a la acción');
+    }
     if (indicador) this.assertEquipoResponsableValido_(data?.responsable, indicador);
     this.validateBusinessRules_(data);
+  },
+
+  parseMediosRequeridos_(value) {
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => String(item || '').trim())
+        .filter((item) => this.TIPOS_MEDIO[item]);
+    }
+
+    return String(value || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => this.TIPOS_MEDIO[item]);
+  },
+
+  serializeMediosRequeridos_(value) {
+    const unique = [];
+    this.parseMediosRequeridos_(value).forEach((medio) => {
+      if (!unique.includes(medio)) unique.push(medio);
+    });
+    if (!unique.length) {
+      throw new Error('Debes declarar al menos un medio de verificación asociado a la acción');
+    }
+    return unique.join(',');
+  },
+
+  countMediosCumplidos_(medios, mediosRequeridos) {
+    if (!mediosRequeridos.length) return 0;
+    const tiposSubidos = medios
+      .map((medio) => String(medio.tipo || '').trim())
+      .filter(Boolean);
+
+    return mediosRequeridos.filter((tipo) => tiposSubidos.includes(tipo)).length;
   },
 
   validateBusinessRules_(data) {

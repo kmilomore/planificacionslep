@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Alert from '../components/ui/Alert';
 import Spinner from '../components/ui/Spinner';
 import {
+  useAccionesPorIndicador,
   useAvancesPorCorte,
   useCortesPorInstrumento,
   useIndicador,
@@ -13,6 +14,7 @@ export default function IngresarAvance() {
   const { indicador_id, corte_id } = useParams();
   const navigate = useNavigate();
   const { data: indicador, isLoading: loadingIndicador } = useIndicador(indicador_id);
+  const { data: accionesIndicador = [], isLoading: loadingAcciones } = useAccionesPorIndicador(indicador_id);
   const { data: cortes = [], isLoading: loadingCortes } = useCortesPorInstrumento(indicador?.instrumento_id);
   const { data: avances = [], isLoading: loadingAvances } = useAvancesPorCorte(corte_id);
   const corte = cortes.find(item => item.id === corte_id);
@@ -41,6 +43,14 @@ export default function IngresarAvance() {
     if (!indicador) return 0;
     return calcularPorcentaje(form.valor_reportado, indicador.meta_valor, indicador.tipo_meta);
   }, [form.valor_reportado, indicador]);
+
+  const cumplimientoMedios = useMemo(() => {
+    const accionesConMedios = accionesIndicador.filter((accion) => Number(accion.medios_requeridos_count || 0) > 0);
+    const total = accionesConMedios.reduce((acc, accion) => acc + Number(accion.medios_requeridos_count || 0), 0);
+    const cumplidos = accionesConMedios.reduce((acc, accion) => acc + Number(accion.medios_cumplidos_count || 0), 0);
+    const porcentaje = total > 0 ? Math.min(Math.round((cumplidos / total) * 100), 100) : null;
+    return { total, cumplidos, porcentaje };
+  }, [accionesIndicador]);
 
   const semaforo = useMemo(() => calcularSemaforo(cumplimiento), [cumplimiento]);
   const comentarioObligatorio = cumplimiento < 80;
@@ -73,7 +83,7 @@ export default function IngresarAvance() {
     }
   };
 
-  if (loadingIndicador || loadingCortes || loadingAvances) {
+  if (loadingIndicador || loadingAcciones || loadingCortes || loadingAvances) {
     return <div className="p-6 flex justify-center"><Spinner size="lg" /></div>;
   }
 
@@ -143,6 +153,13 @@ export default function IngresarAvance() {
             </span>
             {comentarioObligatorio && <span className="text-xs text-red">Se requerirá comentario para guardar.</span>}
           </div>
+          {cumplimientoMedios.porcentaje !== null ? (
+            <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+              Cumplimiento por medios de acciones asociadas: <span className="font-semibold text-navy">{cumplimientoMedios.porcentaje}%</span>
+              {' '}({cumplimientoMedios.cumplidos}/{cumplimientoMedios.total}).
+              {cumplimientoMedios.porcentaje < 100 ? ' Debes cargar en cada acción los medios pendientes para llegar a 100%.' : ' Todos los medios requeridos ya están verificados.'}
+            </div>
+          ) : null}
         </section>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">

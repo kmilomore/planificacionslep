@@ -20,9 +20,11 @@ import {
 
 const ROLES_GESTION = ['admin', 'director_ejecutivo', 'subdirector'];
 const TIPO_MEDIO_OPTIONS = [
-  { value: 'listado_asistencia', label: 'Listado de asistencia' },
-  { value: 'reporte', label: 'Reporte' },
-  { value: 'otros', label: 'Otros' },
+  { value: 'lista_asistencia', label: 'Lista de asistencia' },
+  { value: 'acta', label: 'Acta' },
+  { value: 'fotografia', label: 'Fotografia' },
+  { value: 'informe', label: 'Informe' },
+  { value: 'otro', label: 'Otro' },
 ];
 
 export default function AccionDetalle() {
@@ -42,7 +44,7 @@ export default function AccionDetalle() {
   const [comentarioForm, setComentarioForm] = useState('');
   const [estadoForm, setEstadoForm] = useState({ estado: 'planificada', avance: '0' });
   const [uploadForm, setUploadForm] = useState({
-    tipo: 'reporte',
+    tipo: 'informe',
     file: null,
     displayName: '',
     description: '',

@@ -39,6 +39,28 @@ La pagina:
 
 ## Estructura visual
 
+### Bloque bajo Descripcion: Medios de verificacion
+
+Debajo del campo `Descripcion` en el constructor/edicion de acciones, debe existir un bloque de `Medios de verificacion asociados`.
+
+Comportamiento esperado:
+- selector tipo dropdown (con seleccion multiple)
+- lista de medios predefinidos (ejemplo: Lista de asistencia, Acta, Fotografia, Informe, Otro)
+- lo seleccionado queda asociado a la accion como requisitos de evidencia
+- si no hay medios seleccionados, la accion no debe poder pasar a estado reportado/completado
+
+Impacto en avance y cumplimiento del indicador:
+- el % de avance reportado de la accion depende del cumplimiento de sus medios asociados
+- cada medio asociado debe tener una evidencia subida/validada en Ingresar Avance
+- el cumplimiento de la accion por medios se calcula como: `medios validados / medios asociados * 100`
+- ese resultado impacta directamente el % de cumplimiento del indicador vinculado
+
+Ejemplo operativo:
+- en el constructor de acciones se declara un solo medio: `Lista de asistencia`
+- al ingresar avance, se debe subir el archivo de esa lista (PDF u otro formato permitido)
+- cuando ese unico medio queda cargado y validado, la accion pasa a `100%` por medios
+- al ser el unico verificador asociado, el aporte de esa accion al indicador se considera completo (`100%`)
+
 ### Hero superior
 - nombre del modulo
 - titulo principal
