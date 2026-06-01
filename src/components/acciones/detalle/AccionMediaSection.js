@@ -1,4 +1,5 @@
 import { ExternalLink, FileText, FolderOpen, Image as ImageIcon, UploadCloud } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Alert from '../../ui/Alert';
 import Spinner from '../../ui/Spinner';
 
@@ -35,6 +36,18 @@ export default function AccionMediaSection({
   tipoOptions,
 }) {
   const hasRequiredMedios = Array.isArray(mediosRequeridos) && mediosRequeridos.length > 0;
+  const [isEditingTipos, setIsEditingTipos] = useState(false);
+
+  useEffect(() => {
+    if (!isTiposDirty) return;
+    setIsEditingTipos(true);
+  }, [isTiposDirty]);
+
+  useEffect(() => {
+    if (!isSavingTipos && !isTiposDirty) {
+      setIsEditingTipos(false);
+    }
+  }, [isSavingTipos, isTiposDirty]);
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-5">
@@ -52,8 +65,20 @@ export default function AccionMediaSection({
       </div>
 
       <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">Medios requeridos para esta acción</p>
-        {canEditTipos ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">Medios requeridos para esta acción</p>
+          {canEditTipos && !isEditingTipos ? (
+            <button
+              type="button"
+              onClick={() => setIsEditingTipos(true)}
+              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors"
+            >
+              Editar tipos
+            </button>
+          ) : null}
+        </div>
+
+        {isEditingTipos && canEditTipos ? (
           <div className="mt-3 space-y-3">
             <select
               multiple
@@ -80,11 +105,14 @@ export default function AccionMediaSection({
               </button>
               <button
                 type="button"
-                onClick={onResetTipos}
-                disabled={isSavingTipos || !isTiposDirty}
+                onClick={() => {
+                  onResetTipos();
+                  setIsEditingTipos(false);
+                }}
+                disabled={isSavingTipos}
                 className="inline-flex items-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
               >
-                Restablecer
+                Cancelar
               </button>
             </div>
           </div>
