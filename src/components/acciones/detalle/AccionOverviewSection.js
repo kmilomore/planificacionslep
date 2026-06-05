@@ -1,7 +1,8 @@
 import { CalendarDays, CheckCircle2, Clock3, Target } from 'lucide-react';
 import EstadoBadge from '../EstadoBadge';
 
-export default function AccionOverviewSection({ accion, formatDate, formatDateTime }) {
+export default function AccionOverviewSection({ accion, formatDate, formatDateTime, avancePorMedios }) {
+  const avance = Number.isFinite(Number(avancePorMedios)) ? Number(avancePorMedios) : Number(accion.avance || 0);
   return (
     <>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -18,7 +19,7 @@ export default function AccionOverviewSection({ accion, formatDate, formatDateTi
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Metric label="Equipo responsable" value={accion.responsable_display || accion.responsable} />
         <Metric label="Instrumento" value={accion.instrumento_nombre || accion.instrumento_codigo || 'Sin instrumento'} />
-        <Metric label="Avance" value={`${accion.avance}%`} />
+        <Metric label="Avance" value={`${avance}%`} />
         <Metric label="Estado actual" value={String(accion.estado || '').replace('_', ' ')} />
       </div>
 

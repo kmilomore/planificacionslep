@@ -7,7 +7,6 @@ import AccionDetalleSkeleton from '../components/acciones/detalle/AccionDetalleS
 import AccionOverviewSection from '../components/acciones/detalle/AccionOverviewSection';
 import AccionMediaSection from '../components/acciones/detalle/AccionMediaSection';
 import AccionTimelineSection from '../components/acciones/detalle/AccionTimelineSection';
-import AccionSidebar from '../components/acciones/detalle/AccionSidebar';
 import { useAuth } from '../context/AuthContext';
 import {
   useAccion,
@@ -18,7 +17,6 @@ import {
   useUpdateMedioVerificacion,
   useUpdateAccion,
   useUpdateComentarioAccion,
-  useUpdateEstadoAccion,
   useUploadMedioVerificacion,
 } from '../hooks/useApi';
 
@@ -44,14 +42,12 @@ export default function AccionDetalle() {
   const deleteMedio = useDeleteMedioVerificacion(id);
   const updateMedio = useUpdateMedioVerificacion(id);
   const updateAccion = useUpdateAccion(id);
-  const updateEstado = useUpdateEstadoAccion(id);
   const uploadMedio = useUploadMedioVerificacion(id);
 
   const [feedback, setFeedback] = useState(null);
   const [optimisticAccion, setOptimisticAccion] = useState(null);
   const [uploadStage, setUploadStage] = useState('idle');
   const [comentarioForm, setComentarioForm] = useState('');
-  const [estadoForm, setEstadoForm] = useState({ estado: 'planificada', avance: '0' });
   const [uploadForm, setUploadForm] = useState({
     tipo: 'informe',
     file: null,
@@ -107,10 +103,6 @@ export default function AccionDetalle() {
 
   useEffect(() => {
     if (!accion) return;
-    setEstadoForm({
-      estado: accion.estado || 'planificada',
-      avance: String(accion.avance ?? 0),
-    });
     const detalle = Array.isArray(accion.medios_requeridos_detalle)
       ? accion.medios_requeridos_detalle
       : (Array.isArray(accion.medios_requeridos) ? accion.medios_requeridos : []).map((tipo) => ({ tipo, cantidad: 1 }));
@@ -124,6 +116,12 @@ export default function AccionDetalle() {
   const timeline = useMemo(() => accionView?.timeline || [], [accionView]);
   const comentariosOperativos = useMemo(() => accionView?.comentarios || [], [accionView]);
   const medios = useMemo(() => accionView?.medios || [], [accionView]);
+  const avancePorMedios = useMemo(() => {
+    const requeridos = Number(accionView?.medios_requeridos_count || 0);
+    const cumplidos = Number(accionView?.medios_cumplidos_count || 0);
+    if (requeridos <= 0) return Number(accionView?.avance || 0);
+    return Math.min(Math.round((cumplidos / requeridos) * 100), 100);
+  }, [accionView]);
   const imagePreviewUrl = useMemo(() => {
     if (!uploadForm.file || !isImageFile(uploadForm.file.name)) return '';
     return URL.createObjectURL(uploadForm.file);
@@ -132,29 +130,12 @@ export default function AccionDetalle() {
     if (!uploadForm.file) return '';
     return ensureFileExtension(uploadForm.displayName, uploadForm.file.name);
   }, [uploadForm.displayName, uploadForm.file]);
-  const isEstadoDirty = Boolean(
-    accion && (
-      estadoForm.estado !== (accion.estado || 'planificada')
-      || Number(estadoForm.avance || 0) !== Number(accion.avance ?? 0)
-    )
-  );
 
   useEffect(() => {
     return () => {
       if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
     };
   }, [imagePreviewUrl]);
-
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      if (!isEstadoDirty) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isEstadoDirty]);
 
   if (isLoading) {
     return <AccionDetalleSkeleton />;
@@ -175,64 +156,6 @@ export default function AccionDetalle() {
       </div>
     );
   }
-
-  const handleEstadoReset = () => {
-    if (!accion) return;
-    setEstadoForm({
-      estado: accion.estado || 'planificada',
-      avance: String(accion.avance ?? 0),
-    });
-    setFeedback(null);
-  };
-
-  const handleEstadoSubmit = async (event) => {
-    event.preventDefault();
-    setFeedback(null);
-
-    const nextEstado = {
-      estado: estadoForm.estado,
-      avance: Number(estadoForm.avance || 0),
-      updated_at: new Date().toISOString(),
-    };
-    const previousAccion = queryClient.getQueryData(['accion', id]);
-    const optimisticTimeline = [
-      {
-        tipo: 'cambio_estado',
-        texto: `Estado actualizado a ${humanizeEstado(nextEstado.estado)} con ${nextEstado.avance}% de avance`,
-        fecha: nextEstado.updated_at,
-      },
-      ...(accionView.timeline || []),
-    ];
-    const optimisticState = {
-      ...nextEstado,
-      timeline: optimisticTimeline,
-    };
-
-    setOptimisticAccion(optimisticState);
-    queryClient.setQueryData(['accion', id], (current) => {
-      if (!current) return current;
-      return {
-        ...current,
-        ...optimisticState,
-      };
-    });
-
-    try {
-      await updateEstado.mutateAsync({
-        id,
-        data: {
-          estado: nextEstado.estado,
-          avance: nextEstado.avance,
-        },
-      });
-      setOptimisticAccion(null);
-      setFeedback({ type: 'success', message: 'Estado de la acción actualizado.' });
-    } catch (submitError) {
-      setOptimisticAccion(null);
-      queryClient.setQueryData(['accion', id], previousAccion);
-      setFeedback({ type: 'error', message: submitError.message });
-    }
-  };
 
   const handleUploadSubmit = async (event) => {
     event.preventDefault();
@@ -491,83 +414,75 @@ export default function AccionDetalle() {
       {feedback ? <Alert type={feedback.type} message={feedback.message} onClose={() => setFeedback(null)} /> : null}
 
       <section className="w-full bg-white rounded-card shadow-card border border-slate-100 p-6 lg:p-8 space-y-6">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-6">
-            <AccionOverviewSection accion={accionView} formatDate={formatDate} formatDateTime={formatDateTime} />
-            {permissions.canManage ? (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleDeleteAccion}
-                  disabled={deleteAccion.isPending}
-                  className="inline-flex items-center justify-center rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {deleteAccion.isPending ? 'Eliminando acción...' : 'Eliminar acción'}
-                </button>
-              </div>
-            ) : null}
-
-            <AccionMediaSection
-              canUpload={permissions.canUploadMedios}
-              canEditTipos={permissions.canQuickEdit}
-              medios={medios}
-              mediosRequeridos={accionView?.medios_requeridos || []}
-              mediosForm={mediosForm}
-              setMediosForm={setMediosForm}
-              mediosDetalleForm={mediosDetalleForm}
-              setMediosDetalleForm={setMediosDetalleForm}
-              onSaveTipos={handleMediosSubmit}
-              onResetTipos={handleMediosReset}
-              isSavingTipos={updateAccion.isPending}
-              isTiposDirty={isMediosDirty}
-              uploadForm={uploadForm}
-              setUploadForm={setUploadForm}
-              onSubmit={handleUploadSubmit}
-              isUploading={uploadMedio.isPending}
-              imagePreviewUrl={imagePreviewUrl}
-              formatDateTime={formatDateTime}
-              humanizeTipo={humanizeTipo}
-              isImageFile={isImageFile}
-              formatFileSize={formatFileSize}
-              getFileExtension={getFileExtension}
-              uploadStage={uploadStage}
-              tipoOptions={requiredTipoOptions}
-              mediosRequeridosDetalle={accionView?.medios_requeridos_detalle || []}
-              canDeleteMedios={permissions.canManage}
-              onDeleteMedio={handleDeleteMedio}
-              deletingMedioId={deletingMedioId}
-              canEditMedios={permissions.canManage}
-              onUpdateMedio={handleUpdateMedio}
-              updatingMedioId={updatingMedioId}
-            />
-
-            <AccionTimelineSection timeline={timeline} formatDateTime={formatDateTime} />
+        <AccionOverviewSection
+          accion={accionView}
+          formatDate={formatDate}
+          formatDateTime={formatDateTime}
+          avancePorMedios={avancePorMedios}
+        />
+        {permissions.canManage ? (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleDeleteAccion}
+              disabled={deleteAccion.isPending}
+              className="inline-flex items-center justify-center rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deleteAccion.isPending ? 'Eliminando acción...' : 'Eliminar acción'}
+            </button>
           </div>
+        ) : null}
 
-          <AccionSidebar
-            canQuickEdit={permissions.canQuickEdit}
-            canComment={permissions.canComment}
-            formatDateTime={formatDateTime}
-            currentUserId={user?.id}
-            currentUserRole={user?.rol}
-            estadoForm={estadoForm}
-            setEstadoForm={setEstadoForm}
-            onSubmit={handleEstadoSubmit}
-            onReset={handleEstadoReset}
-            isPending={updateEstado.isPending}
-            isDirty={isEstadoDirty}
-            comentarioForm={comentarioForm}
-            setComentarioForm={setComentarioForm}
-            onCommentSubmit={handleCommentSubmit}
-            isCommentPending={addComentario.isPending || updateComentario.isPending || deleteComentario.isPending}
-            onCommentUpdate={handleCommentUpdate}
-            onCommentDelete={handleCommentDelete}
-            timelineCount={timeline.length}
-            mediosCount={medios.length}
-            accion={accionView}
-            comentarios={comentariosOperativos}
-          />
-        </div>
+        <AccionMediaSection
+          canUpload={permissions.canUploadMedios}
+          canEditTipos={permissions.canQuickEdit}
+          medios={medios}
+          mediosRequeridos={accionView?.medios_requeridos || []}
+          mediosForm={mediosForm}
+          setMediosForm={setMediosForm}
+          mediosDetalleForm={mediosDetalleForm}
+          setMediosDetalleForm={setMediosDetalleForm}
+          onSaveTipos={handleMediosSubmit}
+          onResetTipos={handleMediosReset}
+          isSavingTipos={updateAccion.isPending}
+          isTiposDirty={isMediosDirty}
+          uploadForm={uploadForm}
+          setUploadForm={setUploadForm}
+          onSubmit={handleUploadSubmit}
+          isUploading={uploadMedio.isPending}
+          imagePreviewUrl={imagePreviewUrl}
+          formatDateTime={formatDateTime}
+          humanizeTipo={humanizeTipo}
+          isImageFile={isImageFile}
+          formatFileSize={formatFileSize}
+          getFileExtension={getFileExtension}
+          uploadStage={uploadStage}
+          tipoOptions={requiredTipoOptions}
+          mediosRequeridosDetalle={accionView?.medios_requeridos_detalle || []}
+          canDeleteMedios={permissions.canManage}
+          onDeleteMedio={handleDeleteMedio}
+          deletingMedioId={deletingMedioId}
+          canEditMedios={permissions.canManage}
+          onUpdateMedio={handleUpdateMedio}
+          updatingMedioId={updatingMedioId}
+        />
+
+        <ComentariosOperativosSection
+          canComment={permissions.canComment}
+          formatDateTime={formatDateTime}
+          currentUserId={user?.id}
+          currentUserRole={user?.rol}
+          comentarioForm={comentarioForm}
+          setComentarioForm={setComentarioForm}
+          onCommentSubmit={handleCommentSubmit}
+          isCommentPending={addComentario.isPending || updateComentario.isPending || deleteComentario.isPending}
+          onCommentUpdate={handleCommentUpdate}
+          onCommentDelete={handleCommentDelete}
+          comentarios={comentariosOperativos}
+        />
+
+        <AccionTimelineSection timeline={timeline} formatDateTime={formatDateTime} />
+        <ResumenDocumentalSection accion={accionView} timelineCount={timeline.length} mediosCount={medios.length} />
       </section>
     </div>
   );
@@ -697,16 +612,6 @@ function humanizeTipo(tipo) {
   return TIPO_MEDIO_OPTIONS.find((option) => option.value === tipo)?.label || tipo || 'Sin tipo';
 }
 
-function humanizeEstado(estado) {
-  const labels = {
-    planificada: 'Planificada',
-    en_progreso: 'En progreso',
-    reportada: 'Reportada',
-    completada: 'Completada',
-  };
-  return labels[estado] || estado;
-}
-
 function isImageFile(fileName) {
   return /\.(png|jpg|jpeg|webp)$/i.test(String(fileName || ''));
 }
@@ -830,4 +735,164 @@ function composeTimeline(current, comentarios) {
 function isCommentTimelineType(tipo) {
   const value = String(tipo || '').toLowerCase();
   return value.includes('coment') || value.includes('observ');
+}
+
+function ComentariosOperativosSection({
+  canComment,
+  formatDateTime,
+  currentUserId,
+  currentUserRole,
+  comentarioForm,
+  setComentarioForm,
+  onCommentSubmit,
+  isCommentPending,
+  onCommentUpdate,
+  onCommentDelete,
+  comentarios,
+}) {
+  const [editingCommentId, setEditingCommentId] = useState('');
+  const [editingText, setEditingText] = useState('');
+
+  const startEditing = (entry) => {
+    setEditingCommentId(entry.id);
+    setEditingText(entry.texto || '');
+  };
+
+  const cancelEditing = () => {
+    setEditingCommentId('');
+    setEditingText('');
+  };
+
+  const handleUpdate = async (entry) => {
+    const ok = await onCommentUpdate?.(entry, editingText);
+    if (ok !== false) cancelEditing();
+  };
+
+  return (
+    <section className="rounded-2xl border border-slate-100 bg-white p-5 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-display font-bold text-navy">Comentarios operativos</h2>
+        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{comentarios.length}</span>
+      </div>
+
+      {canComment ? (
+        <form onSubmit={onCommentSubmit} className="space-y-3">
+          <textarea
+            rows="4"
+            value={comentarioForm}
+            onChange={(event) => setComentarioForm(event.target.value)}
+            disabled={isCommentPending}
+            placeholder="Escribe un comentario operativo que quede persistido en la acción."
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+          />
+          <button
+            type="submit"
+            disabled={isCommentPending || !String(comentarioForm || '').trim()}
+            className="inline-flex items-center justify-center rounded-xl bg-blue px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy transition-colors disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {isCommentPending ? 'Guardando comentario...' : 'Agregar comentario'}
+          </button>
+        </form>
+      ) : null}
+
+      {comentarios.length ? comentarios.map((entry, index) => {
+        const canManageEntry = canManageComment(entry, canComment, currentUserId, currentUserRole);
+        const isEditing = editingCommentId === entry.id;
+
+        return (
+          <div key={entry.id || `${entry.fecha}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 space-y-3">
+            {isEditing ? (
+              <div className="space-y-3">
+                <textarea
+                  rows="3"
+                  value={editingText}
+                  onChange={(event) => setEditingText(event.target.value)}
+                  disabled={isCommentPending}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdate(entry)}
+                    disabled={isCommentPending || !String(editingText || '').trim()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue px-3 py-2 text-sm font-semibold text-white hover:bg-navy transition-colors disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    disabled={isCommentPending}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-slate-600 font-body leading-6">{entry.texto}</p>
+                  {canManageEntry ? (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => startEditing(entry)}
+                        disabled={isCommentPending}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onCommentDelete?.(entry)}
+                        disabled={isCommentPending}
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:cursor-not-allowed disabled:text-red-300"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <p className="text-xs text-slate-400 font-body">
+                  {entry.usuario || 'Usuario no informado'} · {formatDateTime ? formatDateTime(entry.fecha) : (entry.fecha || 'Sin fecha')}
+                </p>
+              </>
+            )}
+          </div>
+        );
+      }) : (
+        <p className="text-sm text-slate-500 font-body">
+          Aún no hay comentarios operativos persistidos para esta acción.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ResumenDocumentalSection({ accion, timelineCount, mediosCount }) {
+  return (
+    <section className="rounded-2xl border border-slate-100 bg-slate-50 p-5 space-y-3">
+      <h2 className="text-lg font-display font-bold text-navy">Resumen documental</h2>
+      <SummaryRow label="Carpeta raíz" value="Planificacion" />
+      <SummaryRow label="Ruta lógica" value={`${accion.indicador_nombre || 'Indicador'} / ${accion.nombre} / Medios de Verificacion`} />
+      <SummaryRow label="Eventos bitácora" value={String(timelineCount)} />
+      <SummaryRow label="Archivos cargados" value={String(mediosCount)} />
+    </section>
+  );
+}
+
+function canManageComment(entry, canComment, currentUserId, currentUserRole) {
+  if (!canComment) return false;
+  if (currentUserRole === 'admin' || currentUserRole === 'director_ejecutivo') return true;
+  return entry?.created_by === currentUserId;
+}
+
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-3 last:border-b-0 last:pb-0">
+      <span className="text-sm text-slate-500 font-body">{label}</span>
+      <span className="text-sm font-semibold text-navy font-body text-right break-words">{value || '—'}</span>
+    </div>
+  );
 }
