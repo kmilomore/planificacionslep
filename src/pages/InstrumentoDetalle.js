@@ -123,6 +123,17 @@ export default function InstrumentoDetalle() {
       porcentaje: totalRequeridos > 0 ? Math.min(Math.round((totalCumplidos / totalRequeridos) * 100), 100) : null,
     };
   }, [accionesRelacionadas]);
+  const accionesPendientesPorMedios = useMemo(() => {
+    return accionesRelacionadas
+      .map((accion) => {
+        const requeridos = Number(accion.medios_requeridos_count || 0);
+        const cumplidos = Number(accion.medios_cumplidos_count || 0);
+        const pendientes = Math.max(requeridos - cumplidos, 0);
+        return { ...accion, requeridos, cumplidos, pendientes };
+      })
+      .filter((accion) => accion.requeridos > 0 && accion.pendientes > 0)
+      .sort((a, b) => b.pendientes - a.pendientes);
+  }, [accionesRelacionadas]);
 
   useEffect(() => {
     if (!requestedIndicadorId || !filas.length) return;
@@ -570,6 +581,36 @@ export default function InstrumentoDetalle() {
                         Expandir vista completa
                       </Link>
                     </div>
+
+                    {accionesPendientesPorMedios.length ? (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
+                          Acciones pendientes por medios ({accionesPendientesPorMedios.length})
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {accionesPendientesPorMedios.map((accion) => (
+                            <div key={accion.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-100 bg-white px-3 py-2">
+                              <div>
+                                <p className="text-xs font-semibold text-navy">{accion.nombre || 'Acción sin nombre'}</p>
+                                <p className="text-[11px] text-slate-500">
+                                  Pendientes: {accion.pendientes} de {accion.requeridos} medios
+                                </p>
+                              </div>
+                              <Link
+                                to={`/acciones/${accion.id}`}
+                                className="text-xs font-medium text-blue hover:underline"
+                              >
+                                Ir a cargar medios
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
+                        Todas las acciones con medios requeridos ya tienen su evidencia cargada.
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-xs text-slate-600">
@@ -965,11 +1006,6 @@ function ValorAvanceInput({ tipoMeta, value, onChange }) {
       onChange={(e) => onChange(e.target.value)}
     />
   );
-}
-
-function resolveValorFieldType(tipoMeta) {
-  if (!tipoMeta) return 'valor_avance';
-  return 'valor_avance';
 }
 
 function calcularPorcentajeAvanceModal(valorReportado, metaValor, tipoMeta) {
