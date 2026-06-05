@@ -1,5 +1,5 @@
 const Avances = {
-  upsert(data, user) {
+  upsert(data, user, requestMeta) {
     if (!data.indicador_id || !data.corte_id) {
       throw new Error('indicador_id y corte_id son obligatorios');
     }
@@ -43,9 +43,24 @@ const Avances = {
     };
 
     if (existente) {
+      const anterior = { ...existente };
       Utils.updateRowById(Config.SHEETS.AVANCES, existente.id, payload);
       Utils.invalidateDashboardCaches({ instrumentoId: indicador.instrumento_id, corteId: data.corte_id });
-      return { ...existente, ...payload, id: existente.id };
+      const actualizado = { ...existente, ...payload, id: existente.id };
+      Auditoria.logEvent(
+        {
+          modulo:  'avances',
+          entidad: 'avance',
+          entidad_id: existente.id,
+          accion:  'update',
+          detalle: `Actualización de avance indicador ${indicador.codigo_indicador} corte ${corte.codigo_corte}`,
+          valores_anteriores: anterior,
+          valores_nuevos: actualizado,
+        },
+        user,
+        requestMeta
+      );
+      return actualizado;
     }
 
     const nuevo = {
@@ -58,6 +73,18 @@ const Avances = {
     };
     Utils.appendRow(Config.SHEETS.AVANCES, nuevo);
     Utils.invalidateDashboardCaches({ instrumentoId: indicador.instrumento_id, corteId: data.corte_id });
+    Auditoria.logEvent(
+      {
+        modulo:  'avances',
+        entidad: 'avance',
+        entidad_id: nuevo.id,
+        accion:  'create',
+        detalle: `Ingreso de avance indicador ${indicador.codigo_indicador} corte ${corte.codigo_corte}`,
+        valores_nuevos: nuevo,
+      },
+      user,
+      requestMeta
+    );
     return nuevo;
   },
 
@@ -109,7 +136,7 @@ const Avances = {
     );
   },
 
-  aprobar(id, user) {
+  aprobar(id, user, requestMeta) {
     if (user.rol !== 'director_ejecutivo' && user.rol !== 'admin') {
       throw new Error('Solo director ejecutivo o admin pueden aprobar avances');
     }
@@ -117,6 +144,7 @@ const Avances = {
     const avance = Utils.buscarEnSheet(Config.SHEETS.AVANCES, 'id', id);
     if (!avance) throw new Error('Avance no encontrado');
 
+    const anterior = { ...avance };
     Utils.updateRowById(Config.SHEETS.AVANCES, id, {
       estado_revision: 'aprobado',
       aprobado_por: user.id,
@@ -125,10 +153,23 @@ const Avances = {
     });
     const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', avance.indicador_id);
     Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id, corteId: avance.corte_id });
+    Auditoria.logEvent(
+      {
+        modulo:  'avances',
+        entidad: 'avance',
+        entidad_id: id,
+        accion:  'approve',
+        detalle: `Aprobación de avance indicador ${indicador ? indicador.codigo_indicador : ''}`,
+        valores_anteriores: anterior,
+        valores_nuevos: { ...anterior, estado_revision: 'aprobado', aprobado_por: user.id },
+      },
+      user,
+      requestMeta
+    );
     return { ok: true };
   },
 
-  observar(id, comentario, user) {
+  observar(id, comentario, user, requestMeta) {
     if (user.rol !== 'director_ejecutivo' && user.rol !== 'admin') {
       throw new Error('Solo director ejecutivo o admin pueden observar avances');
     }
@@ -139,6 +180,7 @@ const Avances = {
     const avance = Utils.buscarEnSheet(Config.SHEETS.AVANCES, 'id', id);
     if (!avance) throw new Error('Avance no encontrado');
 
+    const anterior = { ...avance };
     Utils.updateRowById(Config.SHEETS.AVANCES, id, {
       estado_revision: 'observado',
       comentario: String(comentario).trim(),
@@ -146,6 +188,19 @@ const Avances = {
     });
     const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', avance.indicador_id);
     Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id, corteId: avance.corte_id });
+    Auditoria.logEvent(
+      {
+        modulo:  'avances',
+        entidad: 'avance',
+        entidad_id: id,
+        accion:  'observe',
+        detalle: `Observación de avance indicador ${indicador ? indicador.codigo_indicador : ''}`,
+        valores_anteriores: anterior,
+        valores_nuevos: { ...anterior, estado_revision: 'observado', comentario: String(comentario).trim() },
+      },
+      user,
+      requestMeta
+    );
     return { ok: true };
   },
 };

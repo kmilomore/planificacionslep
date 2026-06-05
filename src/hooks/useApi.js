@@ -165,6 +165,15 @@ export function useMetricasCorte(corte_id) {
   );
 }
 
+// --- Auditoría ---
+export function useAuditoriaEventos(filtros = {}) {
+  return useApiQuery(
+    ['auditoria', filtros],
+    'getAuditoriaEventos',
+    { filtros }
+  );
+}
+
 // --- Acciones ---
 export function useAcciones(filtros = {}) {
   return useApiQuery(

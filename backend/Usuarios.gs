@@ -4,7 +4,7 @@ const Usuarios = {
     return Utils.getSheetObjectsCached(Config.SHEETS.USUARIOS, 120);
   },
 
-  create(data, user) {
+  create(data, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede crear usuarios');
 
     const nombre = String(data && data.nombre || '').trim();
@@ -32,6 +32,18 @@ const Usuarios = {
     };
 
     Utils.appendRow(Config.SHEETS.USUARIOS, nuevo);
+    Auditoria.logEvent(
+      {
+        modulo:  'usuarios',
+        entidad: 'usuario',
+        entidad_id: nuevo.id,
+        accion:  'create',
+        detalle: `Creación de usuario ${nuevo.email}`,
+        valores_nuevos: nuevo,
+      },
+      user,
+      requestMeta
+    );
     return nuevo;
   },
 
@@ -50,13 +62,29 @@ const Usuarios = {
     }));
   },
 
-  update(id, data, user) {
+  update(id, data, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede editar usuarios');
     const allowed = { nombre: true, rol: true, area: true, activo: true };
     const updates = Object.fromEntries(
       Object.entries(data).filter(([k]) => allowed[k])
     );
+
+    const anterior = Utils.buscarEnSheet(Config.SHEETS.USUARIOS, 'id', id);
     Utils.updateRowById(Config.SHEETS.USUARIOS, id, updates);
+
+    Auditoria.logEvent(
+      {
+        modulo:  'usuarios',
+        entidad: 'usuario',
+        entidad_id: id,
+        accion:  'update',
+        detalle: `Actualización de usuario ${anterior ? anterior.email : id}`,
+        valores_anteriores: anterior,
+        valores_nuevos: { ...(anterior || {}), ...updates },
+      },
+      user,
+      requestMeta
+    );
     return { ok: true };
   },
 

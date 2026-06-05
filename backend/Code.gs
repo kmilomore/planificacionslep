@@ -9,6 +9,11 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents);
     const { action, data, id, filtros } = body;
 
+    const requestMeta = {
+      ip: (e && e.parameter && e.parameter.ip) || '',
+      userAgent: (e && e.parameter && e.parameter.userAgent) || '',
+    };
+
     const router = {
       // Sesión
       'validarSesion': () => ({
@@ -21,32 +26,32 @@ function doPost(e) {
 
       // Usuarios
       'getUsuarios':   () => Usuarios.getAll(user),
-      'createUsuario': () => Usuarios.create(data, user),
-      'updateUsuario': () => Usuarios.update(id, data, user),
+      'createUsuario': () => Usuarios.create(data, user, requestMeta),
+      'updateUsuario': () => Usuarios.update(id, data, user, requestMeta),
 
       // Instrumentos
       'getInstrumentos':   () => Instrumentos.getAll(user),
-      'createInstrumento': () => Instrumentos.create(data, user),
-      'updateInstrumento': () => Instrumentos.update(id, data, user),
+      'createInstrumento': () => Instrumentos.create(data, user, requestMeta),
+      'updateInstrumento': () => Instrumentos.update(id, data, user, requestMeta),
 
       // Indicadores
       'getIndicador':   () => Indicadores.getById(id, user),
       'getIndicadores':  () => Indicadores.getByInstrumento(filtros.instrumento_id, user),
-      'createIndicador': () => Indicadores.create(data, user),
-      'updateIndicador': () => Indicadores.update(id, data, user),
-      'deleteIndicador': () => Indicadores.softDelete(id, user),
+      'createIndicador': () => Indicadores.create(data, user, requestMeta),
+      'updateIndicador': () => Indicadores.update(id, data, user, requestMeta),
+      'deleteIndicador': () => Indicadores.softDelete(id, user, requestMeta),
 
       // Cortes
       'getCortes':   () => Cortes.getByInstrumento(filtros.instrumento_id, user),
       'getAllCortes': () => Cortes.getAll(user),
-      'createCorte': () => Cortes.create(data, user),
-      'cerrarCorte': () => Cortes.cerrar(id, user),
+      'createCorte': () => Cortes.create(data, user, requestMeta),
+      'cerrarCorte': () => Cortes.cerrar(id, data, user, requestMeta),
 
       // Avances
       'getAvancesPorCorte': () => Avances.getByCorte(filtros.corte_id, user),
-      'upsertAvance':       () => Avances.upsert(data, user),
-      'aprobarAvance':      () => Avances.aprobar(id, user),
-      'observarAvance':     () => Avances.observar(id, data.comentario, user),
+      'upsertAvance':       () => Avances.upsert(data, user, requestMeta),
+      'aprobarAvance':      () => Avances.aprobar(id, user, requestMeta),
+      'observarAvance':     () => Avances.observar(id, data.comentario, user, requestMeta),
 
       // Dashboard
       'getDashboardResumen':     () => Dashboard.getResumenGeneral(user),
@@ -58,19 +63,22 @@ function doPost(e) {
       // Acciones
       'getAcciones':             () => Acciones.getAll(filtros || {}, user),
       'getAccion':               () => Acciones.getById(id, user),
-      'createAccion':            () => Acciones.create(data, user),
-      'updateAccion':            () => Acciones.update(id, data, user),
-      'deleteAccion':            () => Acciones.softDelete(id, user),
-      'updateEstadoAccion':      () => Acciones.updateEstado(id, data, user),
-      'addComentarioAccion':     () => Acciones.addComentario(id, data, user),
-      'updateComentarioAccion':  () => Acciones.updateComentario(id, data, user),
-      'deleteComentarioAccion':  () => Acciones.deleteComentario(id, user),
-      'uploadMedioVerificacion': () => Acciones.uploadMedio(id, data, user),
-      'deleteMedioVerificacion': () => Acciones.deleteMedio(id, data, user),
+      'createAccion':            () => Acciones.create(data, user, requestMeta),
+      'updateAccion':            () => Acciones.update(id, data, user, requestMeta),
+      'deleteAccion':            () => Acciones.softDelete(id, user, requestMeta),
+      'updateEstadoAccion':      () => Acciones.updateEstado(id, data, user, requestMeta),
+      'addComentarioAccion':     () => Acciones.addComentario(id, data, user, requestMeta),
+      'updateComentarioAccion':  () => Acciones.updateComentario(id, data, user, requestMeta),
+      'deleteComentarioAccion':  () => Acciones.deleteComentario(id, user, requestMeta),
+      'uploadMedioVerificacion': () => Acciones.uploadMedio(id, data, user, requestMeta),
+      'deleteMedioVerificacion': () => Acciones.deleteMedio(id, data, user, requestMeta),
       'getMediosAccion':         () => Acciones.getMedios(id || filtros.accion_id, user),
 
       // Emails (admin)
       'enviarReporteManual': () => Emails.enviarReporteCorte(filtros.corte_id),
+
+      // Auditoría (admin)
+      'getAuditoriaEventos': () => Auditoria.getEvents(filtros || {}, user),
     };
 
     if (!router[action]) return jsonError(`Acción desconocida: ${action}`, 400);

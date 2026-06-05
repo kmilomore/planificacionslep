@@ -52,7 +52,7 @@ const Acciones = {
     };
   },
 
-  create(data, user) {
+  create(data, user, requestMeta) {
     this.assertCanEdit_(user);
     const indicador = this.getIndicador_(data.indicador_id);
     this.assertIndicadorActivo_(indicador);
@@ -79,10 +79,23 @@ const Acciones = {
 
     Utils.appendRow(Config.SHEETS.ACCIONES, nueva);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador.instrumento_id, includeIndicadores: true });
-    return this.getById(nueva.id, user);
+    const creada = this.getById(nueva.id, user);
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'accion',
+        entidad_id: nueva.id,
+        accion:  'create',
+        detalle: `Creación de acción "${nueva.nombre}" para indicador ${indicador.codigo_indicador}`,
+        valores_nuevos: creada,
+      },
+      user,
+      requestMeta
+    );
+    return creada;
   },
 
-  update(id, data, user) {
+  update(id, data, user, requestMeta) {
     if (!id) throw new Error('id requerido');
 
     const accion = this.getOwnedAccionForEdit_(id, user);
@@ -122,28 +135,57 @@ const Acciones = {
 
     updates.updated_at = Utils.ahora();
 
+    const anterior = { ...accion };
     Utils.updateRowById(Config.SHEETS.ACCIONES, id, updates);
 
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
-    return this.getById(id, user);
+    const actualizada = this.getById(id, user);
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'accion',
+        entidad_id: id,
+        accion:  'update',
+        detalle: `Actualización de acción "${accion.nombre}"`,
+        valores_anteriores: anterior,
+        valores_nuevos: actualizada,
+      },
+      user,
+      requestMeta
+    );
+    return actualizada;
   },
 
-  softDelete(id, user) {
+  softDelete(id, user, requestMeta) {
     if (!id) throw new Error('id requerido');
     const accion = this.getOwnedAccionForEdit_(id, user);
     const indicador = this.getIndicador_(accion.indicador_id);
     const deletedAt = Utils.ahora();
 
+    const anterior = { ...accion };
     Utils.updateRowById(Config.SHEETS.ACCIONES, accion.id, {
       activo: false,
       updated_at: deletedAt,
     });
 
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'accion',
+        entidad_id: accion.id,
+        accion:  'soft_delete',
+        detalle: `Desactivación de acción "${accion.nombre}"`,
+        valores_anteriores: anterior,
+        valores_nuevos: { ...anterior, activo: false, updated_at: deletedAt },
+      },
+      user,
+      requestMeta
+    );
     return { id: accion.id, deleted: true };
   },
 
-  updateEstado(id, data, user) {
+  updateEstado(id, data, user, requestMeta) {
     if (!id) throw new Error('id requerido');
     const accion = this.getOwnedAccionForEdit_(id, user);
     const estado = data?.estado;
@@ -161,14 +203,29 @@ const Acciones = {
       updates.avance = this.normalizeAvance_(data.avance);
     }
 
+    const anterior = { ...accion };
     Utils.updateRowById(Config.SHEETS.ACCIONES, id, updates);
 
     const indicador = this.getIndicador_(accion.indicador_id);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
-    return this.getById(id, user);
+    const actualizada = this.getById(id, user);
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'accion',
+        entidad_id: id,
+        accion:  'status_change',
+        detalle: `Cambio de estado de acción "${accion.nombre}" a ${estado}`,
+        valores_anteriores: anterior,
+        valores_nuevos: actualizada,
+      },
+      user,
+      requestMeta
+    );
+    return actualizada;
   },
 
-  addComentario(id, data, user) {
+  addComentario(id, data, user, requestMeta) {
     if (!id) throw new Error('id requerido');
 
     const accion = this.getOwnedAccionForEdit_(id, user);
@@ -192,10 +249,22 @@ const Acciones = {
 
     const indicador = this.getIndicador_(accion.indicador_id);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'comentario_accion',
+        entidad_id: comentario.id,
+        accion:  'create',
+        detalle: `Comentario agregado en acción "${accion.nombre}"`,
+        valores_nuevos: comentario,
+      },
+      user,
+      requestMeta
+    );
     return comentario;
   },
 
-  updateComentario(id, data, user) {
+  updateComentario(id, data, user, requestMeta) {
     if (!id) throw new Error('id requerido');
 
     const comentario = this.getComentarioForEdit_(id, user);
@@ -208,21 +277,37 @@ const Acciones = {
       tipo: 'comentario',
     };
 
+    const anterior = { ...comentario };
     Utils.updateRowById(Config.SHEETS.COMENTARIOS_ACCION, comentario.id, updates);
     Utils.updateRowById(Config.SHEETS.ACCIONES, comentario.accion_id, { updated_at: updates.fecha });
 
     const accion = this.getOwnedAccionForEdit_(comentario.accion_id, user);
     const indicador = this.getIndicador_(accion.indicador_id);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
-    return { ...comentario, ...updates };
+    const actualizado = { ...comentario, ...updates };
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'comentario_accion',
+        entidad_id: comentario.id,
+        accion:  'update',
+        detalle: `Comentario actualizado en acción "${accion.nombre}"`,
+        valores_anteriores: anterior,
+        valores_nuevos: actualizado,
+      },
+      user,
+      requestMeta
+    );
+    return actualizado;
   },
 
-  deleteComentario(id, user) {
+  deleteComentario(id, user, requestMeta) {
     if (!id) throw new Error('id requerido');
 
     const comentario = this.getComentarioForEdit_(id, user);
     const deletedAt = Utils.ahora();
 
+    const anterior = { ...comentario };
     Utils.updateRowById(Config.SHEETS.COMENTARIOS_ACCION, comentario.id, {
       tipo: 'comentario_eliminado',
       texto: '[Comentario eliminado]',
@@ -233,6 +318,19 @@ const Acciones = {
     const accion = this.getOwnedAccionForEdit_(comentario.accion_id, user);
     const indicador = this.getIndicador_(accion.indicador_id);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'comentario_accion',
+        entidad_id: comentario.id,
+        accion:  'delete',
+        detalle: `Comentario eliminado en acción "${accion.nombre}"`,
+        valores_anteriores: anterior,
+        valores_nuevos: { ...anterior, tipo: 'comentario_eliminado', texto: '[Comentario eliminado]' },
+      },
+      user,
+      requestMeta
+    );
     return { id: comentario.id, deleted: true };
   },
 
@@ -242,7 +340,7 @@ const Acciones = {
     return accion.medios;
   },
 
-  uploadMedio(accionId, data, user) {
+  uploadMedio(accionId, data, user, requestMeta) {
     if (!accionId) throw new Error('accion_id requerido');
     const accion = this.getOwnedAccionForEdit_(accionId, user);
     const tipo = String(data?.tipo || '').trim();
@@ -283,10 +381,22 @@ const Acciones = {
     Utils.appendRow(Config.SHEETS.MEDIOS_VERIFICACION, medio);
     Utils.updateRowById(Config.SHEETS.ACCIONES, accion.id, { updated_at: Utils.ahora() });
     Utils.invalidateAccionesCaches({ instrumentoId: indicador.instrumento_id, includeIndicadores: true });
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'medio_verificacion',
+        entidad_id: medio.id,
+        accion:  'create',
+        detalle: `Medio de verificación (${tipo}) subido para acción "${accion.nombre}"`,
+        valores_nuevos: medio,
+      },
+      user,
+      requestMeta
+    );
     return medio;
   },
 
-  deleteMedio(accionId, data, user) {
+  deleteMedio(accionId, data, user, requestMeta) {
     if (!accionId) throw new Error('accion_id requerido');
     const accion = this.getOwnedAccionForEdit_(accionId, user);
     const medioId = String(data?.medio_id || '').trim();
@@ -303,6 +413,7 @@ const Acciones = {
     const deletedAt = Utils.ahora();
     Drive.deleteFileById(medio.file_id);
 
+    const anterior = { ...medio };
     Utils.updateRowById(Config.SHEETS.MEDIOS_VERIFICACION, medio.id, {
       url_drive: '',
       file_id: '',
@@ -316,6 +427,28 @@ const Acciones = {
 
     const indicador = this.getIndicador_(accion.indicador_id);
     Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'medio_verificacion',
+        entidad_id: medio.id,
+        accion:  'delete',
+        detalle: `Medio de verificación eliminado para acción "${accion.nombre}"`,
+        valores_anteriores: anterior,
+        valores_nuevos: {
+          ...anterior,
+          url_drive: '',
+          file_id: '',
+          nombre_archivo: anterior.nombre_archivo ? `[ELIMINADO] ${anterior.nombre_archivo}` : '[ELIMINADO]',
+          descripcion: '[Medio eliminado]',
+          usuario: user.email || user.id || '',
+          fecha_subida: deletedAt,
+          tipo: 'eliminado',
+        },
+      },
+      user,
+      requestMeta
+    );
     return { id: medio.id, deleted: true };
   },
 

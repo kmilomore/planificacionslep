@@ -4,12 +4,14 @@ import TabUsuarios     from '../components/admin/TabUsuarios';
 import TabInstrumentos from '../components/admin/TabInstrumentos';
 import TabIndicadores  from '../components/admin/TabIndicadores';
 import TabCortes       from '../components/admin/TabCortes';
+import TabAuditoria    from '../components/admin/TabAuditoria';
 
 const TABS = [
   { id: 'usuarios',      label: 'Usuarios' },
   { id: 'instrumentos',  label: 'Instrumentos' },
   { id: 'indicadores',   label: 'Indicadores' },
   { id: 'cortes',        label: 'Cortes' },
+  { id: 'auditoria',     label: 'Auditoría' },
 ];
 
 export default function Admin() {
@@ -46,6 +48,7 @@ export default function Admin() {
       {tab === 'instrumentos' && <TabInstrumentos />}
       {tab === 'indicadores'  && <TabIndicadores />}
       {tab === 'cortes'       && <TabCortes />}
+      {tab === 'auditoria'    && <TabAuditoria />}
     </div>
   );
 }

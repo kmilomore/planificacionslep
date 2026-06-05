@@ -36,6 +36,13 @@ function setupInicial() {
       'id', 'tipo_alerta', 'destinatario_email', 'instrumento_id',
       'corte_id', 'asunto', 'enviado_en', 'exito', 'error_msg',
     ],
+    auditoria: [
+      'id', 'timestamp', 'user_id', 'user_email', 'user_nombre', 'user_rol', 'user_area',
+      'ip', 'user_agent',
+      'modulo', 'entidad', 'entidad_id',
+      'accion', 'detalle',
+      'valores_anteriores', 'valores_nuevos',
+    ],
   };
 
   // Crear hojas y cabeceras

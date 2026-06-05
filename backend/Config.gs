@@ -13,6 +13,7 @@ const Config = {
     MEDIOS_VERIFICACION: 'medios_verificacion',
     COMENTARIOS_ACCION: 'comentarios_accion',
     ALERTAS_LOG:  'alertas_log',
+    AUDITORIA:    'auditoria',
   },
 
   DRIVE: {

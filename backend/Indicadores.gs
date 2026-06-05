@@ -12,7 +12,7 @@ const Indicadores = {
     return rows.filter(i => i.instrumento_id === instrumento_id);
   },
 
-  create(data, user) {
+  create(data, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede crear indicadores');
     if (!data.instrumento_id || !data.codigo_indicador || !data.nombre) {
       throw new Error('Instrumento, código y nombre son obligatorios');
@@ -41,10 +41,22 @@ const Indicadores = {
     };
     Utils.appendRow(Config.SHEETS.INDICADORES, nuevo);
     Utils.invalidateDashboardCaches({ instrumentoId: data.instrumento_id });
+    Auditoria.logEvent(
+      {
+        modulo:  'indicadores',
+        entidad: 'indicador',
+        entidad_id: nuevo.id,
+        accion:  'create',
+        detalle: `Creación de indicador ${nuevo.codigo_indicador}`,
+        valores_nuevos: nuevo,
+      },
+      user,
+      requestMeta
+    );
     return nuevo;
   },
 
-  update(id, data, user) {
+  update(id, data, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede editar indicadores');
     const allowed = {
       nombre: true, descripcion: true, formula: true, tipo_meta: true,
@@ -55,14 +67,40 @@ const Indicadores = {
     const updates = Object.fromEntries(Object.entries(data).filter(([k]) => allowed[k]));
     Utils.updateRowById(Config.SHEETS.INDICADORES, id, updates);
     Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id });
+    Auditoria.logEvent(
+      {
+        modulo:  'indicadores',
+        entidad: 'indicador',
+        entidad_id: id,
+        accion:  'update',
+        detalle: `Actualización de indicador ${indicador ? indicador.codigo_indicador : id}`,
+        valores_anteriores: indicador,
+        valores_nuevos: { ...(indicador || {}), ...updates },
+      },
+      user,
+      requestMeta
+    );
     return { ok: true };
   },
 
-  softDelete(id, user) {
+  softDelete(id, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede desactivar indicadores');
     const indicador = Utils.buscarEnSheet(Config.SHEETS.INDICADORES, 'id', id);
     Utils.updateRowById(Config.SHEETS.INDICADORES, id, { activo: false });
     Utils.invalidateDashboardCaches({ instrumentoId: indicador?.instrumento_id });
+    Auditoria.logEvent(
+      {
+        modulo:  'indicadores',
+        entidad: 'indicador',
+        entidad_id: id,
+        accion:  'soft_delete',
+        detalle: `Desactivación de indicador ${indicador ? indicador.codigo_indicador : id}`,
+        valores_anteriores: indicador,
+        valores_nuevos: { ...(indicador || {}), activo: false },
+      },
+      user,
+      requestMeta
+    );
     return { ok: true };
   },
 };

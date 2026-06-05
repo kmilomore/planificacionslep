@@ -10,7 +10,7 @@ const Cortes = {
       .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
   },
 
-  create(data, user) {
+  create(data, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede crear cortes');
 
     // Verificar que no exista ya un corte con el mismo código
@@ -30,14 +30,39 @@ const Cortes = {
     };
     Utils.appendRow(Config.SHEETS.CORTES, nuevo);
     Utils.invalidateDashboardCaches({ instrumentoId: data.instrumento_id, corteId: nuevo.id });
+    Auditoria.logEvent(
+      {
+        modulo:  'cortes',
+        entidad: 'corte',
+        entidad_id: nuevo.id,
+        accion:  'create',
+        detalle: `Creación de corte ${nuevo.codigo_corte}`,
+        valores_nuevos: nuevo,
+      },
+      user,
+      requestMeta
+    );
     return nuevo;
   },
 
-  cerrar(id, user) {
+  cerrar(id, data, user, requestMeta) {
     if (user.rol !== 'admin') throw new Error('Solo admin puede cerrar cortes');
     const corte = Utils.buscarEnSheet(Config.SHEETS.CORTES, 'id', id);
     Utils.updateRowById(Config.SHEETS.CORTES, id, { estado: 'cerrado' });
     Utils.invalidateDashboardCaches({ instrumentoId: corte?.instrumento_id, corteId: id });
+    Auditoria.logEvent(
+      {
+        modulo:  'cortes',
+        entidad: 'corte',
+        entidad_id: id,
+        accion:  'status_change',
+        detalle: `Cierre de corte ${corte ? corte.codigo_corte : id}`,
+        valores_anteriores: corte,
+        valores_nuevos: { ...(corte || {}), estado: 'cerrado' },
+      },
+      user,
+      requestMeta
+    );
     return { ok: true };
   },
 

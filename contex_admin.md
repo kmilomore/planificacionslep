@@ -27,13 +27,22 @@ La parte superior de la pestaña incluye un formulario compacto de "Nuevo usuari
 - `nombre` (requerido)
 - `email` (requerido)
 - `rol` (requerido, opciones: `admin`, `subdirector`, `director_ejecutivo`)
-- `área` (opcional)
+- `subdirección / departamento` (requerido, seleccionado desde indicadores)
+- `subdepartamento` (opcional, texto libre)
+- `cargo` (opcional, texto libre)
 
 Al enviar:
 - solo perfiles con rol `admin` pueden crear usuarios
 - se valida que nombre, email y rol no vayan vacíos
 - el backend impide duplicar emails existentes
+- la estructura organizacional se serializa en la columna `area` como `Subdirección · Subdepartamento · Cargo` (omitiendo vacíos)
 - al éxito, se limpia el formulario, se recarga la lista y se muestra mensaje de confirmación
+
+### Integración con indicadores (equipo de trabajo)
+
+- el selector de `Subdirección / Departamento` no es libre: sus opciones provienen de la columna `equipo_trabajo` (y, en su defecto, `subdimension`) de la hoja `indicadores`
+- `TabUsuarios` usa `useTodosLosIndicadores()` para obtener todos los indicadores y construir un catálogo único y ordenado de equipos/subdirecciones
+- esto asegura que los usuarios queden alineados con las mismas subdirecciones/equipos que ya se usan para los indicadores y acciones
 
 ### Contrato esperado con backend para usuarios
 
@@ -47,7 +56,7 @@ Campos esperados por fila en la hoja `usuarios`:
 - `nombre`
 - `email`
 - `rol`
-- `area`
+- `area` (subdirección / subdepartamento / cargo serializados)
 - `activo`
 - `creado_en`
 
