@@ -4,6 +4,37 @@ const Usuarios = {
     return Utils.getSheetObjectsCached(Config.SHEETS.USUARIOS, 120);
   },
 
+  create(data, user) {
+    if (user.rol !== 'admin') throw new Error('Solo admin puede crear usuarios');
+
+    const nombre = String(data && data.nombre || '').trim();
+    const email  = String(data && data.email  || '').trim();
+    const rol    = String(data && data.rol    || '').trim();
+    const area   = String(data && data.area   || '').trim();
+
+    if (!nombre || !email || !rol) {
+      throw new Error('Nombre, email y rol son obligatorios');
+    }
+
+    const existente = Utils.buscarEnSheet(Config.SHEETS.USUARIOS, 'email', email);
+    if (existente) {
+      throw new Error('Ya existe un usuario con ese email');
+    }
+
+    const nuevo = {
+      id:        Utils.uuid(),
+      nombre:    nombre,
+      email:     email,
+      rol:       rol,
+      area:      area,
+      activo:    true,
+      creado_en: Utils.ahora(),
+    };
+
+    Utils.appendRow(Config.SHEETS.USUARIOS, nuevo);
+    return nuevo;
+  },
+
   getResponsablesAccion(user) {
     if (!user || !['admin', 'director_ejecutivo', 'subdirector'].includes(user.rol)) {
       throw new Error('No tienes permiso para listar responsables');

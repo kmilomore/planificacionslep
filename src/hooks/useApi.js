@@ -242,6 +242,10 @@ export function useUsuarios() {
   return useApiQuery('usuarios', 'getUsuarios');
 }
 
+export function useCreateUsuario() {
+  return useApiMutation('createUsuario', ['usuarios']);
+}
+
 export function useUpdateUsuario() {
   return useApiMutation('updateUsuario', ['usuarios']);
 }

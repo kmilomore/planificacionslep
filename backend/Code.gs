@@ -21,6 +21,7 @@ function doPost(e) {
 
       // Usuarios
       'getUsuarios':   () => Usuarios.getAll(user),
+      'createUsuario': () => Usuarios.create(data, user),
       'updateUsuario': () => Usuarios.update(id, data, user),
 
       // Instrumentos

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUsuarios, useUpdateUsuario } from '../../hooks/useApi';
+import { useUsuarios, useUpdateUsuario, useCreateUsuario } from '../../hooks/useApi';
 import Spinner from '../ui/Spinner';
 import Alert from '../ui/Alert';
 
@@ -12,7 +12,14 @@ const ROL_LABELS = {
 export default function TabUsuarios() {
   const { data: usuarios = [], isLoading, isError } = useUsuarios();
   const updateMut = useUpdateUsuario();
+  const createMut = useCreateUsuario();
   const [feedback, setFeedback] = useState(null);
+  const [nuevo, setNuevo] = useState({
+    nombre: '',
+    email: '',
+    rol: 'admin',
+    area: '',
+  });
 
   const toggle = async (u, campo, valor) => {
     try {
@@ -23,18 +30,84 @@ export default function TabUsuarios() {
     }
   };
 
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    try {
+      await createMut.mutateAsync({ data: nuevo });
+      setFeedback({ type: 'success', msg: 'Usuario creado.' });
+      setNuevo({ nombre: '', email: '', rol: 'admin', area: '' });
+    } catch (e) {
+      setFeedback({ type: 'error', msg: e.message });
+    }
+  };
+
   if (isLoading) return <Spinner size="lg" />;
   if (isError)   return <Alert type="error" message="No se pudo cargar la lista de usuarios." />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {feedback && (
         <Alert type={feedback.type} message={feedback.msg} onClose={() => setFeedback(null)} />
       )}
-      <p className="text-sm text-gray-500 font-body">
-        Agrega usuarios directamente en la hoja <code className="bg-gray-100 px-1 rounded">usuarios</code> del Google Sheet,
-        o usando la función <code className="bg-gray-100 px-1 rounded">agregarUsuario()</code> en Apps Script.
-      </p>
+      <div className="bg-white rounded-card shadow-card p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-navy font-display">Nuevo usuario</h2>
+        <p className="text-xs text-gray-500 font-body">
+          Crea usuarios directamente desde el portal. Solo perfiles con rol <span className="font-semibold">admin</span> pueden usar este formulario.
+        </p>
+        <form className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end" onSubmit={handleCreate}>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-600">Nombre</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+              value={nuevo.nombre}
+              onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-600">Email</label>
+            <input
+              type="email"
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+              value={nuevo.email}
+              onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-600">Rol</label>
+            <select
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body bg-white focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+              value={nuevo.rol}
+              onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}
+              required
+            >
+              <option value="admin">Administrador</option>
+              <option value="subdirector">Subdirector</option>
+              <option value="director_ejecutivo">Director Ejecutivo</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-600">Área (opcional)</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+              value={nuevo.area}
+              onChange={(e) => setNuevo({ ...nuevo, area: e.target.value })}
+            />
+          </div>
+          <div className="md:col-span-4 flex justify-end">
+            <button
+              type="submit"
+              disabled={createMut.isPending}
+              className="inline-flex items-center px-4 py-1.5 rounded-md bg-blue text-white text-sm font-medium shadow-sm hover:bg-blue/90 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {createMut.isPending ? 'Creando…' : 'Agregar usuario'}
+            </button>
+          </div>
+        </form>
+      </div>
 
       <div className="bg-white rounded-card shadow-card overflow-hidden">
         <table className="w-full text-sm font-body">
