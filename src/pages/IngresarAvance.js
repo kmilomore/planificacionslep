@@ -56,8 +56,10 @@ export default function IngresarAvance() {
     return { total, cumplidos, porcentaje };
   }, [accionesIndicador]);
 
-  const semaforo = useMemo(() => calcularSemaforo(cumplimiento), [cumplimiento]);
-  const comentarioObligatorio = cumplimiento < 80;
+  const usaLogicaMedios = cumplimientoMedios.porcentaje !== null;
+  const cumplimientoFinal = usaLogicaMedios ? cumplimientoMedios.porcentaje : cumplimiento;
+  const semaforo = useMemo(() => calcularSemaforo(cumplimientoFinal), [cumplimientoFinal]);
+  const comentarioObligatorio = cumplimientoFinal < 80;
 
   const upsertMut = useUpsertAvance(corte_id, indicador?.instrumento_id);
 
@@ -76,7 +78,9 @@ export default function IngresarAvance() {
         data: {
           indicador_id,
           corte_id,
-          valor_reportado: normalizarValor(form.valor_reportado, indicador?.tipo_meta),
+          valor_reportado: usaLogicaMedios
+            ? `${cumplimientoMedios.cumplidos}/${cumplimientoMedios.total}`
+            : normalizarValor(form.valor_reportado, indicador?.tipo_meta),
           comentario: form.comentario,
           evidencia_url: form.evidencia_url,
         },
@@ -118,10 +122,22 @@ export default function IngresarAvance() {
         </section>
 
         <section className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Valor reportado</label>
-            <ValorInput tipoMeta={indicador.tipo_meta} value={form.valor_reportado} onChange={(valor_reportado) => setForm(actual => ({ ...actual, valor_reportado }))} />
-          </div>
+          {usaLogicaMedios ? (
+            <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">Lógica integrada por medios</p>
+              <p className="mt-2 text-sm text-slate-700 font-body">
+                El avance de este indicador se calcula automáticamente según los medios de verificación cargados en las acciones asociadas.
+              </p>
+              <p className="mt-2 text-sm font-semibold text-navy">
+                Medios cumplidos: {cumplimientoMedios.cumplidos}/{cumplimientoMedios.total} ({cumplimientoMedios.porcentaje}%).
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">Valor reportado</label>
+              <ValorInput tipoMeta={indicador.tipo_meta} value={form.valor_reportado} onChange={(valor_reportado) => setForm(actual => ({ ...actual, valor_reportado }))} />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">
@@ -151,15 +167,15 @@ export default function IngresarAvance() {
         <section className="bg-gray-50 rounded-xl p-4 border border-gray-100">
           <p className="text-xs font-semibold text-gray-600 font-body mb-3">Vista previa</p>
           <div className="flex flex-wrap items-center gap-3 text-sm font-body">
-            <span className="text-navy font-semibold">Cumplimiento: {cumplimiento}%</span>
+            <span className="text-navy font-semibold">Cumplimiento: {cumplimientoFinal}%</span>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${semaforo === 'verde' ? 'bg-green-100 text-green-700' : semaforo === 'amarillo' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
               {semaforo}
             </span>
             {comentarioObligatorio && <span className="text-xs text-red">Se requerirá comentario para guardar.</span>}
           </div>
-          {cumplimientoMedios.porcentaje !== null ? (
+          {usaLogicaMedios ? (
             <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-              Cumplimiento por medios de acciones asociadas: <span className="font-semibold text-navy">{cumplimientoMedios.porcentaje}%</span>
+              Cumplimiento por medios de acciones asociadas: <span className="font-semibold text-navy">{cumplimientoFinal}%</span>
               {' '}({cumplimientoMedios.cumplidos}/{cumplimientoMedios.total}).
               {cumplimientoMedios.porcentaje < 100 ? ' Debes cargar en cada acción los medios pendientes para llegar a 100%.' : ' Todos los medios requeridos ya están verificados.'}
             </div>
