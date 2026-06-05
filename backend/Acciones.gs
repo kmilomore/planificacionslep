@@ -378,8 +378,13 @@ const Acciones = {
 
     const existentes = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 30)
       .filter((medio) => medio.accion_id === accion.id && this.normalizeTipoMedio_(medio.tipo) === tipo);
-    if (existentes.length) {
-      throw new Error('Ya existe un archivo para este medio de verificación en la acción');
+
+    const detalleRequeridos = this.parseMediosRequeridosDetalle_(accion.medios_requeridos, accion.medios_requeridos_detalle);
+    const configTipo = detalleRequeridos.find((entry) => this.normalizeTipoMedio_(entry?.tipo) === tipo);
+    const maxArchivos = configTipo ? this.normalizeMedioCantidad_(configTipo.cantidad) : 1;
+
+    if (existentes.length >= maxArchivos) {
+      throw new Error('Ya existen todas las evidencias declaradas para este tipo de medio en la acción');
     }
 
     const indicador = this.getIndicador_(accion.indicador_id);
@@ -452,8 +457,13 @@ const Acciones = {
       }
       const existentes = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 30)
         .filter((other) => other.accion_id === accion.id && this.normalizeTipoMedio_(other.tipo) === nextTipo && other.id !== medio.id);
-      if (existentes.length) {
-        throw new Error('Ya existe un archivo para este medio de verificación en la acción');
+
+      const detalleRequeridos = this.parseMediosRequeridosDetalle_(accion.medios_requeridos, accion.medios_requeridos_detalle);
+      const configTipo = detalleRequeridos.find((entry) => this.normalizeTipoMedio_(entry?.tipo) === nextTipo);
+      const maxArchivos = configTipo ? this.normalizeMedioCantidad_(configTipo.cantidad) : 1;
+
+      if (existentes.length >= maxArchivos) {
+        throw new Error('Ya existen todas las evidencias declaradas para este tipo de medio en la acción');
       }
       updates.tipo = nextTipo;
     }
