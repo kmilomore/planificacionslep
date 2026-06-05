@@ -131,6 +131,8 @@ Cada item debe llegar decorado o con datos suficientes para construir:
 - backend rechaza tipos no declarados y evita duplicar el mismo tipo por accion
 - los tipos de medios declarados se pueden editar en el detalle de accion (multi-seleccion)
 - el cumplimiento del indicador por avance puede calcularse por cumplimiento documental cuando existen medios requeridos
+- se puede eliminar medios de verificacion desde el detalle de accion (con confirmacion y trazabilidad)
+- se puede eliminar acciones desde el portal mediante baja logica (`activo = false`)
 
 ## Hallazgos tecnicos del modulo (iteracion actual)
 
@@ -164,6 +166,14 @@ Cada item debe llegar decorado o con datos suficientes para construir:
 - se habilita editar tipos declarados desde el detalle de accion
 - guardado via `updateAccion` con validacion de al menos un tipo activo
 - restablecer cambios locales de tipos antes de guardar
+
+### Iteracion 5: Eliminacion controlada
+- se agrega `deleteMedioVerificacion` en API y backend para eliminacion de medios desde el portal
+- al eliminar medio:
+  - se intenta enviar archivo a papelera en Drive por `file_id`
+  - se marca registro como eliminado y deja de mostrarse en UI
+- se agrega `deleteAccion` para baja logica de acciones (`activo = false`)
+- el listado y detalle excluyen elementos eliminados manteniendo historial auditable
 
 ## Dependencias cruzadas
 

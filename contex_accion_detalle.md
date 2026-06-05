@@ -10,7 +10,9 @@ La pagina:
 - carga una accion individual con `useAccion(id)`
 - permite cambio rapido de estado y avance
 - permite carga de medios de verificacion con overlay de progreso
+- permite eliminar medios de verificacion desde el mismo detalle (con confirmacion)
 - permite alta, edicion y eliminacion de comentarios persistidos
+- permite eliminar la accion desde el detalle (soft delete, con confirmacion)
 - aplica optimistic update para estado y comentarios
 - reconstruye el timeline local mientras llega la confirmacion backend
 - resuelve permisos segun rol y metadata de la accion
@@ -20,9 +22,11 @@ La pagina:
 - `useAccion()`
 - `useUpdateEstadoAccion()`
 - `useUploadMedioVerificacion()`
+- `useDeleteMedioVerificacion()`
 - `useAddComentarioAccion()`
 - `useUpdateComentarioAccion()`
 - `useDeleteComentarioAccion()`
+- `useDeleteAccion()`
 - `useAuth()`
 - `useQueryClient()` para manipular cache local
 - componentes extraidos:
@@ -45,6 +49,7 @@ Permite:
 - previsualizar imagenes compatibles
 - subir archivo a Drive
 - ver metadata de medios ya cargados
+- eliminar un medio ya cargado (si el perfil tiene gestion)
 
 ### Timeline
 Consolida:
@@ -105,12 +110,21 @@ El detalle ya no deriva comentarios solo desde timeline. Ahora:
 
 `AccionSidebar` usa ademas el `created_by` del comentario para decidir si puede editar o eliminar.
 
+Acciones destructivas:
+- eliminar medio y eliminar accion se habilitan solo con permisos de gestion (`canManage`)
+- ambas requieren confirmacion explicita del usuario en frontend
+
 ## Hallazgos tecnicos del modulo
 
 - esta pagina crecio demasiado y por eso fue refactorizada en componentes especializados
 - la percepcion de lentitud mejoro con overlay de upload y optimistic update
 - las fechas ISO crudas necesitaron normalizacion explicita en detalle y timeline
 - la dependencia de `comentarios_accion` hizo necesario endurecer el esquema backend
+- se agrego soporte de eliminacion documental:
+  - `deleteMedioVerificacion` (backend marca medio como `eliminado` y limpia enlace)
+  - intento de envio a papelera en Drive por `file_id`
+- se agrego soporte de eliminacion de accion:
+  - `deleteAccion` usa baja logica (`activo = false`) para mantener trazabilidad
 
 ## Riesgos al tocar este modulo
 

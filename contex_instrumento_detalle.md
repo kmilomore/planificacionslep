@@ -59,7 +59,8 @@ La pagina:
 - deriva filas con permisos de edicion y revision
 - abre el detalle del indicador al hacer click o al aterrizar por deep link
 - permite editar campos del indicador cuando el usuario es `admin`
-- enlaza a `/avance/:indicador_id/:corte_id` para operar el avance
+- permite guardar avance directamente desde el modal del indicador con `useUpsertAvance(corteId, instrumentoId)`
+- mantiene acceso a la vista completa via `/avance/:indicador_id/:corte_id`
 - consulta acciones relacionadas con `useAccionesPorIndicador(indicadorId)` cuando un indicador esta abierto
 - permite navegar a `/acciones` y `/acciones/:id` desde el detalle
 - muestra feedback con `Alert`
@@ -76,6 +77,7 @@ La pagina:
 - `useAcciones({ instrumento_id: id })` para contar acciones declaradas por indicador en la tabla
 - `useUpdateIndicador(id)` para guardar cambios estructurales
 - `useAprobarAvance()` y `useObservarAvance()` para revision de avances
+- `useUpsertAvance(corteId, id)` para guardar avance desde el mismo modal
 - `useAccionesPorIndicador(indicadorId)` para mostrar acciones relacionadas
 - `Alert`, `Modal` y `Spinner` como primitives de UI
 
@@ -108,7 +110,8 @@ Debe sentirse como una ficha de control, no solo como un formulario.
 #### Franja superior
 - contexto del indicador
 - CTA para editar indicador si aplica
-- CTA para ingresar o editar avance si aplica
+- CTA para guardar avance inline en modal si aplica
+- CTA para abrir la vista completa de avance
 - CTA para ir al modulo acciones
 
 #### Resumen visual
@@ -126,6 +129,12 @@ Debe sentirse como una ficha de control, no solo como un formulario.
 #### Ficha del indicador
 - campos estructurales en lectura
 - campos editables en modo formulario
+
+#### Bloque de avance inline (nuevo)
+- input de valor reportado adaptado a `tipo_meta` (booleano, texto, numerico)
+- comentario y `evidencia_url`
+- validacion de comentario obligatorio cuando cumplimiento estimado < 80
+- guardado directo sin abandonar el modal
 
 #### Acciones relacionadas
 Si hay acciones asociadas al indicador, mostrar:
@@ -233,6 +242,9 @@ Cada usuario debe incluir:
 - puede editar avance el `admin` o el responsable del indicador
 - pueden revisar avances `admin` y `director_ejecutivo`
 - si el corte actual esta cerrado, no se habilita ingreso o edicion de avance
+- el modal de indicador ahora soporta dos caminos complementarios:
+  - guardado rapido inline de avance
+  - apertura de vista completa `/avance/:indicador_id/:corte_id`
 - la columna `Acciones declaradas` muestra el total de acciones del instrumento agrupadas por `indicador_id`, sin filtrar por estado
 - en esta vista el responsable visible del indicador es `subdimension`
 - las acciones relacionadas se consultan solo cuando un indicador esta abierto

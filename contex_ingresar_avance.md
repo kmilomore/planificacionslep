@@ -2,12 +2,17 @@
 
 ## Objetivo
 
-`src/pages/IngresarAvance.js` es el formulario operativo para registrar o editar el avance de un indicador en un corte especifico. Debe garantizar consistencia minima de negocio antes de enviar al backend.
+`src/pages/IngresarAvance.js` es el formulario operativo para registrar o editar el avance de un indicador en un corte especifico.
+
+Actualizacion de criterio funcional:
+- cuando el indicador tiene acciones con medios de verificacion requeridos, el avance se entiende como cumplimiento documental (no como captura aislada de valor reportado)
+- cuando no existen medios requeridos, se mantiene la logica tradicional por `tipo_meta`
 
 ## Responsabilidad funcional
 
 La pagina:
 - carga el indicador con `useIndicador(indicador_id)`
+- carga acciones del indicador con `useAccionesPorIndicador(indicador_id)` (respuesta normalizada desde `data.items`)
 - carga los cortes del instrumento con `useCortesPorInstrumento(indicador.instrumento_id)`
 - carga los avances del corte con `useAvancesPorCorte(corte_id)`
 - detecta si ya existe un avance previo del indicador para ese corte
@@ -49,6 +54,11 @@ Campos:
 - `comentario`
 - `evidencia_url`
 
+Comportamiento actualizado:
+- si hay medios requeridos en acciones asociadas, se muestra bloque de "logica integrada por medios" y no se prioriza captura manual de `valor_reportado`
+- en ese escenario, el valor guardado se traza como `cumplidos/total` de medios
+- si no hay medios requeridos, se mantiene el input tradicional de `valor_reportado` por `tipo_meta`
+
 El control de `valor_reportado` cambia segun `tipo_meta`:
 - `booleano`: select Si/No
 - `texto`: textarea
@@ -56,7 +66,7 @@ El control de `valor_reportado` cambia segun `tipo_meta`:
 
 ### Vista previa
 Muestra:
-- cumplimiento calculado
+- cumplimiento final calculado (por medios cuando aplica, por `tipo_meta` en caso contrario)
 - semaforo resultante
 - alerta de comentario obligatorio cuando corresponde
 
@@ -67,6 +77,9 @@ Muestra:
 - indicadores booleanos transforman `Si` en 100 y `No` en 0
 - indicadores de texto consideran cumplimiento 100 si hay contenido
 - indicadores numericos calculan porcentaje contra `meta_valor`
+- si existen medios requeridos en acciones asociadas, el cumplimiento final del indicador se calcula por medios:
+  - `medios_cumplidos / medios_requeridos * 100`
+  - ese porcentaje domina sobre el calculo manual
 
 ## Guardado
 
@@ -79,13 +92,14 @@ Flujo:
 Payload enviado:
 - `indicador_id`
 - `corte_id`
-- `valor_reportado`
+- `valor_reportado` (manual o `cumplidos/total` cuando aplica logica por medios)
 - `comentario`
 - `evidencia_url`
 
 ## Dependencias principales
 
 - `useIndicador()`
+- `useAccionesPorIndicador()`
 - `useCortesPorInstrumento()`
 - `useAvancesPorCorte()`
 - `useUpsertAvance()`
@@ -98,6 +112,7 @@ Payload enviado:
 - este modulo depende de tres consultas previas antes de poder operar, por eso su estado de loading bloquea la pantalla completa
 - la logica de cumplimiento se replica en frontend como feedback inmediato, pero la fuente final de verdad sigue siendo backend
 - el formulario aun usa `evidencia_url` como campo de texto, no como carga real de archivo
+- bug corregido: `useAccionesPorIndicador()` puede devolver objeto (`{ items, resumen }`) y no arreglo plano; ahora se normaliza antes de usar `.filter`
 
 ## Riesgos al tocar este modulo
 
