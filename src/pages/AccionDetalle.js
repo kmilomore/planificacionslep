@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Spinner from '../components/ui/Spinner';
 import Alert from '../components/ui/Alert';
 import AccionDetalleSkeleton from '../components/acciones/detalle/AccionDetalleSkeleton';
@@ -12,7 +12,9 @@ import { useAuth } from '../context/AuthContext';
 import {
   useAccion,
   useAddComentarioAccion,
+  useDeleteAccion,
   useDeleteComentarioAccion,
+  useDeleteMedioVerificacion,
   useUpdateAccion,
   useUpdateComentarioAccion,
   useUpdateEstadoAccion,
@@ -30,12 +32,15 @@ const TIPO_MEDIO_OPTIONS = [
 
 export default function AccionDetalle() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: accion, isLoading, error } = useAccion(id);
   const addComentario = useAddComentarioAccion(id);
   const updateComentario = useUpdateComentarioAccion(id);
   const deleteComentario = useDeleteComentarioAccion(id);
+  const deleteAccion = useDeleteAccion();
+  const deleteMedio = useDeleteMedioVerificacion(id);
   const updateAccion = useUpdateAccion(id);
   const updateEstado = useUpdateEstadoAccion(id);
   const uploadMedio = useUploadMedioVerificacion(id);
@@ -52,6 +57,7 @@ export default function AccionDetalle() {
     description: '',
   });
   const [mediosForm, setMediosForm] = useState([]);
+  const [deletingMedioId, setDeletingMedioId] = useState('');
 
   const accionView = useMemo(() => {
     if (!accion) return accion;
@@ -365,6 +371,41 @@ export default function AccionDetalle() {
     }
   };
 
+  const handleDeleteAccion = async () => {
+    const confirmed = window.confirm('Esta acción se eliminará del portal. ¿Deseas continuar?');
+    if (!confirmed) return;
+
+    setFeedback(null);
+    try {
+      await deleteAccion.mutateAsync({ id });
+      setFeedback({ type: 'success', message: 'Acción eliminada. Serás redirigido al listado.' });
+      window.setTimeout(() => {
+        navigate('/acciones');
+      }, 400);
+    } catch (submitError) {
+      setFeedback({ type: 'error', message: submitError.message });
+    }
+  };
+
+  const handleDeleteMedio = async (medio) => {
+    const confirmed = window.confirm(`Se eliminará el medio "${medio?.nombre_archivo || 'sin nombre'}". ¿Deseas continuar?`);
+    if (!confirmed) return;
+
+    setFeedback(null);
+    setDeletingMedioId(medio.id);
+    try {
+      await deleteMedio.mutateAsync({
+        id,
+        data: { medio_id: medio.id },
+      });
+      setFeedback({ type: 'success', message: 'Medio de verificación eliminado.' });
+    } catch (submitError) {
+      setFeedback({ type: 'error', message: submitError.message });
+    } finally {
+      setDeletingMedioId('');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {uploadMedio.isPending ? (
@@ -382,6 +423,18 @@ export default function AccionDetalle() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-6">
             <AccionOverviewSection accion={accionView} formatDate={formatDate} formatDateTime={formatDateTime} />
+            {permissions.canManage ? (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleDeleteAccion}
+                  disabled={deleteAccion.isPending}
+                  className="inline-flex items-center justify-center rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {deleteAccion.isPending ? 'Eliminando acción...' : 'Eliminar acción'}
+                </button>
+              </div>
+            ) : null}
 
             <AccionMediaSection
               canUpload={permissions.canUploadMedios}
@@ -406,6 +459,9 @@ export default function AccionDetalle() {
               getFileExtension={getFileExtension}
               uploadStage={uploadStage}
               tipoOptions={requiredTipoOptions}
+              canDeleteMedios={permissions.canManage}
+              onDeleteMedio={handleDeleteMedio}
+              deletingMedioId={deletingMedioId}
             />
 
             <AccionTimelineSection timeline={timeline} formatDateTime={formatDateTime} />

@@ -22,6 +22,17 @@ const Drive = {
     };
   },
 
+  deleteFileById(fileId) {
+    const id = String(fileId || '').trim();
+    if (!id) return;
+    try {
+      const file = DriveApp.getFileById(id);
+      file.setTrashed(true);
+    } catch (error) {
+      // Si no existe o no se puede enviar a papelera no bloqueamos la eliminación lógica.
+    }
+  },
+
   validateUpload_(payload) {
     if (!payload || !payload.base64Content) {
       throw new Error('Archivo requerido para subir medio de verificación');

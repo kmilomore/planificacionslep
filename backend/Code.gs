@@ -59,11 +59,13 @@ function doPost(e) {
       'getAccion':               () => Acciones.getById(id, user),
       'createAccion':            () => Acciones.create(data, user),
       'updateAccion':            () => Acciones.update(id, data, user),
+      'deleteAccion':            () => Acciones.softDelete(id, user),
       'updateEstadoAccion':      () => Acciones.updateEstado(id, data, user),
       'addComentarioAccion':     () => Acciones.addComentario(id, data, user),
       'updateComentarioAccion':  () => Acciones.updateComentario(id, data, user),
       'deleteComentarioAccion':  () => Acciones.deleteComentario(id, user),
       'uploadMedioVerificacion': () => Acciones.uploadMedio(id, data, user),
+      'deleteMedioVerificacion': () => Acciones.deleteMedio(id, data, user),
       'getMediosAccion':         () => Acciones.getMedios(id || filtros.accion_id, user),
 
       // Emails (admin)

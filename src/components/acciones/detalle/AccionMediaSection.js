@@ -34,6 +34,9 @@ export default function AccionMediaSection({
   getFileExtension,
   uploadStage,
   tipoOptions,
+  canDeleteMedios,
+  onDeleteMedio,
+  deletingMedioId,
 }) {
   const hasRequiredMedios = Array.isArray(mediosRequeridos) && mediosRequeridos.length > 0;
   const [isEditingTipos, setIsEditingTipos] = useState(false);
@@ -247,15 +250,27 @@ export default function AccionMediaSection({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <a
-                    href={medio.url_drive}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors"
-                  >
-                    <ExternalLink size={16} />
-                    Abrir Drive
-                  </a>
+                  {medio.url_drive ? (
+                    <a
+                      href={medio.url_drive}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors"
+                    >
+                      <ExternalLink size={16} />
+                      Abrir Drive
+                    </a>
+                  ) : null}
+                  {canDeleteMedios ? (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteMedio(medio)}
+                      disabled={deletingMedioId === medio.id}
+                      className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deletingMedioId === medio.id ? 'Eliminando...' : 'Eliminar'}
+                    </button>
+                  ) : null}
                 </div>
               </div>
 

@@ -10,6 +10,7 @@ import {
   useIndicadores,
   useInstrumentos,
   useObservarAvance,
+  useUpsertAvance,
   useUpdateIndicador,
   useUsuarios,
 } from '../hooks/useApi';
@@ -48,6 +49,11 @@ export default function InstrumentoDetalle() {
   const [editandoDetalle, setEditandoDetalle] = useState(false);
   const [observando, setObservando] = useState(null);
   const [comentarioObservacion, setComentarioObservacion] = useState('');
+  const [avanceForm, setAvanceForm] = useState({
+    valor_reportado: '',
+    comentario: '',
+    evidencia_url: '',
+  });
   const requestedCorteId = searchParams.get('corte') || '';
   const requestedIndicadorId = searchParams.get('indicador') || '';
 
@@ -66,6 +72,7 @@ export default function InstrumentoDetalle() {
   const { data: accionesInstrumentoData } = useAcciones({ instrumento_id: id });
   const aprobarMut = useAprobarAvance(corteId, id);
   const observarMut = useObservarAvance(corteId, id);
+  const upsertAvanceMut = useUpsertAvance(corteId, id);
   const updateIndicadorMut = useUpdateIndicador(id);
   const indicadorDetalleId = detalle?.indicador?.id || '';
   const { data: accionesRelacionadasData, isLoading: loadingAccionesRelacionadas } = useAccionesPorIndicador(indicadorDetalleId);
@@ -142,12 +149,22 @@ export default function InstrumentoDetalle() {
   const abrirDetalle = (indicador, avance) => {
     setDetalle({ indicador, avance });
     setDetalleForm(buildDetalleForm(indicador));
+    setAvanceForm({
+      valor_reportado: avance?.valor_reportado ?? '',
+      comentario: avance?.comentario ?? '',
+      evidencia_url: avance?.evidencia_url ?? '',
+    });
     setEditandoDetalle(false);
   };
 
   const cerrarDetalle = () => {
     setDetalle(null);
     setDetalleForm({});
+    setAvanceForm({
+      valor_reportado: '',
+      comentario: '',
+      evidencia_url: '',
+    });
     setEditandoDetalle(false);
   };
 
@@ -191,6 +208,41 @@ export default function InstrumentoDetalle() {
       ));
       setFeedback({ type: 'success', msg: 'Indicador actualizado.' });
       setEditandoDetalle(false);
+    } catch (error) {
+      setFeedback({ type: 'error', msg: error.message });
+    }
+  };
+
+  const guardarAvanceDesdeModal = async () => {
+    if (!detalle?.indicador?.id || !corteId) return;
+    if (corteActual?.estado === 'cerrado') {
+      setFeedback({ type: 'error', msg: 'El corte está cerrado.' });
+      return;
+    }
+
+    const porcentaje = calcularPorcentajeAvanceModal(
+      avanceForm.valor_reportado,
+      detalle.indicador.meta_valor,
+      detalle.indicador.tipo_meta
+    );
+    const requiereComentario = porcentaje < 80;
+    if (requiereComentario && !String(avanceForm.comentario || '').trim()) {
+      setFeedback({ type: 'error', msg: 'Debes ingresar comentario si el cumplimiento es menor a 80%.' });
+      return;
+    }
+
+    try {
+      await upsertAvanceMut.mutateAsync({
+        data: {
+          indicador_id: detalle.indicador.id,
+          corte_id: corteId,
+          valor_reportado: normalizarValorAvanceModal(avanceForm.valor_reportado, detalle.indicador.tipo_meta),
+          comentario: avanceForm.comentario,
+          evidencia_url: avanceForm.evidencia_url,
+        },
+      });
+      setFeedback({ type: 'success', msg: 'Avance guardado correctamente.' });
+      cerrarDetalle();
     } catch (error) {
       setFeedback({ type: 'error', msg: error.message });
     }
@@ -358,14 +410,24 @@ export default function InstrumentoDetalle() {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-xs text-gray-500">Revisa el indicador, su avance y las acciones vinculadas al corte seleccionado.</p>
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) && (
-                  <Link
-                    to={`/avance/${detalle.indicador.id}/${corteId}`}
-                    className="px-3 py-1.5 text-xs border border-blue/20 text-blue rounded-lg hover:bg-blue/5"
-                  >
-                    {detalle.avance?.id ? 'Editar avance' : 'Ingresar avance'}
-                  </Link>
-                )}
+                {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) ? (
+                  <>
+                    <Link
+                      to={`/avance/${detalle.indicador.id}/${corteId}`}
+                      className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:border-blue hover:text-blue"
+                    >
+                      Abrir vista completa de avance
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={guardarAvanceDesdeModal}
+                      disabled={upsertAvanceMut.isPending}
+                      className="px-3 py-1.5 text-xs border border-blue/20 text-blue rounded-lg hover:bg-blue/5 disabled:opacity-50"
+                    >
+                      {upsertAvanceMut.isPending ? 'Guardando avance...' : (detalle.avance?.id ? 'Guardar cambios de avance' : 'Guardar avance')}
+                    </button>
+                  </>
+                ) : null}
                 <Link
                   to="/acciones"
                   className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:border-blue hover:text-blue"
@@ -432,6 +494,51 @@ export default function InstrumentoDetalle() {
                 tone="amber"
               />
             </div>
+
+            {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) ? (
+              <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-4 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-navy">Ingresar avance en este modal</h3>
+                  <span className="text-xs text-slate-500">Corte: {corteActual?.nombre_corte || '—'}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    label="Valor reportado"
+                    tipo={resolveValorFieldType(detalle.indicador.tipo_meta)}
+                    value={avanceForm.valor_reportado}
+                    onChange={(value) => setAvanceForm((actual) => ({ ...actual, valor_reportado: value }))}
+                    usuarios={usuarios}
+                    tipoMeta={detalle.indicador.tipo_meta}
+                  />
+                  <FormField
+                    label="URL evidencia"
+                    tipo="url"
+                    value={avanceForm.evidencia_url}
+                    onChange={(value) => setAvanceForm((actual) => ({ ...actual, evidencia_url: value }))}
+                    usuarios={usuarios}
+                  />
+                  <FormField
+                    label={`Comentario ${calcularPorcentajeAvanceModal(avanceForm.valor_reportado, detalle.indicador.meta_valor, detalle.indicador.tipo_meta) < 80 ? '*' : '(opcional)'}`}
+                    tipo="textarea"
+                    value={avanceForm.comentario}
+                    onChange={(value) => setAvanceForm((actual) => ({ ...actual, comentario: value }))}
+                    usuarios={usuarios}
+                  />
+                </div>
+                <div className="text-xs text-slate-600">
+                  Cumplimiento estimado:{' '}
+                  <span className="font-semibold text-navy">
+                    {calcularPorcentajeAvanceModal(avanceForm.valor_reportado, detalle.indicador.meta_valor, detalle.indicador.tipo_meta)}%
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                {corteActual?.estado === 'cerrado'
+                  ? 'El corte está cerrado, por lo que no se pueden registrar avances.'
+                  : 'No tienes permiso para ingresar avances en este indicador.'}
+              </div>
+            )}
 
             {!editandoDetalle && (
               <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
@@ -715,7 +822,7 @@ function formatDateValue(value) {
   return `${day}/${month}/${year}`;
 }
 
-function FormField({ label, tipo, value, onChange, usuarios }) {
+function FormField({ label, tipo, value, onChange, usuarios, tipoMeta }) {
   return (
     <div className={tipo === 'textarea' ? 'md:col-span-2' : ''}>
       <label className="block text-xs font-semibold text-gray-600 mb-1 font-body">{label}</label>
@@ -725,6 +832,16 @@ function FormField({ label, tipo, value, onChange, usuarios }) {
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30 resize-none"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+        />
+      ) : tipo === 'valor_avance' ? (
+        <ValorAvanceInput tipoMeta={tipoMeta} value={value} onChange={onChange} />
+      ) : tipo === 'url' ? (
+        <input
+          type="url"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://..."
         />
       ) : tipo === 'select_user' ? (
         <select
@@ -757,4 +874,58 @@ function FormField({ label, tipo, value, onChange, usuarios }) {
       )}
     </div>
   );
+}
+
+function ValorAvanceInput({ tipoMeta, value, onChange }) {
+  const cls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:ring-2 focus:ring-blue/30';
+
+  if (tipoMeta === 'booleano') {
+    return (
+      <select className={cls} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">— Selecciona —</option>
+        <option value="Sí">Sí</option>
+        <option value="No">No</option>
+      </select>
+    );
+  }
+
+  if (tipoMeta === 'texto') {
+    return (
+      <textarea
+        rows={3}
+        className={`${cls} resize-none`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  return (
+    <input
+      type="number"
+      step="any"
+      className={cls}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
+function resolveValorFieldType(tipoMeta) {
+  if (!tipoMeta) return 'valor_avance';
+  return 'valor_avance';
+}
+
+function calcularPorcentajeAvanceModal(valorReportado, metaValor, tipoMeta) {
+  if (tipoMeta === 'booleano') return valorReportado === 'Sí' ? 100 : 0;
+  if (tipoMeta === 'texto') return String(valorReportado || '').trim() ? 100 : 0;
+  const valor = parseFloat(valorReportado);
+  const meta = parseFloat(metaValor);
+  if (Number.isNaN(valor) || Number.isNaN(meta) || meta === 0) return 0;
+  return Math.min(Math.round((valor / meta) * 100), 100);
+}
+
+function normalizarValorAvanceModal(valor, tipoMeta) {
+  if (tipoMeta === 'booleano') return valor || 'No';
+  return valor;
 }

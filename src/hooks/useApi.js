@@ -229,6 +229,14 @@ export function useUploadMedioVerificacion(accionId) {
   return useApiMutation('uploadMedioVerificacion', ['acciones', ['accion', accionId], ['medios_accion', accionId]]);
 }
 
+export function useDeleteMedioVerificacion(accionId) {
+  return useApiMutation('deleteMedioVerificacion', ['acciones', ['accion', accionId], ['medios_accion', accionId]]);
+}
+
+export function useDeleteAccion() {
+  return useApiMutation('deleteAccion', ['acciones']);
+}
+
 // --- Usuarios ---
 export function useUsuarios() {
   return useApiQuery('usuarios', 'getUsuarios');

@@ -128,6 +128,21 @@ const Acciones = {
     return this.getById(id, user);
   },
 
+  softDelete(id, user) {
+    if (!id) throw new Error('id requerido');
+    const accion = this.getOwnedAccionForEdit_(id, user);
+    const indicador = this.getIndicador_(accion.indicador_id);
+    const deletedAt = Utils.ahora();
+
+    Utils.updateRowById(Config.SHEETS.ACCIONES, accion.id, {
+      activo: false,
+      updated_at: deletedAt,
+    });
+
+    Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    return { id: accion.id, deleted: true };
+  },
+
   updateEstado(id, data, user) {
     if (!id) throw new Error('id requerido');
     const accion = this.getOwnedAccionForEdit_(id, user);
@@ -271,12 +286,46 @@ const Acciones = {
     return medio;
   },
 
+  deleteMedio(accionId, data, user) {
+    if (!accionId) throw new Error('accion_id requerido');
+    const accion = this.getOwnedAccionForEdit_(accionId, user);
+    const medioId = String(data?.medio_id || '').trim();
+    if (!medioId) throw new Error('medio_id requerido');
+
+    const medio = Utils.buscarEnSheet(
+      Config.SHEETS.MEDIOS_VERIFICACION,
+      'id',
+      medioId,
+      (row) => row.accion_id === accion.id
+    );
+    if (!medio) throw new Error('Medio de verificación no encontrado');
+
+    const deletedAt = Utils.ahora();
+    Drive.deleteFileById(medio.file_id);
+
+    Utils.updateRowById(Config.SHEETS.MEDIOS_VERIFICACION, medio.id, {
+      url_drive: '',
+      file_id: '',
+      nombre_archivo: medio.nombre_archivo ? `[ELIMINADO] ${medio.nombre_archivo}` : '[ELIMINADO]',
+      descripcion: '[Medio eliminado]',
+      usuario: user.email || user.id || '',
+      fecha_subida: deletedAt,
+      tipo: 'eliminado',
+    });
+    Utils.updateRowById(Config.SHEETS.ACCIONES, accion.id, { updated_at: deletedAt });
+
+    const indicador = this.getIndicador_(accion.indicador_id);
+    Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+    return { id: medio.id, deleted: true };
+  },
+
   getBundle_(user) {
     ensureAccionesSchema();
 
     return {
       acciones: Utils.getSheetObjectsCached(Config.SHEETS.ACCIONES, 60).filter((accion) => this.isActive_(accion)),
-      medios: Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 60),
+      medios: Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 60)
+        .filter((medio) => String(medio.tipo || '').trim() !== 'eliminado'),
       comentarios: Utils.getSheetObjectsCached(Config.SHEETS.COMENTARIOS_ACCION, 60)
         .filter((comentario) => String(comentario.tipo || '').trim() !== 'comentario_eliminado'),
       indicadores: Utils.getSheetObjectsCached(Config.SHEETS.INDICADORES, 90).filter((indicador) => this.isActive_(indicador)),
