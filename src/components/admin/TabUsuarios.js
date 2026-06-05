@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useUsuarios, useUpdateUsuario, useCreateUsuario } from '../../hooks/useApi';
+import { useState, useMemo } from 'react';
+import { useUsuarios, useUpdateUsuario, useCreateUsuario, useTodosLosIndicadores } from '../../hooks/useApi';
 import Spinner from '../ui/Spinner';
 import Alert from '../ui/Alert';
 
@@ -13,6 +13,7 @@ export default function TabUsuarios() {
   const { data: usuarios = [], isLoading, isError } = useUsuarios();
   const updateMut = useUpdateUsuario();
   const createMut = useCreateUsuario();
+  const { data: indicadores = [] } = useTodosLosIndicadores();
   const [feedback, setFeedback] = useState(null);
   const [nuevo, setNuevo] = useState({
     nombre: '',
@@ -22,6 +23,15 @@ export default function TabUsuarios() {
     subdepartamento: '',
     cargo: '',
   });
+
+  const equiposTrabajo = useMemo(() => {
+    const set = new Set();
+    indicadores.forEach((ind) => {
+      const equipo = String(ind.equipo_trabajo || ind.subdimension || '').trim();
+      if (equipo) set.add(equipo);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [indicadores]);
 
   const toggle = async (u, campo, valor) => {
     try {
@@ -111,14 +121,25 @@ export default function TabUsuarios() {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Subdirección / Departamento</label>
-            <input
-              type="text"
-              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+            <label className="block text-xs font-medium text-gray-600">
+              Subdirección / Departamento
+              <span className="block text-[10px] text-gray-400 font-normal">
+                Valores desde columna &quot;Equipo de trabajo&quot; de indicadores
+              </span>
+            </label>
+            <select
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body bg-white focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
               value={nuevo.subdireccion}
               onChange={(e) => setNuevo({ ...nuevo, subdireccion: e.target.value })}
-              placeholder="Ej: Subdirección de Gestión"
-            />
+              required
+            >
+              <option value="">Selecciona subdirección / equipo</option>
+              {equiposTrabajo.map((equipo) => (
+                <option key={equipo} value={equipo}>
+                  {equipo}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1">
             <label className="block text-xs font-medium text-gray-600">Subdepartamento</label>
