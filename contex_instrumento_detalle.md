@@ -135,6 +135,11 @@ Debe sentirse como una ficha de control, no solo como un formulario.
 - comentario y `evidencia_url`
 - validacion de comentario obligatorio cuando cumplimiento estimado < 80
 - guardado directo sin abandonar el modal
+- cuando el indicador trabaja por medios, el modal prioriza avance documental desde acciones relacionadas
+- muestra resumen de cumplimiento documental global (`cumplidos/total`)
+- permite registrar avance por medios y expandir a vista completa
+- incluye listado de acciones pendientes por medios con link directo a `/acciones/:id` para cargar evidencias faltantes
+- si no existen acciones vinculadas, muestra CTA para crear accion y habilitar modulo de medios
 
 #### Acciones relacionadas
 Si hay acciones asociadas al indicador, mostrar:
@@ -146,6 +151,7 @@ Si hay acciones asociadas al indicador, mostrar:
 - fecha compromiso
 - fecha de ultima actualizacion
 - link a `/acciones/:id`
+- si hay medios pendientes, destacarlas en un bloque especifico de "acciones pendientes por medios"
 
 Si no hay acciones:
 - estado vacio explicando que aun no existen acciones vinculadas
