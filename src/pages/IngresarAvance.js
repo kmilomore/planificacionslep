@@ -14,10 +14,14 @@ export default function IngresarAvance() {
   const { indicador_id, corte_id } = useParams();
   const navigate = useNavigate();
   const { data: indicador, isLoading: loadingIndicador } = useIndicador(indicador_id);
-  const { data: accionesIndicador = [], isLoading: loadingAcciones } = useAccionesPorIndicador(indicador_id);
+  const { data: accionesIndicadorData, isLoading: loadingAcciones } = useAccionesPorIndicador(indicador_id);
   const { data: cortes = [], isLoading: loadingCortes } = useCortesPorInstrumento(indicador?.instrumento_id);
   const { data: avances = [], isLoading: loadingAvances } = useAvancesPorCorte(corte_id);
   const corte = cortes.find(item => item.id === corte_id);
+  const accionesIndicador = useMemo(() => {
+    if (Array.isArray(accionesIndicadorData)) return accionesIndicadorData;
+    return accionesIndicadorData?.items || [];
+  }, [accionesIndicadorData]);
   const avanceExistente = useMemo(
     () => avances.find(av => av.indicador_id === indicador_id) || null,
     [avances, indicador_id]
