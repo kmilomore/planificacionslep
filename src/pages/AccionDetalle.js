@@ -59,6 +59,7 @@ export default function AccionDetalle() {
     description: '',
   });
   const [mediosForm, setMediosForm] = useState([]);
+  const [mediosDetalleForm, setMediosDetalleForm] = useState([]);
   const [deletingMedioId, setDeletingMedioId] = useState('');
   const [updatingMedioId, setUpdatingMedioId] = useState('');
 
@@ -92,10 +93,17 @@ export default function AccionDetalle() {
 
   const permissions = useMemo(() => resolveActionPermissions(accionView, user), [accionView, user]);
   const isMediosDirty = useMemo(() => {
-    const current = Array.isArray(accion?.medios_requeridos) ? accion.medios_requeridos : [];
-    if (current.length !== mediosForm.length) return true;
-    return current.some((tipo) => !mediosForm.includes(tipo));
-  }, [accion, mediosForm]);
+    const normalize = (items = []) => items
+      .map((entry) => ({
+        tipo: String(entry?.tipo || '').trim(),
+        cantidad: Number(entry?.cantidad || 1) || 1,
+      }))
+      .filter((entry) => entry.tipo)
+      .sort((a, b) => a.tipo.localeCompare(b.tipo));
+    const current = normalize(Array.isArray(accion?.medios_requeridos_detalle) ? accion.medios_requeridos_detalle : []);
+    const draft = normalize(mediosDetalleForm);
+    return JSON.stringify(current) !== JSON.stringify(draft);
+  }, [accion, mediosDetalleForm]);
 
   useEffect(() => {
     if (!accion) return;
@@ -103,7 +111,14 @@ export default function AccionDetalle() {
       estado: accion.estado || 'planificada',
       avance: String(accion.avance ?? 0),
     });
-    setMediosForm(Array.isArray(accion.medios_requeridos) ? accion.medios_requeridos : []);
+    const detalle = Array.isArray(accion.medios_requeridos_detalle)
+      ? accion.medios_requeridos_detalle
+      : (Array.isArray(accion.medios_requeridos) ? accion.medios_requeridos : []).map((tipo) => ({ tipo, cantidad: 1 }));
+    setMediosDetalleForm(detalle.map((entry) => ({
+      tipo: String(entry?.tipo || '').trim(),
+      cantidad: Number(entry?.cantidad || 1) || 1,
+    })).filter((entry) => entry.tipo));
+    setMediosForm(detalle.map((entry) => String(entry?.tipo || '').trim()).filter(Boolean));
   }, [accion]);
 
   const timeline = useMemo(() => accionView?.timeline || [], [accionView]);
@@ -271,23 +286,38 @@ export default function AccionDetalle() {
   const handleMediosSubmit = async () => {
     setFeedback(null);
 
-    if (!mediosForm.length) {
+    if (!mediosDetalleForm.length) {
       setFeedback({ type: 'error', message: 'Debes mantener al menos un medio de verificación.' });
       return;
     }
 
+    const detalle = mediosDetalleForm
+      .map((entry) => ({
+        tipo: String(entry?.tipo || '').trim(),
+        cantidad: Number(entry?.cantidad || 0),
+      }))
+      .filter((entry) => entry.tipo);
+
+    if (!detalle.length) {
+      setFeedback({ type: 'error', message: 'Debes seleccionar al menos un tipo de medio.' });
+      return;
+    }
+    const invalidCantidad = detalle.find((entry) => !Number.isFinite(entry.cantidad) || entry.cantidad <= 0);
+    if (invalidCantidad) {
+      setFeedback({ type: 'error', message: 'Cada tipo debe tener una cantidad mayor a 0.' });
+      return;
+    }
+    const tipos = detalle.map((entry) => entry.tipo);
+    if (new Set(tipos).size !== tipos.length) {
+      setFeedback({ type: 'error', message: 'No puedes repetir el mismo tipo de medio.' });
+      return;
+    }
+
     try {
-      const detalle = mediosForm.map((tipo) => {
-        const currentEntry = (accion?.medios_requeridos_detalle || []).find((entry) => entry.tipo === tipo);
-        return {
-          tipo,
-          cantidad: Number(currentEntry?.cantidad || 1) || 1,
-        };
-      });
       await updateAccion.mutateAsync({
         id,
         data: {
-          medios_requeridos: mediosForm,
+          medios_requeridos: tipos,
           medios_requeridos_detalle: detalle,
         },
       });
@@ -298,7 +328,14 @@ export default function AccionDetalle() {
   };
 
   const handleMediosReset = () => {
-    setMediosForm(Array.isArray(accion?.medios_requeridos) ? accion.medios_requeridos : []);
+    const detalle = Array.isArray(accion?.medios_requeridos_detalle)
+      ? accion.medios_requeridos_detalle
+      : (Array.isArray(accion?.medios_requeridos) ? accion.medios_requeridos : []).map((tipo) => ({ tipo, cantidad: 1 }));
+    setMediosDetalleForm(detalle.map((entry) => ({
+      tipo: String(entry?.tipo || '').trim(),
+      cantidad: Number(entry?.cantidad || 1) || 1,
+    })).filter((entry) => entry.tipo));
+    setMediosForm(detalle.map((entry) => String(entry?.tipo || '').trim()).filter(Boolean));
     setFeedback(null);
   };
 
@@ -477,6 +514,8 @@ export default function AccionDetalle() {
               mediosRequeridos={accionView?.medios_requeridos || []}
               mediosForm={mediosForm}
               setMediosForm={setMediosForm}
+              mediosDetalleForm={mediosDetalleForm}
+              setMediosDetalleForm={setMediosDetalleForm}
               onSaveTipos={handleMediosSubmit}
               onResetTipos={handleMediosReset}
               isSavingTipos={updateAccion.isPending}

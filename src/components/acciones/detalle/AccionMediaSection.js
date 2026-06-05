@@ -18,6 +18,8 @@ export default function AccionMediaSection({
   mediosRequeridos,
   mediosForm,
   setMediosForm,
+  mediosDetalleForm = [],
+  setMediosDetalleForm,
   onSaveTipos,
   onResetTipos,
   isSavingTipos,
@@ -109,20 +111,64 @@ export default function AccionMediaSection({
 
         {isEditingTipos && canEditTipos ? (
           <div className="mt-3 space-y-3">
-            <select
-              multiple
-              value={mediosForm}
-              onChange={(event) => {
-                const selected = Array.from(event.target.selectedOptions || []).map((option) => option.value);
-                setMediosForm(selected);
+            <div className="space-y-2">
+              {(mediosDetalleForm || []).map((entry, index) => (
+                <div key={`${entry.tipo || 'medio'}-${index}`} className="grid grid-cols-[minmax(0,1fr)_140px_auto] gap-2">
+                  <select
+                    value={entry.tipo}
+                    onChange={(event) => {
+                      const next = [...mediosDetalleForm];
+                      next[index] = { ...next[index], tipo: event.target.value };
+                      setMediosDetalleForm(next);
+                      setMediosForm(next.map((row) => row.tipo).filter(Boolean));
+                    }}
+                    disabled={isSavingTipos}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                  >
+                    <option value="">Selecciona tipo</option>
+                    {ALL_TIPO_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={entry.cantidad}
+                    onChange={(event) => {
+                      const next = [...mediosDetalleForm];
+                      next[index] = { ...next[index], cantidad: event.target.value };
+                      setMediosDetalleForm(next);
+                    }}
+                    disabled={isSavingTipos}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = mediosDetalleForm.filter((_, rowIndex) => rowIndex !== index);
+                      setMediosDetalleForm(next);
+                      setMediosForm(next.map((row) => row.tipo).filter(Boolean));
+                    }}
+                    disabled={isSavingTipos}
+                    className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = [...(mediosDetalleForm || []), { tipo: '', cantidad: 1 }];
+                setMediosDetalleForm(next);
               }}
               disabled={isSavingTipos}
-              className="w-full min-h-[120px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors"
             >
-              {ALL_TIPO_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+              Agregar tipo
+            </button>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
