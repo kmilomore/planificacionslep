@@ -45,7 +45,6 @@ export default function AccionDetalle() {
   const uploadMedio = useUploadMedioVerificacion(id);
 
   const [feedback, setFeedback] = useState(null);
-  const [optimisticAccion, setOptimisticAccion] = useState(null);
   const [uploadStage, setUploadStage] = useState('idle');
   const [comentarioForm, setComentarioForm] = useState('');
   const [uploadForm, setUploadForm] = useState({
@@ -59,16 +58,7 @@ export default function AccionDetalle() {
   const [deletingMedioId, setDeletingMedioId] = useState('');
   const [updatingMedioId, setUpdatingMedioId] = useState('');
 
-  const accionView = useMemo(() => {
-    if (!accion) return accion;
-    if (!optimisticAccion) return accion;
-
-    return {
-      ...accion,
-      ...optimisticAccion,
-      timeline: optimisticAccion.timeline || accion.timeline || [],
-    };
-  }, [accion, optimisticAccion]);
+  const accionView = useMemo(() => accion, [accion]);
 
   const requiredTipoOptions = useMemo(() => {
     const required = Array.isArray(accionView?.medios_requeridos) ? accionView.medios_requeridos : [];

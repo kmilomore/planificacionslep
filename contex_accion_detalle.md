@@ -2,25 +2,23 @@
 
 ## Objetivo
 
-`src/pages/AccionDetalle.js` es la vista operativa mas rica del modulo Acciones. Su responsabilidad es consolidar informacion general, medios de verificacion, timeline operativo, comentarios persistidos y gestion rapida de estado.
+`src/pages/AccionDetalle.js` es la vista operativa mas rica del modulo Acciones. Su responsabilidad es consolidar informacion general, medios de verificacion, timeline operativo y comentarios persistidos, priorizando el seguimiento documental de la accion en una sola columna.
 
 ## Responsabilidad funcional
 
 La pagina:
 - carga una accion individual con `useAccion(id)`
-- permite cambio rapido de estado y avance
-- permite carga de medios de verificacion con overlay de progreso
+- permite carga y gestion de medios de verificacion con overlay de progreso
 - permite eliminar medios de verificacion desde el mismo detalle (con confirmacion)
 - permite alta, edicion y eliminacion de comentarios persistidos
 - permite eliminar la accion desde el detalle (soft delete, con confirmacion)
-- aplica optimistic update para estado y comentarios
+- aplica optimistic update para comentarios
 - reconstruye el timeline local mientras llega la confirmacion backend
 - resuelve permisos segun rol y metadata de la accion
 
 ## Dependencias principales
 
 - `useAccion()`
-- `useUpdateEstadoAccion()`
 - `useUploadMedioVerificacion()`
 - `useDeleteMedioVerificacion()`
 - `useUpdateMedioVerificacion()`
@@ -34,13 +32,17 @@ La pagina:
   - `AccionOverviewSection`
   - `AccionMediaSection`
   - `AccionTimelineSection`
-  - `AccionSidebar`
   - `AccionDetalleSkeleton`
 
 ## Secciones visuales
 
+La vista se organiza en una sola columna (sin sidebar), en el siguiente orden:
+
 ### Overview
-Muestra datos base de la accion, fechas y metadatos principales.
+Muestra datos base de la accion, fechas y metadatos principales. El bloque de métricas incluye:
+- equipo responsable
+- instrumento
+- **avance documental**, calculado preferentemente a partir de `medios_cumplidos_count / medios_requeridos_count * 100` (cuando existe configuracion de medios) y, en ausencia de medios, desde `accion.avance`.
 
 ### Medios de verificacion
 Permite:
@@ -55,27 +57,28 @@ Permite:
 - ver metadata de medios ya cargados
 - eliminar un medio ya cargado (si el perfil tiene gestion)
 
-### Timeline
+### Comentarios operativos
+Bloque especifico ubicado **debajo de medios de verificacion y antes de la bitacora operativa**, en la misma columna. Incluye:
+- formulario para agregar nuevo comentario operativo
+- lista de comentarios persistidos con soporte de edicion y eliminacion (segun permisos).
+
+### Bitacora operativa (timeline)
 Consolida:
 - creacion
-- cambios de estado
+- cambios de estado historicos
 - carga de medios
 - comentarios operativos
 
-### Sidebar
-Incluye:
-- gestion rapida de estado y avance
-- formulario de comentario operativo
-- lista de comentarios persistidos
-- edicion inline y eliminacion de comentarios propios o segun rol
-- resumen documental
+Se renderiza mediante `AccionTimelineSection`, manteniendo los estilos de tipos de evento.
+
+### Resumen documental
+Bloque final que muestra:
+- carpeta raiz logica
+- ruta logica de la accion dentro de la estructura (`Indicador / Accion / Medios de Verificacion`)
+- cantidad de eventos en la bitacora
+- cantidad de archivos cargados.
 
 ## Optimistic update
-
-### Estado
-- al guardar un cambio de estado se actualiza cache local inmediatamente
-- se inserta un evento optimista en timeline
-- si el backend falla, se hace rollback con `queryClient.setQueryData`
 
 ### Comentarios
 - al crear comentario se inserta un comentario temporal con id local
