@@ -37,9 +37,13 @@ export default function AccionMediaSection({
   canDeleteMedios,
   onDeleteMedio,
   deletingMedioId,
+  canEditMedios,
+  onUpdateMedio,
+  updatingMedioId,
 }) {
   const hasRequiredMedios = Array.isArray(mediosRequeridos) && mediosRequeridos.length > 0;
   const [isEditingTipos, setIsEditingTipos] = useState(false);
+  const [editingMedioId, setEditingMedioId] = useState('');
 
   useEffect(() => {
     if (!isTiposDirty) return;
@@ -261,6 +265,16 @@ export default function AccionMediaSection({
                       Abrir Drive
                     </a>
                   ) : null}
+                  {canEditMedios ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditingMedioId(editingMedioId === medio.id ? '' : medio.id)}
+                      disabled={Boolean(updatingMedioId)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {editingMedioId === medio.id ? 'Cancelar edición' : 'Editar'}
+                    </button>
+                  ) : null}
                   {canDeleteMedios ? (
                     <button
                       type="button"
@@ -280,6 +294,15 @@ export default function AccionMediaSection({
                 <MetaCard label="Tipo documental" value={humanizeTipo(medio.tipo)} />
                 <MetaCard label="Tamaño" value={medio.size_bytes ? formatFileSize(medio.size_bytes) : 'No informado'} />
               </div>
+
+              {editingMedioId === medio.id && canEditMedios ? (
+                <MedioEditForm
+                  medio={medio}
+                  tipoOptions={tipoOptions}
+                  onUpdate={onUpdateMedio}
+                  isUpdating={updatingMedioId === medio.id}
+                />
+              ) : null}
 
               {medio.nombre_original && medio.nombre_original !== medio.nombre_archivo ? (
                 <p className="text-xs text-slate-400 font-body">
@@ -327,5 +350,143 @@ function MetaCard({ label, value }) {
       <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">{label}</p>
       <p className="mt-2 text-sm font-semibold text-navy font-body break-words">{value || '—'}</p>
     </div>
+  );
+}
+
+function MedioEditForm({ medio, tipoOptions, onUpdate, isUpdating }) {
+  const [form, setForm] = useState({
+    tipo: medio.tipo || '',
+    cantidad_esperada: medio.cantidad_esperada || 1,
+    cantidad_lograda: medio.cantidad_lograda ?? medio.cantidad_esperada ?? 1,
+    url_externa: medio.url_externa || '',
+    descripcion: medio.descripcion || '',
+  });
+  const [localError, setLocalError] = useState('');
+
+  const handleChange = (key, value) => {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
+    setLocalError('');
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLocalError('');
+
+    const expected = Number(form.cantidad_esperada);
+    const achieved = Number(form.cantidad_lograda);
+
+    if (!Number.isFinite(expected) || expected <= 0) {
+      setLocalError('La cantidad esperada debe ser un número mayor a 0.');
+      return;
+    }
+
+    if (!Number.isFinite(achieved) || achieved < 0) {
+      setLocalError('La cantidad lograda debe ser un número mayor o igual a 0.');
+      return;
+    }
+
+    const patch = {
+      tipo: form.tipo,
+      cantidad_esperada: expected,
+      cantidad_lograda: achieved,
+      url_externa: form.url_externa,
+      descripcion: form.descripcion,
+    };
+
+    const ok = await onUpdate(medio, patch);
+    if (!ok) {
+      setLocalError('No se pudieron guardar los cambios del medio. Revisa el detalle del error mostrado arriba.');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-400 font-semibold font-body">Editar medio de verificación</p>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="block space-y-1 text-sm text-slate-600 font-body">
+          Tipo de medio
+          <select
+            value={form.tipo}
+            onChange={(event) => handleChange('tipo', event.target.value)}
+            disabled={isUpdating}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+          >
+            {tipoOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block space-y-1 text-sm text-slate-600 font-body">
+          URL de evidencia externa
+          <input
+            type="url"
+            value={form.url_externa}
+            onChange={(event) => handleChange('url_externa', event.target.value)}
+            disabled={isUpdating}
+            placeholder="https://drive.google.com/..."
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="block space-y-1 text-sm text-slate-600 font-body">
+          Cantidad esperada
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={form.cantidad_esperada}
+            onChange={(event) => handleChange('cantidad_esperada', event.target.value)}
+            disabled={isUpdating}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+          />
+        </label>
+
+        <label className="block space-y-1 text-sm text-slate-600 font-body">
+          Cantidad lograda
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={form.cantidad_lograda}
+            onChange={(event) => handleChange('cantidad_lograda', event.target.value)}
+            disabled={isUpdating}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+          />
+        </label>
+      </div>
+
+      <label className="block space-y-1 text-sm text-slate-600 font-body">
+        Comentario o descripción
+        <textarea
+          rows="3"
+          value={form.descripcion}
+          onChange={(event) => handleChange('descripcion', event.target.value)}
+          disabled={isUpdating}
+          placeholder="Describe brevemente el alcance de este medio y cómo respalda la acción."
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+        />
+      </label>
+
+      {localError ? (
+        <p className="text-xs text-red font-body">{localError}</p>
+      ) : null}
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="submit"
+          disabled={isUpdating}
+          className="inline-flex items-center rounded-xl bg-navy px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue transition-colors disabled:cursor-not-allowed disabled:bg-slate-300"
+        >
+          {isUpdating ? 'Guardando cambios...' : 'Guardar cambios del medio'}
+        </button>
+      </div>
+    </form>
   );
 }

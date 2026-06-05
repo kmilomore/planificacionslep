@@ -113,6 +113,7 @@ function _getMediosVerificacionHeaders() {
   return [
     'id', 'accion_id', 'tipo', 'nombre_archivo', 'url_drive', 'file_id',
     'usuario', 'fecha_subida', 'nombre_original', 'descripcion',
+    'cantidad_esperada', 'cantidad_lograda', 'url_externa', 'size_bytes',
   ];
 }
 

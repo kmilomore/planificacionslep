@@ -93,7 +93,8 @@ const Avances = {
 
     const acciones = Utils.getSheetObjectsCached(Config.SHEETS.ACCIONES, 45)
       .filter((accion) => Utils.isActiveFlag(accion.activo) && accion.indicador_id === indicadorId);
-    const medios = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 45);
+    const medios = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 45)
+      .filter((medio) => String(medio.tipo || '').trim() !== 'eliminado');
 
     let totalRequeridos = 0;
     let totalCumplidos = 0;
@@ -106,13 +107,24 @@ const Avances = {
 
       if (!requeridos.length) return;
 
-      const tiposSubidos = medios
-        .filter((medio) => medio.accion_id === accion.id)
-        .map((medio) => String(medio.tipo || '').trim())
-        .filter(Boolean);
+      const mediosAccion = medios.filter((medio) => medio.accion_id === accion.id);
 
-      totalRequeridos += requeridos.length;
-      totalCumplidos += requeridos.filter((tipo) => tiposSubidos.includes(tipo)).length;
+      requeridos.forEach((tipo) => {
+        const medio = mediosAccion.find((entry) => String(entry.tipo || '').trim() === tipo);
+        if (!medio) {
+          totalRequeridos += 1;
+          return;
+        }
+
+        const esperada = Number(medio.cantidad_esperada || 1) || 1;
+        const lograda = Number(medio.cantidad_lograda || esperada) || esperada;
+
+        const boundedEsperada = esperada > 0 ? esperada : 1;
+        const boundedLograda = Math.max(0, Math.min(lograda, boundedEsperada));
+
+        totalRequeridos += boundedEsperada;
+        totalCumplidos += boundedLograda;
+      });
     });
 
     if (!totalRequeridos) {

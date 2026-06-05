@@ -86,6 +86,7 @@ function doPost(e) {
       'deleteComentarioAccion':  () => Acciones.deleteComentario(id, user, requestMeta),
       'uploadMedioVerificacion': () => Acciones.uploadMedio(id, data, user, requestMeta),
       'deleteMedioVerificacion': () => Acciones.deleteMedio(id, data, user, requestMeta),
+      'updateMedioVerificacion': () => Acciones.updateMedio(id, data, user, requestMeta),
       'getMediosAccion':         () => Acciones.getMedios(id || filtros.accion_id, user),
 
       // Emails (admin)

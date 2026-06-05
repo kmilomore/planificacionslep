@@ -15,6 +15,7 @@ import {
   useDeleteAccion,
   useDeleteComentarioAccion,
   useDeleteMedioVerificacion,
+  useUpdateMedioVerificacion,
   useUpdateAccion,
   useUpdateComentarioAccion,
   useUpdateEstadoAccion,
@@ -41,6 +42,7 @@ export default function AccionDetalle() {
   const deleteComentario = useDeleteComentarioAccion(id);
   const deleteAccion = useDeleteAccion();
   const deleteMedio = useDeleteMedioVerificacion(id);
+  const updateMedio = useUpdateMedioVerificacion(id);
   const updateAccion = useUpdateAccion(id);
   const updateEstado = useUpdateEstadoAccion(id);
   const uploadMedio = useUploadMedioVerificacion(id);
@@ -58,6 +60,7 @@ export default function AccionDetalle() {
   });
   const [mediosForm, setMediosForm] = useState([]);
   const [deletingMedioId, setDeletingMedioId] = useState('');
+  const [updatingMedioId, setUpdatingMedioId] = useState('');
 
   const accionView = useMemo(() => {
     if (!accion) return accion;
@@ -245,6 +248,8 @@ export default function AccionDetalle() {
           mime_type: uploadForm.file.type,
           size_bytes: uploadForm.file.size,
           base64Content,
+          cantidad_esperada: 1,
+          cantidad_lograda: 1,
         },
       });
 
@@ -406,6 +411,27 @@ export default function AccionDetalle() {
     }
   };
 
+  const handleUpdateMedio = async (medio, patch) => {
+    setFeedback(null);
+    setUpdatingMedioId(medio.id);
+    try {
+      await updateMedio.mutateAsync({
+        id,
+        data: {
+          medio_id: medio.id,
+          ...patch,
+        },
+      });
+      setFeedback({ type: 'success', message: 'Medio de verificación actualizado.' });
+      return true;
+    } catch (submitError) {
+      setFeedback({ type: 'error', message: submitError.message });
+      return false;
+    } finally {
+      setUpdatingMedioId('');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {uploadMedio.isPending ? (
@@ -462,6 +488,9 @@ export default function AccionDetalle() {
               canDeleteMedios={permissions.canManage}
               onDeleteMedio={handleDeleteMedio}
               deletingMedioId={deletingMedioId}
+              canEditMedios={permissions.canManage}
+              onUpdateMedio={handleUpdateMedio}
+              updatingMedioId={updatingMedioId}
             />
 
             <AccionTimelineSection timeline={timeline} formatDateTime={formatDateTime} />

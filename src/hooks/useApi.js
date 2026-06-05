@@ -242,6 +242,10 @@ export function useDeleteMedioVerificacion(accionId) {
   return useApiMutation('deleteMedioVerificacion', ['acciones', ['accion', accionId], ['medios_accion', accionId]]);
 }
 
+export function useUpdateMedioVerificacion(accionId) {
+  return useApiMutation('updateMedioVerificacion', ['acciones', ['accion', accionId], ['medios_accion', accionId]]);
+}
+
 export function useDeleteAccion() {
   return useApiMutation('deleteAccion', ['acciones']);
 }

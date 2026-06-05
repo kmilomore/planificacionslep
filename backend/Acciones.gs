@@ -376,6 +376,10 @@ const Acciones = {
       fecha_subida: Utils.ahora(),
       nombre_original: String(data?.nombre_original || data?.nombre_archivo || '').trim(),
       descripcion: String(data?.descripcion || '').trim(),
+      cantidad_esperada: Number(data?.cantidad_esperada || 1) || 1,
+      cantidad_lograda: Number(data?.cantidad_lograda || data?.cantidad_esperada || 1) || 1,
+      url_externa: String(data?.url_externa || '').trim(),
+      size_bytes: Number(data?.size_bytes || 0) || 0,
     };
 
     Utils.appendRow(Config.SHEETS.MEDIOS_VERIFICACION, medio);
@@ -394,6 +398,100 @@ const Acciones = {
       requestMeta
     );
     return medio;
+  },
+
+  updateMedio(accionId, data, user, requestMeta) {
+    if (!accionId) throw new Error('accion_id requerido');
+    const accion = this.getOwnedAccionForEdit_(accionId, user);
+    const medioId = String(data?.medio_id || '').trim();
+    if (!medioId) throw new Error('medio_id requerido');
+
+    const medio = Utils.buscarEnSheet(
+      Config.SHEETS.MEDIOS_VERIFICACION,
+      'id',
+      medioId,
+      (row) => row.accion_id === accion.id
+    );
+    if (!medio) throw new Error('Medio de verificación no encontrado');
+
+    const indicador = this.getIndicador_(accion.indicador_id);
+
+    const updates = {};
+
+    if (Object.prototype.hasOwnProperty.call(data, 'tipo')) {
+      const nextTipo = String(data.tipo || '').trim();
+      if (!this.TIPOS_MEDIO[nextTipo]) {
+        throw new Error('Tipo de medio inválido');
+      }
+      const mediosRequeridos = this.parseMediosRequeridos_(accion.medios_requeridos);
+      if (!mediosRequeridos.includes(nextTipo)) {
+        throw new Error('El tipo de medio no está declarado para esta acción');
+      }
+      const existentes = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 30)
+        .filter((other) => other.accion_id === accion.id && String(other.tipo || '').trim() === nextTipo && other.id !== medio.id);
+      if (existentes.length) {
+        throw new Error('Ya existe un archivo para este medio de verificación en la acción');
+      }
+      updates.tipo = nextTipo;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'cantidad_esperada')) {
+      const expected = Number(data.cantidad_esperada);
+      if (!Number.isFinite(expected) || expected <= 0) {
+        throw new Error('La cantidad esperada debe ser un número mayor a 0');
+      }
+      updates.cantidad_esperada = expected;
+      if (!Object.prototype.hasOwnProperty.call(data, 'cantidad_lograda')) {
+        const currentLograda = Number(medio.cantidad_lograda || expected);
+        updates.cantidad_lograda = Math.min(currentLograda, expected);
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'cantidad_lograda')) {
+      const lograda = Number(data.cantidad_lograda);
+      const expectedBase = Object.prototype.hasOwnProperty.call(updates, 'cantidad_esperada')
+        ? updates.cantidad_esperada
+        : Number(medio.cantidad_esperada || 1);
+      if (!Number.isFinite(lograda) || lograda < 0) {
+        throw new Error('La cantidad lograda debe ser un número mayor o igual a 0');
+      }
+      updates.cantidad_lograda = Math.min(lograda, expectedBase || 1);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'url_externa')) {
+      updates.url_externa = String(data.url_externa || '').trim();
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'descripcion')) {
+      updates.descripcion = String(data.descripcion || '').trim();
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { id: medio.id, updated: false };
+    }
+
+    const anterior = { ...medio };
+    Utils.updateRowById(Config.SHEETS.MEDIOS_VERIFICACION, medio.id, updates);
+    Utils.updateRowById(Config.SHEETS.ACCIONES, accion.id, { updated_at: Utils.ahora() });
+
+    Utils.invalidateAccionesCaches({ instrumentoId: indicador?.instrumento_id, includeIndicadores: true });
+
+    const actualizado = { ...anterior, ...updates };
+    Auditoria.logEvent(
+      {
+        modulo:  'acciones',
+        entidad: 'medio_verificacion',
+        entidad_id: medio.id,
+        accion:  'update',
+        detalle: `Medio de verificación actualizado para acción "${accion.nombre}"`,
+        valores_anteriores: anterior,
+        valores_nuevos: actualizado,
+      },
+      user,
+      requestMeta
+    );
+
+    return actualizado;
   },
 
   deleteMedio(accionId, data, user, requestMeta) {
