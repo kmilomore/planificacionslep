@@ -16,13 +16,27 @@ function doPost(e) {
 
     const router = {
       // Sesión
-      'validarSesion': () => ({
-        id:        user.id,
-        email:     user.email,
-        nombre:    user.nombre,
-        rol:       user.rol,
-        area:      user.area,
-      }),
+      'validarSesion': () => {
+        Auditoria.logEvent(
+          {
+            modulo:  'auth',
+            entidad: 'sesion',
+            entidad_id: user.id,
+            accion:  'login',
+            detalle: `Validación de sesión para ${user.email}`,
+          },
+          user,
+          requestMeta
+        );
+
+        return {
+          id:        user.id,
+          email:     user.email,
+          nombre:    user.nombre,
+          rol:       user.rol,
+          area:      user.area,
+        };
+      },
 
       // Usuarios
       'getUsuarios':   () => Usuarios.getAll(user),

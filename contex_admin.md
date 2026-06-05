@@ -2,14 +2,14 @@
 
 ## Objetivo
 
-`src/pages/Admin.js` centraliza la configuración maestra del sistema accesible solo para perfiles con rol administrador. Desde esta vista se gestionan usuarios, instrumentos, indicadores y cortes, actuando como panel de mantenimiento de catálogos clave.
+`src/pages/Admin.js` centraliza la configuración maestra del sistema accesible solo para perfiles con rol administrador. Desde esta vista se gestionan usuarios, instrumentos, indicadores, cortes y la auditoría de movimientos, actuando como panel de mantenimiento de catálogos clave y trazabilidad.
 
 ## Responsabilidad funcional
 
 La página:
-- muestra pestañas para `Usuarios`, `Instrumentos`, `Indicadores` y `Cortes`
-- carga cada submódulo mediante componentes dedicados (`TabUsuarios`, `TabInstrumentos`, `TabIndicadores`, `TabCortes`)
-- actúa como contenedor visual y punto de entrada único a la configuración
+- muestra pestañas para `Usuarios`, `Instrumentos`, `Indicadores`, `Cortes` y `Auditoría`
+- carga cada submódulo mediante componentes dedicados (`TabUsuarios`, `TabInstrumentos`, `TabIndicadores`, `TabCortes`, `TabAuditoria`)
+- actúa como contenedor visual y punto de entrada único a la configuración y trazabilidad administrativa
 
 ## Submódulo Usuarios
 
@@ -48,8 +48,8 @@ Al enviar:
 
 `Usuarios.gs` expone:
 - `getAll(user)` para listar usuarios (solo admin)
-- `create(data, user)` para crear usuarios (solo admin)
-- `update(id, data, user)` para actualizar campos permitidos (solo admin)
+- `create(data, user, requestMeta)` para crear usuarios (solo admin, registrando auditoría)
+- `update(id, data, user, requestMeta)` para actualizar campos permitidos (solo admin, registrando auditoría)
 
 Campos esperados por fila en la hoja `usuarios`:
 - `id`
@@ -65,6 +65,16 @@ Campos esperados por fila en la hoja `usuarios`:
 - `createUsuario` → `Usuarios.create`
 - `updateUsuario` → `Usuarios.update`
 
+`Auditoria.gs` expone:
+- `logEvent(payload, user, requestMeta)` para registrar eventos de auditoría en la hoja `auditoria`
+- `getEvents(filtros, user)` para listar eventos (solo admin)
+
+`Code.gs` enruta la auditoría:
+- `getAuditoriaEventos` → `Auditoria.getEvents`
+
+En React, los hooks en `src/hooks/useApi.js` abstraen estas acciones:
+- `useAuditoriaEventos(filtros)` consulta `getAuditoriaEventos` con filtros opcionales (usuario, módulo, acción, rango de fechas, límite)
+
 En React, los hooks en `src/hooks/useApi.js` abstraen estas acciones:
 - `useUsuarios()` consulta `getUsuarios`
 - `useCreateUsuario()` ejecuta `createUsuario` e invalida cache de `usuarios`
@@ -75,6 +85,7 @@ En React, los hooks en `src/hooks/useApi.js` abstraen estas acciones:
 - `TabInstrumentos`: gestiona catálogo de instrumentos (creación, edición, activación) contra `Instrumentos.gs`
 - `TabIndicadores`: administra indicadores asociados a instrumentos y su configuración base
 - `TabCortes`: define y administra cortes de seguimiento para los instrumentos
+ - `TabAuditoria`: permite a perfiles `admin` revisar la bitácora de movimientos registrada en la hoja `auditoria`
 
 Cada pestaña sigue el patrón:
 - hook `useApi` alineado con acción en `Code.gs`
