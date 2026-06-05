@@ -34,6 +34,7 @@ const INITIAL_FORM = {
   estado: 'planificada',
   avance: '0',
   medios_requeridos: [],
+  medios_requeridos_detalle: [],
 };
 
 function Field({ label, hint, required = false, children }) {
@@ -100,6 +101,15 @@ function validateForm(form) {
     return 'Debes seleccionar al menos un medio de verificación asociado.';
   }
 
+  if (!Array.isArray(form.medios_requeridos_detalle) || !form.medios_requeridos_detalle.length) {
+    return 'Debes definir cantidad para cada medio de verificación.';
+  }
+
+  const invalidDetalle = form.medios_requeridos_detalle.find((entry) => Number(entry?.cantidad || 0) <= 0);
+  if (invalidDetalle) {
+    return 'Cada medio de verificación debe tener una cantidad mayor a 0.';
+  }
+
   return null;
 }
 
@@ -153,7 +163,19 @@ export default function NuevaAccion() {
       }
 
       if (key === 'medios_requeridos') {
-        return { ...current, medios_requeridos: value };
+        const currentMap = (current.medios_requeridos_detalle || []).reduce((acc, entry) => {
+          acc[entry.tipo] = Number(entry.cantidad || 1) || 1;
+          return acc;
+        }, {});
+        const detalle = value.map((tipo) => ({
+          tipo,
+          cantidad: currentMap[tipo] || 1,
+        }));
+        return { ...current, medios_requeridos: value, medios_requeridos_detalle: detalle };
+      }
+
+      if (key === 'medios_requeridos_detalle') {
+        return { ...current, medios_requeridos_detalle: value };
       }
 
       return { ...current, [key]: value };
@@ -182,6 +204,7 @@ export default function NuevaAccion() {
           estado: form.estado,
           avance: Number(form.avance || 0),
           medios_requeridos: form.medios_requeridos,
+          medios_requeridos_detalle: form.medios_requeridos_detalle,
         },
       });
 
@@ -362,7 +385,7 @@ export default function NuevaAccion() {
             <Field
               label="Medios de verificación asociados"
               required
-              hint="Selecciona uno o más medios. El % de cumplimiento del indicador por acción dependerá de la evidencia cargada para estos medios."
+              hint="Selecciona los tipos y define cuántas evidencias se deben subir por cada tipo para calcular avance automático."
             >
               <select
                 multiple
@@ -381,6 +404,41 @@ export default function NuevaAccion() {
                 ))}
               </select>
             </Field>
+
+            {form.medios_requeridos.length ? (
+              <Field
+                label="Cantidad requerida por tipo de medio"
+                required
+                hint="Ejemplo: Acta = 6 significa que al subir 1 acta se considera 1/6 para ese tipo."
+              >
+                <div className="space-y-2">
+                  {form.medios_requeridos_detalle.map((entry) => {
+                    const label = MEDIOS_OPTIONS.find((item) => item.value === entry.tipo)?.label || entry.tipo;
+                    return (
+                      <div key={entry.tipo} className="grid grid-cols-[minmax(0,1fr)_160px] gap-3 items-center rounded-xl border border-slate-200 px-3 py-2">
+                        <p className="text-sm font-semibold text-navy">{label}</p>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={entry.cantidad}
+                          onChange={(event) => {
+                            const cantidad = event.target.value;
+                            updateField('medios_requeridos_detalle', form.medios_requeridos_detalle.map((row) => (
+                              row.tipo === entry.tipo
+                                ? { ...row, cantidad }
+                                : row
+                            )));
+                          }}
+                          disabled={!canManage || createAccion.isPending}
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30 disabled:bg-slate-50 disabled:text-slate-400"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </Field>
+            ) : null}
 
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-500 font-body">

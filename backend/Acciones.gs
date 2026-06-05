@@ -71,6 +71,7 @@ const Acciones = {
       estado: data.estado || 'planificada',
       avance: this.normalizeAvance_(data.avance),
       medios_requeridos: this.serializeMediosRequeridos_(data.medios_requeridos),
+      medios_requeridos_detalle: this.serializeMediosRequeridosDetalle_(data.medios_requeridos, data.medios_requeridos_detalle),
       activo: true,
       created_at: now,
       updated_at: now,
@@ -117,6 +118,7 @@ const Acciones = {
       estado: true,
       avance: true,
       medios_requeridos: true,
+      medios_requeridos_detalle: true,
       activo: true,
     };
     const updates = Object.fromEntries(
@@ -124,13 +126,34 @@ const Acciones = {
         .filter(([key]) => allowed[key])
         .map(([key, value]) => {
           if (key === 'avance') return [key, this.normalizeAvance_(value)];
-          if (key === 'medios_requeridos') return [key, this.serializeMediosRequeridos_(value)];
+          if (key === 'medios_requeridos') {
+            return [key, this.serializeMediosRequeridos_(value)];
+          }
+          if (key === 'medios_requeridos_detalle') {
+            const nextMedios = Object.prototype.hasOwnProperty.call(data, 'medios_requeridos')
+              ? data.medios_requeridos
+              : accion.medios_requeridos;
+            const nextDetalle = Object.prototype.hasOwnProperty.call(data, 'medios_requeridos_detalle')
+              ? data.medios_requeridos_detalle
+              : accion.medios_requeridos_detalle;
+            return ['medios_requeridos_detalle', this.serializeMediosRequeridosDetalle_(nextMedios, nextDetalle)];
+          }
           return [key, value];
         })
     );
 
     if (Object.prototype.hasOwnProperty.call(updates, 'responsable')) {
       updates.responsable = this.assertEquipoResponsableValido_(updates.responsable, indicador);
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(data, 'medios_requeridos')
+      && !Object.prototype.hasOwnProperty.call(updates, 'medios_requeridos_detalle')
+    ) {
+      updates.medios_requeridos_detalle = this.serializeMediosRequeridosDetalle_(
+        data.medios_requeridos,
+        accion.medios_requeridos_detalle
+      );
     }
 
     updates.updated_at = Utils.ahora();
@@ -343,7 +366,7 @@ const Acciones = {
   uploadMedio(accionId, data, user, requestMeta) {
     if (!accionId) throw new Error('accion_id requerido');
     const accion = this.getOwnedAccionForEdit_(accionId, user);
-    const tipo = String(data?.tipo || '').trim();
+    const tipo = this.normalizeTipoMedio_(data?.tipo);
     if (!this.TIPOS_MEDIO[tipo]) throw new Error('Tipo de medio inválido');
 
     const mediosRequeridos = this.parseMediosRequeridos_(accion.medios_requeridos);
@@ -354,7 +377,7 @@ const Acciones = {
     ensureAccionesSchema();
 
     const existentes = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 30)
-      .filter((medio) => medio.accion_id === accion.id && String(medio.tipo || '').trim() === tipo);
+      .filter((medio) => medio.accion_id === accion.id && this.normalizeTipoMedio_(medio.tipo) === tipo);
     if (existentes.length) {
       throw new Error('Ya existe un archivo para este medio de verificación en la acción');
     }
@@ -419,7 +442,7 @@ const Acciones = {
     const updates = {};
 
     if (Object.prototype.hasOwnProperty.call(data, 'tipo')) {
-      const nextTipo = String(data.tipo || '').trim();
+      const nextTipo = this.normalizeTipoMedio_(data.tipo);
       if (!this.TIPOS_MEDIO[nextTipo]) {
         throw new Error('Tipo de medio inválido');
       }
@@ -428,7 +451,7 @@ const Acciones = {
         throw new Error('El tipo de medio no está declarado para esta acción');
       }
       const existentes = Utils.getSheetObjectsCached(Config.SHEETS.MEDIOS_VERIFICACION, 30)
-        .filter((other) => other.accion_id === accion.id && String(other.tipo || '').trim() === nextTipo && other.id !== medio.id);
+        .filter((other) => other.accion_id === accion.id && this.normalizeTipoMedio_(other.tipo) === nextTipo && other.id !== medio.id);
       if (existentes.length) {
         throw new Error('Ya existe un archivo para este medio de verificación en la acción');
       }
@@ -571,7 +594,8 @@ const Acciones = {
       : null;
     const medios = bundle.medios.filter((medio) => medio.accion_id === accion.id);
     const mediosRequeridos = this.parseMediosRequeridos_(accion.medios_requeridos);
-    const mediosCumplidos = this.countMediosCumplidos_(medios, mediosRequeridos);
+    const mediosRequeridosDetalle = this.parseMediosRequeridosDetalle_(accion.medios_requeridos, accion.medios_requeridos_detalle);
+    const progresoMedios = this.countMediosCumplidos_(medios, mediosRequeridosDetalle);
     const equipoIndicador = this.getEquipoResponsable_(indicador);
     const responsableDisplay = String(accion.responsable || equipoIndicador || '').trim();
 
@@ -579,6 +603,7 @@ const Acciones = {
       ...accion,
       avance: Number(accion.avance || 0),
       medios_requeridos: mediosRequeridos,
+      medios_requeridos_detalle: mediosRequeridosDetalle,
       indicador_nombre: indicador?.nombre || '',
       indicador_codigo: indicador?.codigo_indicador || '',
       indicador_equipo_trabajo: indicador?.equipo_trabajo || '',
@@ -587,8 +612,8 @@ const Acciones = {
       instrumento_nombre: instrumento?.nombre || '',
       responsable_display: responsableDisplay || 'Sin equipo',
       medios_count: medios.length,
-      medios_requeridos_count: mediosRequeridos.length,
-      medios_cumplidos_count: mediosCumplidos,
+      medios_requeridos_count: progresoMedios.totalRequeridos,
+      medios_cumplidos_count: progresoMedios.totalCumplidos,
     };
   },
 
@@ -743,13 +768,13 @@ const Acciones = {
   parseMediosRequeridos_(value) {
     if (Array.isArray(value)) {
       return value
-        .map((item) => String(item || '').trim())
+        .map((item) => this.normalizeTipoMedio_(item))
         .filter((item) => this.TIPOS_MEDIO[item]);
     }
 
     return String(value || '')
       .split(',')
-      .map((item) => item.trim())
+      .map((item) => this.normalizeTipoMedio_(item))
       .filter((item) => this.TIPOS_MEDIO[item]);
   },
 
@@ -764,13 +789,31 @@ const Acciones = {
     return unique.join(',');
   },
 
-  countMediosCumplidos_(medios, mediosRequeridos) {
-    if (!mediosRequeridos.length) return 0;
-    const tiposSubidos = medios
-      .map((medio) => String(medio.tipo || '').trim())
-      .filter(Boolean);
+  countMediosCumplidos_(medios, mediosRequeridosDetalle) {
+    if (!Array.isArray(mediosRequeridosDetalle) || !mediosRequeridosDetalle.length) {
+      return { totalRequeridos: 0, totalCumplidos: 0 };
+    }
 
-    return mediosRequeridos.filter((tipo) => tiposSubidos.includes(tipo)).length;
+    const byTipo = medios.reduce((acc, medio) => {
+      const tipo = this.normalizeTipoMedio_(medio.tipo);
+      if (!tipo) return acc;
+      if (!acc[tipo]) acc[tipo] = 0;
+      acc[tipo] += 1;
+      return acc;
+    }, {});
+
+    let totalRequeridos = 0;
+    let totalCumplidos = 0;
+
+    mediosRequeridosDetalle.forEach((entry) => {
+      const tipo = this.normalizeTipoMedio_(entry?.tipo);
+      if (!tipo) return;
+      const cantidad = this.normalizeMedioCantidad_(entry?.cantidad);
+      totalRequeridos += cantidad;
+      totalCumplidos += Math.min(byTipo[tipo] || 0, cantidad);
+    });
+
+    return { totalRequeridos, totalCumplidos };
   },
 
   validateBusinessRules_(data) {
@@ -814,6 +857,74 @@ const Acciones = {
 
   normalizeTeam_(value) {
     return String(value || '').trim().toLowerCase();
+  },
+
+  normalizeTipoMedio_(value) {
+    const raw = String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    if (!raw) return '';
+
+    const compact = raw.replace(/\s+/g, '_');
+    const aliases = {
+      lista_asistencia: 'lista_asistencia',
+      listas_asistencia: 'lista_asistencia',
+      'lista_de_asistencia': 'lista_asistencia',
+      'listas_de_asistencia': 'lista_asistencia',
+      acta: 'acta',
+      actas: 'acta',
+      fotografia: 'fotografia',
+      fotografias: 'fotografia',
+      foto: 'fotografia',
+      fotos: 'fotografia',
+      informe: 'informe',
+      informes: 'informe',
+      otro: 'otro',
+      otros: 'otro',
+    };
+
+    return aliases[compact] || '';
+  },
+
+  normalizeMedioCantidad_(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) return 1;
+    return Math.round(parsed);
+  },
+
+  parseMediosRequeridosDetalle_(mediosRequeridos, detalle) {
+    const tipos = this.parseMediosRequeridos_(mediosRequeridos);
+    const source = Array.isArray(detalle)
+      ? detalle
+      : (() => {
+        const text = String(detalle || '').trim();
+        if (!text) return [];
+        try {
+          const parsed = JSON.parse(text);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      })();
+
+    const mapCantidad = {};
+    source.forEach((entry) => {
+      const tipo = this.normalizeTipoMedio_(entry?.tipo);
+      if (!tipo) return;
+      mapCantidad[tipo] = this.normalizeMedioCantidad_(entry?.cantidad);
+    });
+
+    return tipos.map((tipo) => ({
+      tipo,
+      cantidad: mapCantidad[tipo] || 1,
+    }));
+  },
+
+  serializeMediosRequeridosDetalle_(mediosRequeridos, detalle) {
+    const normalized = this.parseMediosRequeridosDetalle_(mediosRequeridos, detalle);
+    return JSON.stringify(normalized);
   },
 
   normalizeAvance_(value) {

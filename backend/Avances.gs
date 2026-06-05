@@ -100,30 +100,28 @@ const Avances = {
     let totalCumplidos = 0;
 
     acciones.forEach((accion) => {
-      const requeridos = String(accion.medios_requeridos || '')
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
+      const requeridos = this.parseMediosRequeridosDetalle_(
+        accion.medios_requeridos,
+        accion.medios_requeridos_detalle
+      );
 
       if (!requeridos.length) return;
 
       const mediosAccion = medios.filter((medio) => medio.accion_id === accion.id);
 
-      requeridos.forEach((tipo) => {
-        const medio = mediosAccion.find((entry) => String(entry.tipo || '').trim() === tipo);
-        if (!medio) {
-          totalRequeridos += 1;
-          return;
-        }
+      const byTipo = mediosAccion.reduce((acc, medio) => {
+        const tipo = this.normalizeTipoMedio_(medio.tipo);
+        if (!tipo) return acc;
+        if (!acc[tipo]) acc[tipo] = 0;
+        acc[tipo] += 1;
+        return acc;
+      }, {});
 
-        const esperada = Number(medio.cantidad_esperada || 1) || 1;
-        const lograda = Number(medio.cantidad_lograda || esperada) || esperada;
-
-        const boundedEsperada = esperada > 0 ? esperada : 1;
-        const boundedLograda = Math.max(0, Math.min(lograda, boundedEsperada));
-
-        totalRequeridos += boundedEsperada;
-        totalCumplidos += boundedLograda;
+      requeridos.forEach((entry) => {
+        const tipoNormalizado = this.normalizeTipoMedio_(entry.tipo);
+        const cantidad = this.normalizeCantidad_(entry.cantidad);
+        totalRequeridos += cantidad;
+        totalCumplidos += Math.min(byTipo[tipoNormalizado] || 0, cantidad);
       });
     });
 
@@ -136,6 +134,72 @@ const Avances = {
       totalRequeridos,
       totalCumplidos,
     };
+  },
+
+  normalizeTipoMedio_(value) {
+    const raw = String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    if (!raw) return '';
+
+    const compact = raw.replace(/\s+/g, '_');
+    const aliases = {
+      lista_asistencia: 'lista_asistencia',
+      listas_asistencia: 'lista_asistencia',
+      'lista_de_asistencia': 'lista_asistencia',
+      'listas_de_asistencia': 'lista_asistencia',
+      acta: 'acta',
+      actas: 'acta',
+      fotografia: 'fotografia',
+      fotografias: 'fotografia',
+      foto: 'fotografia',
+      fotos: 'fotografia',
+      informe: 'informe',
+      informes: 'informe',
+      otro: 'otro',
+      otros: 'otro',
+    };
+
+    return aliases[compact] || '';
+  },
+
+  normalizeCantidad_(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) return 1;
+    return Math.round(parsed);
+  },
+
+  parseMediosRequeridosDetalle_(mediosRequeridos, detalle) {
+    const tipos = String(mediosRequeridos || '')
+      .split(',')
+      .map((item) => this.normalizeTipoMedio_(item))
+      .filter(Boolean);
+
+    const source = (() => {
+      if (Array.isArray(detalle)) return detalle;
+      const text = String(detalle || '').trim();
+      if (!text) return [];
+      try {
+        const parsed = JSON.parse(text);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    })();
+
+    const mapCantidad = {};
+    source.forEach((entry) => {
+      const tipo = this.normalizeTipoMedio_(entry?.tipo);
+      if (!tipo) return;
+      mapCantidad[tipo] = this.normalizeCantidad_(entry?.cantidad);
+    });
+
+    return tipos.map((tipo) => ({
+      tipo,
+      cantidad: mapCantidad[tipo] || 1,
+    }));
   },
 
   getByCorte(corte_id, user) {

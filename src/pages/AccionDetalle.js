@@ -277,10 +277,18 @@ export default function AccionDetalle() {
     }
 
     try {
+      const detalle = mediosForm.map((tipo) => {
+        const currentEntry = (accion?.medios_requeridos_detalle || []).find((entry) => entry.tipo === tipo);
+        return {
+          tipo,
+          cantidad: Number(currentEntry?.cantidad || 1) || 1,
+        };
+      });
       await updateAccion.mutateAsync({
         id,
         data: {
           medios_requeridos: mediosForm,
+          medios_requeridos_detalle: detalle,
         },
       });
       setFeedback({ type: 'success', message: 'Tipos de medios actualizados.' });
@@ -485,6 +493,7 @@ export default function AccionDetalle() {
               getFileExtension={getFileExtension}
               uploadStage={uploadStage}
               tipoOptions={requiredTipoOptions}
+              mediosRequeridosDetalle={accionView?.medios_requeridos_detalle || []}
               canDeleteMedios={permissions.canManage}
               onDeleteMedio={handleDeleteMedio}
               deletingMedioId={deletingMedioId}

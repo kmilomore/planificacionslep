@@ -34,6 +34,7 @@ export default function AccionMediaSection({
   getFileExtension,
   uploadStage,
   tipoOptions,
+  mediosRequeridosDetalle = [],
   canDeleteMedios,
   onDeleteMedio,
   deletingMedioId,
@@ -44,6 +45,27 @@ export default function AccionMediaSection({
   const hasRequiredMedios = Array.isArray(mediosRequeridos) && mediosRequeridos.length > 0;
   const [isEditingTipos, setIsEditingTipos] = useState(false);
   const [editingMedioId, setEditingMedioId] = useState('');
+  const normalizeTipo = (value) => String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const normalizeTipoToKey = (value) => {
+    const normalized = normalizeTipo(value).replace(/\s+/g, '_');
+    const aliases = {
+      lista_asistencia: 'lista_asistencia',
+      listas_asistencia: 'lista_asistencia',
+      lista_de_asistencia: 'lista_asistencia',
+      listas_de_asistencia: 'lista_asistencia',
+      acta: 'acta',
+      actas: 'acta',
+      fotografia: 'fotografia',
+      fotografias: 'fotografia',
+      foto: 'fotografia',
+      fotos: 'fotografia',
+      informe: 'informe',
+      informes: 'informe',
+      otro: 'otro',
+      otros: 'otro',
+    };
+    return aliases[normalized] || normalized;
+  };
 
   useEffect(() => {
     if (!isTiposDirty) return;
@@ -124,12 +146,30 @@ export default function AccionMediaSection({
             </div>
           </div>
         ) : hasRequiredMedios ? (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tipoOptions.map((option) => (
-              <span key={option.value} className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                {option.label}
-              </span>
-            ))}
+          <div className="mt-3 space-y-2">
+            {tipoOptions.map((option) => {
+              const config = mediosRequeridosDetalle.find((entry) => entry.tipo === option.value);
+              const requiredCount = Number(config?.cantidad || 1) || 1;
+              const currentCount = medios.filter((medio) => normalizeTipoToKey(medio.tipo) === option.value).length;
+              const pct = Math.min(Math.round((currentCount / requiredCount) * 100), 100);
+
+              return (
+                <div key={option.value} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-navy">{option.label}</p>
+                    <p className="text-xs font-semibold text-slate-500">
+                      {currentCount}/{requiredCount}
+                    </p>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-blue"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="mt-2 text-sm text-slate-500 font-body">No hay medios declarados en el constructor. Debes definirlos para habilitar carga específica.</p>

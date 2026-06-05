@@ -104,7 +104,7 @@ function _getIndicadoresHeaders() {
 function _getAccionesHeaders() {
   return [
     'id', 'indicador_id', 'nombre', 'descripcion', 'responsable',
-    'fecha_inicio', 'fecha_compromiso', 'estado', 'avance', 'medios_requeridos', 'activo',
+    'fecha_inicio', 'fecha_compromiso', 'estado', 'avance', 'medios_requeridos', 'medios_requeridos_detalle', 'activo',
     'created_at', 'updated_at', 'created_by',
   ];
 }

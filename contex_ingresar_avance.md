@@ -5,7 +5,7 @@
 `src/pages/IngresarAvance.js` es el formulario operativo para registrar o editar el avance de un indicador en un corte especifico.
 
 Actualizacion de criterio funcional:
-- cuando el indicador tiene acciones con medios de verificacion requeridos, el avance se entiende como cumplimiento documental (no como captura aislada de valor reportado)
+- cuando el indicador tiene acciones con medios de verificacion requeridos, el avance se entiende como cumplimiento documental (no como captura aislada de valor reportado), calculado a partir de los medios y sus cantidades declaradas cuando existan
 - cuando no existen medios requeridos, se mantiene la logica tradicional por `tipo_meta`
 
 ## Responsabilidad funcional
@@ -84,8 +84,8 @@ Cuando se abre el detalle de indicador en `InstrumentoDetalle`, el bloque de ava
 - indicadores booleanos transforman `Si` en 100 y `No` en 0
 - indicadores de texto consideran cumplimiento 100 si hay contenido
 - indicadores numericos calculan porcentaje contra `meta_valor`
-- si existen medios requeridos en acciones asociadas, el cumplimiento final del indicador se calcula por medios:
-  - `medios_cumplidos / medios_requeridos * 100`
+- si existen medios requeridos en acciones asociadas, el cumplimiento final del indicador se calcula por medios y cantidades documentales:
+  - `unidades_cumplidas / unidades_requeridas * 100`, donde las unidades provienen de `cantidad_esperada` y `cantidad_lograda` por medio en backend (si no hay cantidades explicitadas se asume 1 unidad por tipo de medio)
   - ese porcentaje domina sobre el calculo manual
 - sin acciones asociadas al indicador no hay base documental para reportar avance por medios; la UI debe invitar a crear acciones y definir medios
 
@@ -100,7 +100,7 @@ Flujo:
 Payload enviado:
 - `indicador_id`
 - `corte_id`
-- `valor_reportado` (manual o `cumplidos/total` cuando aplica logica por medios)
+- `valor_reportado` (manual o string resumen tipo `cumplidos/total` cuando aplica logica por medios; el porcentaje real se calcula en backend segun los medios y sus cantidades)
 - `comentario`
 - `evidencia_url`
 

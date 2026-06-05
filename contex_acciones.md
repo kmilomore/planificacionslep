@@ -51,9 +51,9 @@ Comportamiento esperado:
 - si no hay medios seleccionados, la accion no debe poder pasar a estado reportado/completado
 
 Impacto en avance y cumplimiento del indicador:
-- el % de avance reportado de la accion depende del cumplimiento de sus medios asociados
-- cada medio asociado debe tener una evidencia subida/validada en Ingresar Avance
-- el cumplimiento de la accion por medios se calcula como: `medios validados / medios asociados * 100`
+- el % de avance reportado de la accion depende del cumplimiento de sus medios asociados y de las cantidades declaradas por medio cuando existan
+- cada medio asociado debe tener una evidencia subida/validada en Ingresar Avance o una URL de evidencia registrada
+- el cumplimiento de la accion por medios se calcula como: `unidades_validadas / unidades_requeridas * 100`, donde cada medio puede declarar `cantidad_esperada` y `cantidad_lograda` (si no se declaran cantidades se asume 1 unidad por medio)
 - ese resultado impacta directamente el % de cumplimiento del indicador vinculado
 
 Ejemplo operativo:
@@ -199,9 +199,9 @@ Cada item debe llegar decorado o con datos suficientes para construir:
 
 1. se crea accion con medios requeridos obligatorios
 2. se puede editar lista de tipos requeridos desde detalle de accion
-3. se suben evidencias solo de tipos permitidos
-4. cada tipo se cumple con una evidencia (sin duplicados por tipo)
-5. el avance/cumplimiento consume progreso documental cuando existe configuracion de medios
+3. se suben evidencias solo de tipos permitidos o se registran URLs externas de respaldo
+4. cada tipo se cumple con una evidencia asociada y puede declarar `cantidad_esperada` y `cantidad_lograda` para reflejar cuantas unidades (actas, listas, informes, etc.) se consideran
+5. el avance/cumplimiento consume progreso documental cuando existe configuracion de medios, usando las cantidades declaradas por medio para el calculo porcentual
 
 ## Roadmap actualizado
 

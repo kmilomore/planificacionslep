@@ -23,6 +23,7 @@ La pagina:
 - `useUpdateEstadoAccion()`
 - `useUploadMedioVerificacion()`
 - `useDeleteMedioVerificacion()`
+- `useUpdateMedioVerificacion()`
 - `useAddComentarioAccion()`
 - `useUpdateComentarioAccion()`
 - `useDeleteComentarioAccion()`
@@ -48,6 +49,9 @@ Permite:
 - agregar descripcion
 - previsualizar imagenes compatibles
 - subir archivo a Drive
+- asociar URL externa de evidencia cuando aplique (ej. carpeta o archivo ya existente en Drive)
+- editar el tipo de medio (dentro de los declarados en la accion)
+- definir y actualizar cantidades esperada y lograda por medio (ej. cuantas actas se consideran para el cumplimiento)
 - ver metadata de medios ya cargados
 - eliminar un medio ya cargado (si el perfil tiene gestion)
 
