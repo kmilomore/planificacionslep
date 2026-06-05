@@ -110,6 +110,19 @@ export default function InstrumentoDetalle() {
     if (Array.isArray(accionesRelacionadasData)) return accionesRelacionadasData;
     return accionesRelacionadasData?.items || [];
   }, [accionesRelacionadasData]);
+  const resumenMediosRelacionados = useMemo(() => {
+    const accionesConMedios = accionesRelacionadas.filter((accion) => Number(accion.medios_requeridos_count || 0) > 0);
+    const totalRequeridos = accionesConMedios.reduce((acc, accion) => acc + Number(accion.medios_requeridos_count || 0), 0);
+    const totalCumplidos = accionesConMedios.reduce((acc, accion) => acc + Number(accion.medios_cumplidos_count || 0), 0);
+
+    return {
+      totalAcciones: accionesRelacionadas.length,
+      accionesConMedios: accionesConMedios.length,
+      totalRequeridos,
+      totalCumplidos,
+      porcentaje: totalRequeridos > 0 ? Math.min(Math.round((totalCumplidos / totalRequeridos) * 100), 100) : null,
+    };
+  }, [accionesRelacionadas]);
 
   useEffect(() => {
     if (!requestedIndicadorId || !filas.length) return;
@@ -213,18 +226,20 @@ export default function InstrumentoDetalle() {
     }
   };
 
-  const guardarAvanceDesdeModal = async () => {
+  const guardarAvanceDesdeModal = async (options = {}) => {
     if (!detalle?.indicador?.id || !corteId) return;
     if (corteActual?.estado === 'cerrado') {
       setFeedback({ type: 'error', msg: 'El corte está cerrado.' });
       return;
     }
 
-    const porcentaje = calcularPorcentajeAvanceModal(
-      avanceForm.valor_reportado,
-      detalle.indicador.meta_valor,
-      detalle.indicador.tipo_meta
-    );
+    const porcentaje = Number.isFinite(Number(options.forzarPorcentaje))
+      ? Number(options.forzarPorcentaje)
+      : calcularPorcentajeAvanceModal(
+        avanceForm.valor_reportado,
+        detalle.indicador.meta_valor,
+        detalle.indicador.tipo_meta
+      );
     const requiereComentario = porcentaje < 80;
     if (requiereComentario && !String(avanceForm.comentario || '').trim()) {
       setFeedback({ type: 'error', msg: 'Debes ingresar comentario si el cumplimiento es menor a 80%.' });
@@ -236,7 +251,9 @@ export default function InstrumentoDetalle() {
         data: {
           indicador_id: detalle.indicador.id,
           corte_id: corteId,
-          valor_reportado: normalizarValorAvanceModal(avanceForm.valor_reportado, detalle.indicador.tipo_meta),
+          valor_reportado: options.forzarValorReportado
+            ? String(options.forzarValorReportado)
+            : normalizarValorAvanceModal(avanceForm.valor_reportado, detalle.indicador.tipo_meta),
           comentario: avanceForm.comentario,
           evidencia_url: avanceForm.evidencia_url,
         },
@@ -410,7 +427,7 @@ export default function InstrumentoDetalle() {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-xs text-gray-500">Revisa el indicador, su avance y las acciones vinculadas al corte seleccionado.</p>
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) ? (
+                {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) && accionesRelacionadas.length > 0 ? (
                   <>
                     <Link
                       to={`/avance/${detalle.indicador.id}/${corteId}`}
@@ -498,39 +515,78 @@ export default function InstrumentoDetalle() {
             {corteActual?.estado !== 'cerrado' && (user?.rol === 'admin' || detalle.indicador.responsable_id === user?.id) ? (
               <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-4 space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-navy">Ingresar avance en este modal</h3>
+                  <h3 className="text-sm font-semibold text-navy">Reportar avance por medios de verificación</h3>
                   <span className="text-xs text-slate-500">Corte: {corteActual?.nombre_corte || '—'}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    label="Valor reportado"
-                    tipo={resolveValorFieldType(detalle.indicador.tipo_meta)}
-                    value={avanceForm.valor_reportado}
-                    onChange={(value) => setAvanceForm((actual) => ({ ...actual, valor_reportado: value }))}
-                    usuarios={usuarios}
-                    tipoMeta={detalle.indicador.tipo_meta}
-                  />
-                  <FormField
-                    label="URL evidencia"
-                    tipo="url"
-                    value={avanceForm.evidencia_url}
-                    onChange={(value) => setAvanceForm((actual) => ({ ...actual, evidencia_url: value }))}
-                    usuarios={usuarios}
-                  />
-                  <FormField
-                    label={`Comentario ${calcularPorcentajeAvanceModal(avanceForm.valor_reportado, detalle.indicador.meta_valor, detalle.indicador.tipo_meta) < 80 ? '*' : '(opcional)'}`}
-                    tipo="textarea"
-                    value={avanceForm.comentario}
-                    onChange={(value) => setAvanceForm((actual) => ({ ...actual, comentario: value }))}
-                    usuarios={usuarios}
-                  />
-                </div>
-                <div className="text-xs text-slate-600">
-                  Cumplimiento estimado:{' '}
-                  <span className="font-semibold text-navy">
-                    {calcularPorcentajeAvanceModal(avanceForm.valor_reportado, detalle.indicador.meta_valor, detalle.indicador.tipo_meta)}%
-                  </span>
-                </div>
+
+                {accionesRelacionadas.length ? (
+                  <>
+                    <div className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-xs text-slate-700">
+                      <p className="font-semibold text-navy">
+                        El avance de este indicador se reporta mediante los medios de verificación cargados en sus acciones.
+                      </p>
+                      <p className="mt-2">
+                        Avance documental actual:{' '}
+                        <span className="font-semibold text-navy">
+                          {resumenMediosRelacionados.porcentaje ?? 0}%
+                        </span>
+                        {' '}({resumenMediosRelacionados.totalCumplidos}/{resumenMediosRelacionados.totalRequeridos} medios cumplidos).
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="URL evidencia general (opcional)"
+                        tipo="url"
+                        value={avanceForm.evidencia_url}
+                        onChange={(value) => setAvanceForm((actual) => ({ ...actual, evidencia_url: value }))}
+                        usuarios={usuarios}
+                      />
+                      <FormField
+                        label={`Comentario ${resumenMediosRelacionados.porcentaje !== null && resumenMediosRelacionados.porcentaje < 80 ? '*' : '(opcional)'}`}
+                        tipo="textarea"
+                        value={avanceForm.comentario}
+                        onChange={(value) => setAvanceForm((actual) => ({ ...actual, comentario: value }))}
+                        usuarios={usuarios}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => guardarAvanceDesdeModal({
+                          forzarValorReportado: `${resumenMediosRelacionados.totalCumplidos}/${resumenMediosRelacionados.totalRequeridos}`,
+                          forzarPorcentaje: resumenMediosRelacionados.porcentaje ?? 0,
+                        })}
+                        disabled={upsertAvanceMut.isPending}
+                        className="px-3 py-1.5 text-xs border border-blue/20 text-blue rounded-lg hover:bg-blue/5 disabled:opacity-50"
+                      >
+                        {upsertAvanceMut.isPending ? 'Guardando avance...' : 'Registrar avance por medios'}
+                      </button>
+                      <Link
+                        to={`/avance/${detalle.indicador.id}/${corteId}`}
+                        className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:border-blue hover:text-blue"
+                      >
+                        Expandir vista completa
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-xs text-slate-600">
+                    <p className="font-semibold text-slate-700">No existen acciones cargadas para este indicador.</p>
+                    <p className="mt-1">
+                      Para reportar avance por medios de verificación, primero debes crear al menos una acción y definir sus medios requeridos.
+                    </p>
+                    <div className="mt-3">
+                      <Link
+                        to="/acciones/nueva"
+                        className="inline-flex items-center rounded-lg border border-blue/20 px-3 py-1.5 font-medium text-blue hover:bg-blue/5"
+                      >
+                        Crear acción y habilitar medios
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">

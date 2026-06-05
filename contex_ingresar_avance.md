@@ -70,6 +70,13 @@ Muestra:
 - semaforo resultante
 - alerta de comentario obligatorio cuando corresponde
 
+### Integracion con modal de indicador
+Cuando se abre el detalle de indicador en `InstrumentoDetalle`, el bloque de avance debe respetar la misma logica:
+- reportar avance = reportar medios de verificacion en acciones asociadas
+- si existen acciones, mostrar estado documental (`cumplidos/total`) y permitir registrar avance por medios
+- si no existen acciones, mostrar mensaje explicito de que no hay acciones cargadas y CTA para crear accion
+- desde ese modal se permite "expandir" a la vista completa de `/avance/:indicador_id/:corte_id`
+
 ## Reglas de negocio visibles
 
 - si el corte esta cerrado, no se puede guardar
@@ -80,6 +87,7 @@ Muestra:
 - si existen medios requeridos en acciones asociadas, el cumplimiento final del indicador se calcula por medios:
   - `medios_cumplidos / medios_requeridos * 100`
   - ese porcentaje domina sobre el calculo manual
+- sin acciones asociadas al indicador no hay base documental para reportar avance por medios; la UI debe invitar a crear acciones y definir medios
 
 ## Guardado
 
@@ -125,3 +133,4 @@ Payload enviado:
 - migrar de `evidencia_url` a una carga real de evidencia si el flujo de avances lo requiere
 - agregar skeleton en vez de spinner para consistencia con otras vistas
 - normalizar mejor fechas informativas del indicador si llegan en ISO o formatos mixtos
+- evaluar deep-link directo desde modal a acciones pendientes con medios faltantes
