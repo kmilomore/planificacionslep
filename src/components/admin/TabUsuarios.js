@@ -18,7 +18,9 @@ export default function TabUsuarios() {
     nombre: '',
     email: '',
     rol: 'admin',
-    area: '',
+    subdireccion: '',
+    subdepartamento: '',
+    cargo: '',
   });
 
   const toggle = async (u, campo, valor) => {
@@ -33,9 +35,29 @@ export default function TabUsuarios() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await createMut.mutateAsync({ data: nuevo });
+      const partesArea = [
+        nuevo.subdireccion?.trim(),
+        nuevo.subdepartamento?.trim(),
+        nuevo.cargo?.trim(),
+      ].filter(Boolean);
+
+      const payload = {
+        nombre: nuevo.nombre,
+        email: nuevo.email,
+        rol: nuevo.rol,
+        area: partesArea.join(' · '),
+      };
+
+      await createMut.mutateAsync({ data: payload });
       setFeedback({ type: 'success', msg: 'Usuario creado.' });
-      setNuevo({ nombre: '', email: '', rol: 'admin', area: '' });
+      setNuevo({
+        nombre: '',
+        email: '',
+        rol: 'admin',
+        subdireccion: '',
+        subdepartamento: '',
+        cargo: '',
+      });
     } catch (e) {
       setFeedback({ type: 'error', msg: e.message });
     }
@@ -54,7 +76,7 @@ export default function TabUsuarios() {
         <p className="text-xs text-gray-500 font-body">
           Crea usuarios directamente desde el portal. Solo perfiles con rol <span className="font-semibold">admin</span> pueden usar este formulario.
         </p>
-        <form className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end" onSubmit={handleCreate}>
+        <form className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end" onSubmit={handleCreate}>
           <div className="space-y-1">
             <label className="block text-xs font-medium text-gray-600">Nombre</label>
             <input
@@ -89,15 +111,36 @@ export default function TabUsuarios() {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-gray-600">Área (opcional)</label>
+            <label className="block text-xs font-medium text-gray-600">Subdirección / Departamento</label>
             <input
               type="text"
               className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
-              value={nuevo.area}
-              onChange={(e) => setNuevo({ ...nuevo, area: e.target.value })}
+              value={nuevo.subdireccion}
+              onChange={(e) => setNuevo({ ...nuevo, subdireccion: e.target.value })}
+              placeholder="Ej: Subdirección de Gestión"
             />
           </div>
-          <div className="md:col-span-4 flex justify-end">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-600">Subdepartamento</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+              value={nuevo.subdepartamento}
+              onChange={(e) => setNuevo({ ...nuevo, subdepartamento: e.target.value })}
+              placeholder="Ej: Dept. Seguimiento CDC"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-600">Cargo</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-blue focus:border-blue"
+              value={nuevo.cargo}
+              onChange={(e) => setNuevo({ ...nuevo, cargo: e.target.value })}
+              placeholder="Ej: Profesional, Jefe de departamento"
+            />
+          </div>
+          <div className="md:col-span-3 flex justify-end">
             <button
               type="submit"
               disabled={createMut.isPending}
@@ -116,7 +159,7 @@ export default function TabUsuarios() {
               <th className="px-4 py-3">Nombre</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Rol</th>
-              <th className="px-4 py-3">Área</th>
+              <th className="px-4 py-3">Subdirección / Depto / Cargo</th>
               <th className="px-4 py-3 text-center">Activo</th>
             </tr>
           </thead>
