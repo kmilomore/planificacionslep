@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, FolderOpen } from 'lucide-react';
+import { ArrowUpRight, FolderOpen, Pencil } from 'lucide-react';
 import EstadoBadge from './EstadoBadge';
 
-export default function AccionesTable({ acciones }) {
+export default function AccionesTable({ acciones, canEditActions = false }) {
   return (
     <section className="bg-white rounded-card shadow-card border border-slate-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -57,13 +57,24 @@ export default function AccionesTable({ acciones }) {
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-slate-500">{accion.actualizado}</td>
                 <td className="px-3 py-3 whitespace-nowrap">
-                  <Link
-                    to={`/acciones/${accion.id}`}
-                    className="inline-flex items-center gap-1.5 text-blue hover:text-navy font-semibold text-[13px]"
-                  >
-                    Ver detalle
-                    <ArrowUpRight size={15} />
-                  </Link>
+                  <div className="flex flex-col items-start gap-1.5">
+                    <Link
+                      to={`/acciones/${accion.id}`}
+                      className="inline-flex items-center gap-1.5 text-blue hover:text-navy font-semibold text-[13px]"
+                    >
+                      Ver detalle
+                      <ArrowUpRight size={15} />
+                    </Link>
+                    {canEditActions ? (
+                      <Link
+                        to={`/acciones/${accion.id}?edit=1`}
+                        className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 font-semibold text-[13px]"
+                      >
+                        Editar
+                        <Pencil size={14} />
+                      </Link>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ))}

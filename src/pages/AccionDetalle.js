@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Pencil, Save, X } from 'lucide-react';
 import Spinner from '../components/ui/Spinner';
 import Alert from '../components/ui/Alert';
 import AccionDetalleSkeleton from '../components/acciones/detalle/AccionDetalleSkeleton';
@@ -31,6 +32,7 @@ const TIPO_MEDIO_OPTIONS = [
 
 export default function AccionDetalle() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -57,6 +59,17 @@ export default function AccionDetalle() {
   const [mediosDetalleForm, setMediosDetalleForm] = useState([]);
   const [deletingMedioId, setDeletingMedioId] = useState('');
   const [updatingMedioId, setUpdatingMedioId] = useState('');
+  const [isEditingAction, setIsEditingAction] = useState(searchParams.get('edit') === '1');
+  const [actionForm, setActionForm] = useState({
+    nombre: '',
+    descripcion: '',
+    fecha_inicio: '',
+    fecha_compromiso: '',
+    estado: 'planificada',
+    avance: 0,
+  });
+
+  const isAdmin = user?.rol === 'admin';
 
   const accionView = useMemo(() => accion, [accion]);
 
@@ -103,9 +116,40 @@ export default function AccionDetalle() {
     setMediosForm(detalle.map((entry) => String(entry?.tipo || '').trim()).filter(Boolean));
   }, [accion]);
 
+  useEffect(() => {
+    if (!accion) return;
+    setActionForm({
+      nombre: String(accion.nombre || ''),
+      descripcion: String(accion.descripcion || ''),
+      fecha_inicio: String(accion.fecha_inicio || ''),
+      fecha_compromiso: String(accion.fecha_compromiso || ''),
+      estado: String(accion.estado || 'planificada'),
+      avance: Number(accion.avance || 0),
+    });
+  }, [accion]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setIsEditingAction(false);
+      return;
+    }
+    setIsEditingAction(searchParams.get('edit') === '1');
+  }, [isAdmin, searchParams]);
+
   const timeline = useMemo(() => accionView?.timeline || [], [accionView]);
   const comentariosOperativos = useMemo(() => accionView?.comentarios || [], [accionView]);
   const medios = useMemo(() => accionView?.medios || [], [accionView]);
+  const isActionDirty = useMemo(() => {
+    if (!accionView) return false;
+    return JSON.stringify({
+      nombre: String(accionView.nombre || ''),
+      descripcion: String(accionView.descripcion || ''),
+      fecha_inicio: String(accionView.fecha_inicio || ''),
+      fecha_compromiso: String(accionView.fecha_compromiso || ''),
+      estado: String(accionView.estado || 'planificada'),
+      avance: Number(accionView.avance || 0),
+    }) !== JSON.stringify(actionForm);
+  }, [accionView, actionForm]);
   const avancePorMedios = useMemo(() => {
     const requeridos = Number(accionView?.medios_requeridos_count || 0);
     const cumplidos = Number(accionView?.medios_cumplidos_count || 0);
@@ -350,6 +394,62 @@ export default function AccionDetalle() {
     }
   };
 
+  const handleEnableEdit = () => {
+    if (!isAdmin) return;
+    setSearchParams({ edit: '1' });
+    setIsEditingAction(true);
+    setFeedback(null);
+  };
+
+  const handleCancelEdit = () => {
+    if (!accionView) return;
+    setActionForm({
+      nombre: String(accionView.nombre || ''),
+      descripcion: String(accionView.descripcion || ''),
+      fecha_inicio: String(accionView.fecha_inicio || ''),
+      fecha_compromiso: String(accionView.fecha_compromiso || ''),
+      estado: String(accionView.estado || 'planificada'),
+      avance: Number(accionView.avance || 0),
+    });
+    setSearchParams({});
+    setIsEditingAction(false);
+    setFeedback(null);
+  };
+
+  const handleSaveAction = async () => {
+    if (!isAdmin) return;
+    const payload = {
+      nombre: String(actionForm.nombre || '').trim(),
+      descripcion: String(actionForm.descripcion || '').trim(),
+      fecha_inicio: String(actionForm.fecha_inicio || '').trim(),
+      fecha_compromiso: String(actionForm.fecha_compromiso || '').trim(),
+      estado: String(actionForm.estado || 'planificada'),
+      avance: Number(actionForm.avance || 0),
+    };
+    if (!payload.nombre) {
+      setFeedback({ type: 'error', message: 'El nombre de la acción es obligatorio.' });
+      return;
+    }
+    if (!payload.fecha_compromiso) {
+      setFeedback({ type: 'error', message: 'La fecha compromiso es obligatoria.' });
+      return;
+    }
+    if (!Number.isFinite(payload.avance) || payload.avance < 0 || payload.avance > 100) {
+      setFeedback({ type: 'error', message: 'El avance debe estar entre 0 y 100.' });
+      return;
+    }
+
+    setFeedback(null);
+    try {
+      await updateAccion.mutateAsync({ id, data: payload });
+      setFeedback({ type: 'success', message: 'Acción actualizada correctamente.' });
+      setSearchParams({});
+      setIsEditingAction(false);
+    } catch (submitError) {
+      setFeedback({ type: 'error', message: submitError.message });
+    }
+  };
+
   const handleDeleteMedio = async (medio) => {
     const confirmed = window.confirm(`Se eliminará el medio "${medio?.nombre_archivo || 'sin nombre'}". ¿Deseas continuar?`);
     if (!confirmed) return;
@@ -404,6 +504,128 @@ export default function AccionDetalle() {
       {feedback ? <Alert type={feedback.type} message={feedback.message} onClose={() => setFeedback(null)} /> : null}
 
       <section className="w-full bg-white rounded-card shadow-card border border-slate-100 p-6 lg:p-8 space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            to="/acciones"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue"
+          >
+            <ArrowLeft size={16} />
+            Volver al listado
+          </Link>
+          {isAdmin ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {!isEditingAction ? (
+                <button
+                  type="button"
+                  onClick={handleEnableEdit}
+                  className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-semibold text-blue hover:bg-blue-50 transition-colors"
+                >
+                  <Pencil size={16} />
+                  Editar acción
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSaveAction}
+                    disabled={updateAccion.isPending || !isActionDirty}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy transition-colors disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    <Save size={16} />
+                    {updateAccion.isPending ? 'Guardando...' : 'Guardar edición'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    disabled={updateAccion.isPending}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue hover:text-blue transition-colors"
+                  >
+                    <X size={16} />
+                    Cancelar
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        {isAdmin && isEditingAction ? (
+          <section className="rounded-2xl border border-blue-100 bg-blue-50/40 p-5 space-y-4">
+            <h2 className="text-lg font-display font-bold text-navy">Edición de acción</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2 text-sm text-slate-600 font-body">
+                Nombre
+                <input
+                  type="text"
+                  value={actionForm.nombre}
+                  onChange={(event) => setActionForm((current) => ({ ...current, nombre: event.target.value }))}
+                  disabled={updateAccion.isPending}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                />
+              </label>
+              <label className="space-y-2 text-sm text-slate-600 font-body">
+                Fecha compromiso
+                <input
+                  type="date"
+                  value={actionForm.fecha_compromiso}
+                  onChange={(event) => setActionForm((current) => ({ ...current, fecha_compromiso: event.target.value }))}
+                  disabled={updateAccion.isPending}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                />
+              </label>
+            </div>
+            <label className="space-y-2 text-sm text-slate-600 font-body block">
+              Descripción
+              <textarea
+                rows="4"
+                value={actionForm.descripcion}
+                onChange={(event) => setActionForm((current) => ({ ...current, descripcion: event.target.value }))}
+                disabled={updateAccion.isPending}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+              />
+            </label>
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="space-y-2 text-sm text-slate-600 font-body">
+                Fecha inicio
+                <input
+                  type="date"
+                  value={actionForm.fecha_inicio}
+                  onChange={(event) => setActionForm((current) => ({ ...current, fecha_inicio: event.target.value }))}
+                  disabled={updateAccion.isPending}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                />
+              </label>
+              <label className="space-y-2 text-sm text-slate-600 font-body">
+                Estado
+                <select
+                  value={actionForm.estado}
+                  onChange={(event) => setActionForm((current) => ({ ...current, estado: event.target.value }))}
+                  disabled={updateAccion.isPending}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                >
+                  <option value="planificada">Planificada</option>
+                  <option value="en_progreso">En progreso</option>
+                  <option value="reportada">Reportada</option>
+                  <option value="completada">Completada</option>
+                </select>
+              </label>
+              <label className="space-y-2 text-sm text-slate-600 font-body">
+                Avance (%)
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={actionForm.avance}
+                  onChange={(event) => setActionForm((current) => ({ ...current, avance: Number(event.target.value || 0) }))}
+                  disabled={updateAccion.isPending}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue/30"
+                />
+              </label>
+            </div>
+          </section>
+        ) : null}
+
         <AccionOverviewSection
           accion={accionView}
           formatDate={formatDate}

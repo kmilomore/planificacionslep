@@ -606,12 +606,15 @@ const Acciones = {
     const mediosRequeridos = this.parseMediosRequeridos_(accion.medios_requeridos);
     const mediosRequeridosDetalle = this.parseMediosRequeridosDetalle_(accion.medios_requeridos, accion.medios_requeridos_detalle);
     const progresoMedios = this.countMediosCumplidos_(medios, mediosRequeridosDetalle);
+    const avanceDocumental = progresoMedios.totalRequeridos > 0
+      ? Math.min(Math.round((progresoMedios.totalCumplidos / progresoMedios.totalRequeridos) * 100), 100)
+      : null;
     const equipoIndicador = this.getEquipoResponsable_(indicador);
     const responsableDisplay = String(accion.responsable || equipoIndicador || '').trim();
 
     return {
       ...accion,
-      avance: Number(accion.avance || 0),
+      avance: avanceDocumental !== null ? avanceDocumental : Number(accion.avance || 0),
       medios_requeridos: mediosRequeridos,
       medios_requeridos_detalle: mediosRequeridosDetalle,
       indicador_nombre: indicador?.nombre || '',

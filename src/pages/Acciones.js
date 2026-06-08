@@ -7,6 +7,7 @@ import ResumenAcciones from '../components/acciones/ResumenAcciones';
 import { useAcciones } from '../hooks/useApi';
 import Alert from '../components/ui/Alert';
 import Skeleton from '../components/ui/Skeleton';
+import { useAuth } from '../context/AuthContext';
 
 function AccionesSkeleton() {
   return (
@@ -81,6 +82,7 @@ function AccionesSkeleton() {
 }
 
 export default function Acciones() {
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     search: '',
     estado: 'todos',
@@ -149,6 +151,7 @@ export default function Acciones() {
   };
 
   const firstAccionId = accionesFiltradas[0]?.id;
+  const canEditActions = user?.rol === 'admin';
 
   return (
     <div className="p-6 space-y-6">
@@ -202,7 +205,7 @@ export default function Acciones() {
           />
 
           {accionesFiltradas.length ? (
-            <AccionesTable acciones={accionesFiltradas} />
+            <AccionesTable acciones={accionesFiltradas} canEditActions={canEditActions} />
           ) : (
             <section className="bg-white rounded-card shadow-card border border-slate-100 p-8 text-center">
               <h2 className="text-xl font-display font-bold text-navy">No hay acciones registradas</h2>

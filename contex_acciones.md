@@ -89,7 +89,7 @@ La tabla fue compactada para mejorar visibilidad horizontal e incluye:
 - equipo responsable
 - compromiso
 - estado
-- avance
+- avance (porcentaje de cumplimiento documental de la acción)
 - medios
 - actualizacion
 - link a detalle
@@ -114,7 +114,7 @@ Cada item debe llegar decorado o con datos suficientes para construir:
 - `responsable_display` o `responsable`
 - `fecha_compromiso`
 - `estado`
-- `avance`
+- `avance` (porcentaje ya calculado en backend; cuando existen medios requeridos refleja `medios_cumplidos_count / medios_requeridos_count * 100`, en ausencia de medios usa el valor numerico tradicional de la accion)
 - `medios_count`
 - `medios_requeridos_count`
 - `medios_cumplidos_count`
@@ -175,6 +175,13 @@ Cada item debe llegar decorado o con datos suficientes para construir:
 - se agrega `deleteAccion` para baja logica de acciones (`activo = false`)
 - el listado y detalle excluyen elementos eliminados manteniendo historial auditable
 
+### Iteracion 6: Edicion admin en portal
+- en el listado (`AccionesTable`) se agrega accion `Editar` visible solo para rol `admin`
+- la accion `Editar` navega al detalle con modo edicion activo (`/acciones/:id?edit=1`)
+- en el detalle (`AccionDetalle`) se agrega boton `Editar acción` solo para `admin`
+- el detalle habilita formulario de edicion para nombre, descripcion, fechas, estado y avance
+- guardado conectado a `updateAccion` y cancelacion con restablecimiento de valores originales
+
 ## Dependencias cruzadas
 
 - `AccionesTable.js` define el render final del listado
@@ -222,6 +229,5 @@ Cada item debe llegar decorado o con datos suficientes para construir:
 
 ## Pendientes naturales
 
-- edicion completa desde el listado o desde un modal
 - acciones bulk o vistas agrupadas por instrumento
 - exportacion o indicadores de vencimiento cercano dentro del listado
