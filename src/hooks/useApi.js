@@ -1,10 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { callApi } from '../config/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { mockRepository } from '../mocks/mockRepository';
+
+function runMockAction(action, payload = {}) {
+  const handler = mockRepository[action];
+  if (!handler) {
+    throw new Error(`Acción mock no implementada: ${action}`);
+  }
+  return handler(payload);
+}
 
 export function useApiQuery(queryKey, action, payload = {}, options = {}) {
   return useQuery({
     queryKey: Array.isArray(queryKey) ? queryKey : [queryKey],
-    queryFn:  () => callApi(action, payload),
+    queryFn:  () => runMockAction(action, payload),
     ...options,
   });
 }
@@ -12,9 +20,14 @@ export function useApiQuery(queryKey, action, payload = {}, options = {}) {
 export function useApiMutation(action, invalidateKeys = [], options = {}) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload) => callApi(action, payload),
+    mutationFn: (payload) => runMockAction(action, payload),
     onSuccess: (...args) => {
       invalidateKeys.forEach(k => qc.invalidateQueries({ queryKey: Array.isArray(k) ? k : [k] }));
+      qc.invalidateQueries({ queryKey: ['dashboard_resumen'] });
+      qc.invalidateQueries({ queryKey: ['gantt_data'] });
+      qc.invalidateQueries({ queryKey: ['cortes_all'] });
+      qc.invalidateQueries({ queryKey: ['indicadores_all'] });
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
       options.onSuccess?.(...args);
     },
     ...options,
@@ -135,7 +148,7 @@ export function useRefreshDashboardResumen() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: () => callApi('refreshDashboardResumen'),
+    mutationFn: () => runMockAction('refreshDashboardResumen'),
     onSuccess: (data) => {
       qc.setQueryData(['dashboard_resumen'], data);
       qc.invalidateQueries({ queryKey: ['gantt_data'] });
