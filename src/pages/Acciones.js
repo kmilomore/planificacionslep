@@ -8,6 +8,7 @@ import { useAcciones } from '../hooks/useApi';
 import Alert from '../components/ui/Alert';
 import Skeleton from '../components/ui/Skeleton';
 import { useAuth } from '../context/AuthContext';
+import { APP_BRANDING } from '../config/branding';
 
 function AccionesSkeleton() {
   return (
@@ -164,7 +165,7 @@ export default function Acciones() {
               Gestión operativa vinculada a indicadores institucionales
             </h1>
             <p className="mt-3 text-sm lg:text-base text-slate-500 font-body max-w-2xl">
-              SLEP COLCHAGUA
+              {APP_BRANDING.organizationName}
             </p>
           </div>
 
@@ -210,7 +211,7 @@ export default function Acciones() {
             <section className="bg-white rounded-card shadow-card border border-slate-100 p-8 text-center">
               <h2 className="text-xl font-display font-bold text-navy">No hay acciones registradas</h2>
               <p className="mt-2 text-sm text-slate-500 font-body">
-                El módulo ya está consultando datos reales. Si esperabas ver registros, revisa la hoja acciones o crea la primera acción desde esta vista.
+                Este ambiente está listo para trabajar con datos mock. Si esperabas ver registros, carga ejemplos en la hoja de acciones o crea la primera acción desde esta vista.
               </p>
             </section>
           )}

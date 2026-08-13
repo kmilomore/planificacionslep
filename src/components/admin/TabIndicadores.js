@@ -116,7 +116,7 @@ export default function TabIndicadores() {
       )}
 
       <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-navy font-body">
-        La base oficial CDC se sincroniza desde la hoja <strong>cdccolchagua</strong> mediante <code>migracionCDC()</code> en Apps Script. Los campos visibles debajo reflejan esa estructura real.
+        Para este ambiente demo, los indicadores pueden cargarse desde una hoja mock compatible con <code>migracionCDC()</code>. Los campos visibles debajo reflejan la estructura esperada por la aplicación.
       </div>
 
       {/* Filtros */}
@@ -234,7 +234,7 @@ export default function TabIndicadores() {
                 {filtrados.length === 0 && (
                   <tr>
                     <td colSpan={10} className="px-4 py-8 text-center text-gray-400">
-                      Sin indicadores. Ejecuta <code>migracionCDC()</code> para recargar la base oficial desde <code>cdccolchagua</code>.
+                      Sin indicadores. Ejecuta <code>migracionCDC()</code> para recargar una base mock o crea registros manualmente para la demo.
                     </td>
                   </tr>
                 )}

@@ -1,5 +1,16 @@
 # Contexto de Desarrollo
 
+## Convención de Datos Mock
+
+Este documento debe leerse usando datos de ejemplo y no datos reales de operación.
+
+Reglas de uso:
+- todos los nombres institucionales pueden tratarse como referenciales
+- correos, usuarios, equipos, instrumentos, indicadores, cortes y acciones deben representarse con valores mock
+- IDs, porcentajes, fechas y estados pueden usarse como ejemplos funcionales para UI y pruebas
+- no asumir que este archivo refleja datos productivos ni sensibles
+- cuando se construyan vistas, seeds, ejemplos o demos, priorizar siempre contenido ficticio pero verosímil
+
 ## Objetivo del Documento
 
 Este archivo debe servir como referencia viva del proyecto.
@@ -15,7 +26,7 @@ Debe permitir que cualquier persona retome el desarrollo entendiendo:
 
 ## Proyecto
 
-Sistema de Control de Gestión Institucional para SLEP Colchagua.
+Sistema de Control de Gestión Institucional para una organización demo.
 
 Objetivo funcional:
 - centralizar el seguimiento de instrumentos institucionales
@@ -46,6 +57,23 @@ Estado por fase:
 - Fase 4.5: módulo Acciones inicial ya implementado en frontend y backend
 - Fase 5: pendiente
 - Fase 6: pendiente
+
+## Referencia de Datos Mock Sugeridos
+
+Ejemplos de datos que sí conviene usar en desarrollo, demo o documentación:
+- organización: `Institución Demo Centro Norte`
+- usuarios: `ana.demo@institucion.cl`, `carlos.qa@institucion.cl`, `direccion.demo@institucion.cl`
+- instrumentos: `PMI 2026`, `Plan Territorial`, `Convenio de Desempeño`
+- equipos responsables: `Unidad de Mejora`, `Gestión Pedagógica`, `Planificación y Control`
+- indicadores: `Cobertura de seguimiento mensual`, `Cumplimiento de hitos críticos`, `Ejecución del plan anual`
+- acciones: `Levantar diagnóstico inicial`, `Validar avance con equipos`, `Publicar reporte de seguimiento`
+- estados: `planificada`, `en_progreso`, `completada`, `observada`
+
+Ejemplos de valores mock útiles:
+- IDs: `inst_001`, `ind_014`, `corte_2026_03`, `accion_0007`
+- porcentajes: `0`, `35`, `78`, `100`
+- fechas: `2026-03-15`, `2026-06-30`, `2026-10-20`
+- comentarios: `Avance parcial con evidencia pendiente`, `Se requiere validación de jefatura`
 
 ## Estructura General
 
@@ -527,6 +555,7 @@ Consecuencia:
 - la autorización de Drive también requiere ejecución manual de `autorizarServicios()` en Apps Script cuando corresponda
 - Vercel requiere redeploy para reflejar cambios del frontend
 - las mejoras de rendimiento backend no tienen efecto real hasta republicar el Web App de Apps Script
+- para demos locales o validaciones visuales, preferir siempre datasets mock antes que datos reales
 
 ## Dependencias entre Capas
 

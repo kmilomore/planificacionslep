@@ -82,7 +82,7 @@ export default function TabInstrumentos() {
       )}
 
       <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-navy font-body">
-        La hoja de instrumentos CDC ahora se reconstruye desde la base oficial en <strong>cdccolchagua</strong>. Si vuelves a ejecutar <code>migracionCDC()</code>, cualquier dato manual previo será reemplazado.
+        La hoja de instrumentos puede reconstruirse desde una base mock compatible con <code>migracionCDC()</code>. Si vuelves a ejecutar la migración, cualquier dato manual previo podrá ser reemplazado.
       </div>
 
       <div className="flex justify-end">

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { SESSION_EXPIRED_EVENT } from '../config/api';
+import { APP_BRANDING } from '../config/branding';
 
 const AuthContext = createContext(null);
 
@@ -9,7 +10,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(({ message } = {}) => {
     localStorage.removeItem('google_id_token');
-    localStorage.removeItem('slep_user');
+    localStorage.removeItem(APP_BRANDING.storageUserKey);
     if (message) {
       sessionStorage.setItem('auth_logout_message', message);
     }
@@ -22,7 +23,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('google_id_token');
-    const savedUser  = localStorage.getItem('slep_user');
+    const savedUser  = localStorage.getItem(APP_BRANDING.storageUserKey);
     if (savedToken && savedUser) {
       try { setUser(JSON.parse(savedUser)); } catch { logout(); }
     }
@@ -40,7 +41,7 @@ export function AuthProvider({ children }) {
 
   const loginWithGoogle = (credential, userInfo) => {
     localStorage.setItem('google_id_token', credential);
-    localStorage.setItem('slep_user', JSON.stringify(userInfo));
+    localStorage.setItem(APP_BRANDING.storageUserKey, JSON.stringify(userInfo));
     setUser(userInfo);
   };
 

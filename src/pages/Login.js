@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { callApi } from '../config/api';
+import { APP_BRANDING } from '../config/branding';
 
 export default function Login() {
   const { loginWithGoogle, user } = useAuth();
@@ -92,22 +93,22 @@ export default function Login() {
         {/* Logo / cabecera */}
         <div className="flex flex-col items-center gap-2 text-center">
           <img
-            src="/SLEPCOLCHAGUA.webp"
-            alt="Logo SLEP Colchagua"
+            src={APP_BRANDING.logoPath}
+            alt={APP_BRANDING.logoAlt}
             className="w-20 h-20 object-contain drop-shadow-sm"
           />
           <h1 className="text-xl font-display font-bold text-navy leading-tight">
-            SLEP Colchagua
+            {APP_BRANDING.appName}
           </h1>
           <p className="text-sm text-gray-500 font-body">
-            Sistema de Control de Gestión Institucional
+            {APP_BRANDING.appSubtitle}
           </p>
         </div>
 
         <div className="w-full border-t border-gray-100" />
 
         <p className="text-sm text-gray-600 font-body text-center">
-          Ingresa con tu cuenta institucional
+          {APP_BRANDING.loginPrompt}
         </p>
 
         {/* Botón Google */}
@@ -136,7 +137,7 @@ export default function Login() {
         )}
 
         <p className="text-xs text-gray-400 text-center font-body">
-          Solo personal autorizado del SLEP Colchagua
+          {APP_BRANDING.loginDisclaimer}
         </p>
       </div>
     </div>

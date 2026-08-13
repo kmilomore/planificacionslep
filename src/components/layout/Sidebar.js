@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { BarChart3, CalendarRange, ClipboardCheck, LayoutDashboard, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
+import { APP_BRANDING } from '../../config/branding';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -23,13 +24,13 @@ export default function Sidebar({ onClose, onPrefetchRoute }) {
       <div className="px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
           <img
-            src="/SLEPCOLCHAGUA.webp"
-            alt="Logo SLEP Colchagua"
+            src={APP_BRANDING.logoPath}
+            alt={APP_BRANDING.logoAlt}
             className="w-9 h-9 rounded-full object-cover flex-shrink-0 bg-white"
           />
           <div className="min-w-0">
-            <p className="text-sm font-display font-bold leading-tight truncate">SLEP Colchagua</p>
-            <p className="text-xs text-white/60 font-body leading-tight">Gestión Institucional</p>
+            <p className="text-sm font-display font-bold leading-tight truncate">{APP_BRANDING.appName}</p>
+            <p className="text-xs text-white/60 font-body leading-tight">{APP_BRANDING.appSubtitle}</p>
           </div>
         </div>
       </div>

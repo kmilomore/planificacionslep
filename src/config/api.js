@@ -1,10 +1,12 @@
+import { APP_BRANDING } from './branding';
+
 const API_URL = process.env.REACT_APP_APPS_SCRIPT_URL;
 
-export const SESSION_EXPIRED_EVENT = 'slep:session-expired';
+export const SESSION_EXPIRED_EVENT = APP_BRANDING.sessionExpiredEvent;
 
 function expireSession(message = 'Tu sesión expiró. Vuelve a iniciar sesión.') {
   localStorage.removeItem('google_id_token');
-  localStorage.removeItem('slep_user');
+  localStorage.removeItem(APP_BRANDING.storageUserKey);
   sessionStorage.setItem('auth_logout_message', message);
   window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, {
     detail: { message },

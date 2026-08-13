@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { callApi } from '../../config/api';
 import Sidebar from './Sidebar';
 import NavigationProgress from '../ui/NavigationProgress';
+import { APP_BRANDING } from '../../config/branding';
 
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -86,11 +87,11 @@ export default function AppShell() {
             </svg>
           </button>
           <img
-            src="/SLEPCOLCHAGUA.webp"
-            alt="Logo SLEP Colchagua"
+            src={APP_BRANDING.logoPath}
+            alt={APP_BRANDING.logoAlt}
             className="w-8 h-8 rounded-full object-cover bg-white flex-shrink-0"
           />
-          <span className="text-sm font-display font-bold">SLEP Colchagua</span>
+          <span className="text-sm font-display font-bold">{APP_BRANDING.appName}</span>
         </header>
 
         {/* Página activa */}
