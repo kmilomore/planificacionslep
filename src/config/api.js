@@ -15,12 +15,11 @@ function expireSession(message = 'Tu sesión expiró. Vuelve a iniciar sesión.'
 
 export async function callApi(action, payload = {}) {
   const token = localStorage.getItem('google_id_token');
-  if (!token) {
-    expireSession('Tu sesión ya no es válida. Vuelve a iniciar sesión.');
-    throw new Error('Sin sesión');
-  }
+  const requestUrl = token
+    ? `${API_URL}?token=${encodeURIComponent(token)}`
+    : API_URL;
 
-  const response = await fetch(`${API_URL}?token=${encodeURIComponent(token)}`, {
+  const response = await fetch(requestUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify({ action, ...payload }),

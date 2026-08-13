@@ -1,6 +1,14 @@
 const Auth = {
   TOKEN_CACHE_VERSION: 'v1',
   TOKEN_CACHE_TTL: 300,
+  PUBLIC_USER: {
+    id: 'public-demo-user',
+    email: 'invitado@demo.local',
+    nombre: 'Invitado Demo',
+    rol: 'admin',
+    area: 'Acceso abierto',
+    activo: true,
+  },
 
   /**
    * Valida un Google id_token y verifica que el email esté en la lista
@@ -81,5 +89,9 @@ const Auth = {
         return normalized.toString(16).padStart(2, '0');
       })
       .join('');
+  },
+
+  getPublicUser() {
+    return { ...this.PUBLIC_USER };
   },
 };

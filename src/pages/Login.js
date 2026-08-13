@@ -1,17 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { callApi } from '../config/api';
 import { APP_BRANDING } from '../config/branding';
 
 export default function Login() {
-  const { loginWithGoogle, user } = useAuth();
+  const { enterPortal, user } = useAuth();
   const navigate  = useNavigate();
   const [error,   setError]   = useState('');
-  // Si venimos de vuelta de OAuth ya hay un resultado pendiente → arrancar en loading
-  const [loading, setLoading] = useState(
-    () => !!sessionStorage.getItem('google_auth_result')
-  );
+  const [loading, setLoading] = useState(false);
 
   // Si ya hay sesión activa, redirigir
   useEffect(() => {
@@ -26,59 +22,18 @@ export default function Login() {
     setError(logoutMessage);
   }, []);
 
-  const handleToken = useCallback(async (idToken) => {
-    setLoading(true);
-    setError('');
-    try {
-      localStorage.setItem('google_id_token', idToken);
-      const userInfo = await callApi('validarSesion');
-      loginWithGoogle(idToken, userInfo);
-      navigate('/dashboard', { replace: true });
-    } catch {
-      localStorage.removeItem('google_id_token');
-      setError('Correo no autorizado. Contacta al administrador del sistema.');
-    } finally {
-      setLoading(false);
-    }
-  }, [loginWithGoogle, navigate]);
-
-  // Recoger el resultado que auth_callback.html dejó en sessionStorage
-  useEffect(() => {
-    const raw = sessionStorage.getItem('google_auth_result');
-    if (!raw) return;
-    sessionStorage.removeItem('google_auth_result');
-    try {
-      const result = JSON.parse(raw);
-      if (result.type === 'GOOGLE_AUTH_SUCCESS') {
-        handleToken(result.idToken);
-      } else {
-        setError('Error al autenticar con Google. Intenta de nuevo.');
-        setLoading(false);
-      }
-    } catch {
-      setError('Error al autenticar con Google. Intenta de nuevo.');
-      setLoading(false);
-    }
-  }, [handleToken]);
-
-  const abrirSelectorCuentas = () => {
+  const handleEnter = () => {
     if (loading) return;
     setLoading(true);
     setError('');
-
-    const nonce = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-    const params = new URLSearchParams({
-      client_id:     process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      redirect_uri:  `${window.location.origin}/auth_callback.html`,
-      response_type: 'id_token',
-      scope:         'openid email profile',
-      nonce:         nonce,
-      prompt:        'select_account',
-    });
-
-    // Redirect directo: evita el problema de COOP con popups
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    try {
+      enterPortal();
+      navigate('/dashboard', { replace: true });
+    } catch {
+      setError('No fue posible abrir el portal. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -118,15 +73,15 @@ export default function Login() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Verificando acceso…
+            Abriendo portal...
           </div>
         ) : (
           <button
-            onClick={abrirSelectorCuentas}
+            onClick={handleEnter}
             className="flex items-center gap-3 px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-body text-sm font-medium text-gray-700 shadow-sm"
           >
-            <GoogleIcon />
-            Iniciar sesión con Google
+            <EnterIcon />
+            Entrar al portal
           </button>
         )}
 
@@ -144,13 +99,11 @@ export default function Login() {
   );
 }
 
-function GoogleIcon() {
+function EnterIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-      <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 5L20 12L13 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20 12H4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }

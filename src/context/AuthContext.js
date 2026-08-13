@@ -5,7 +5,7 @@ import { APP_BRANDING } from '../config/branding';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
+  const [user, setUser]       = useState(APP_BRANDING.publicUser);
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(({ message } = {}) => {
@@ -14,18 +14,16 @@ export function AuthProvider({ children }) {
     if (message) {
       sessionStorage.setItem('auth_logout_message', message);
     }
-    setUser(null);
-    // Revocar sesión de Google si el SDK está disponible
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.disableAutoSelect();
-    }
+    setUser(APP_BRANDING.publicUser);
   }, []);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('google_id_token');
     const savedUser  = localStorage.getItem(APP_BRANDING.storageUserKey);
-    if (savedToken && savedUser) {
+    if (savedUser) {
       try { setUser(JSON.parse(savedUser)); } catch { logout(); }
+    } else {
+      localStorage.setItem(APP_BRANDING.storageUserKey, JSON.stringify(APP_BRANDING.publicUser));
+      setUser(APP_BRANDING.publicUser);
     }
     setLoading(false);
   }, [logout]);
@@ -40,13 +38,21 @@ export function AuthProvider({ children }) {
   }, [logout]);
 
   const loginWithGoogle = (credential, userInfo) => {
-    localStorage.setItem('google_id_token', credential);
-    localStorage.setItem(APP_BRANDING.storageUserKey, JSON.stringify(userInfo));
-    setUser(userInfo);
+    const nextUser = userInfo || APP_BRANDING.publicUser;
+    if (credential) {
+      localStorage.setItem('google_id_token', credential);
+    }
+    localStorage.setItem(APP_BRANDING.storageUserKey, JSON.stringify(nextUser));
+    setUser(nextUser);
   };
 
+  const enterPortal = useCallback(() => {
+    localStorage.setItem(APP_BRANDING.storageUserKey, JSON.stringify(APP_BRANDING.publicUser));
+    setUser(APP_BRANDING.publicUser);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout, enterPortal }}>
       {children}
     </AuthContext.Provider>
   );

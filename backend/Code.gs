@@ -1,10 +1,9 @@
 function doPost(e) {
   try {
     const token = e.parameter.token;
-    if (!token) return jsonError('Token requerido', 401);
-
-    const user = Auth.validarToken(token);
-    if (!user) return jsonError('No autorizado', 401);
+    const user = token
+      ? (Auth.validarToken(token) || Auth.getPublicUser())
+      : Auth.getPublicUser();
 
     const body = JSON.parse(e.postData.contents);
     const { action, data, id, filtros } = body;
